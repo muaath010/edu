@@ -232,6 +232,14 @@
         
         .quiz-option-item { padding: 5px 10px; margin: 4px 0; background: #eaf2f8; border-radius: 4px; border: 1px solid #dcdde1; font-size: 14px;}
         .dark-mode .quiz-option-item { background: #2c3e50; border-color: #34495e;}
+
+        /* تنسيقات نافذة إجابات الطلاب الجديدة */
+        .quiz-res-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px;}
+        .quiz-res-table th, .quiz-res-table td { padding: 10px; border: 1px solid var(--border-color); text-align: center; color: var(--text-color);}
+        .cheat-alert { color: #c0392b; font-weight: bold; background: #fadbd8; padding: 4px 8px; border-radius: 4px; display:inline-block;}
+        .safe-status { color: #27ae60; font-weight: bold; background: #d5f5e3; padding: 4px 8px; border-radius: 4px; display:inline-block;}
+        .btn-view-ans { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; transition:0.3s;}
+        .btn-view-ans:hover { background: #2980b9; }
     </style>
 </head>
 <body>
@@ -255,6 +263,7 @@
 
     <div class="sidebar-left">
         <button class="side-icon" style="background: #2c3e50;" data-title="تجهيز الاختبارات" onclick="openModal('modalQuizForm'); loadQuizHistory();">📝</button>
+        <button class="side-icon" style="background: #e74c3c;" data-title="استلام الإجابات" onclick="openQuizResultsModal()">📑</button>
         <button class="side-icon" style="background: #8e44ad;" data-title="دفتر التحضير" onclick="openNotesModal()">📓</button>
         <button class="side-icon bg-wheel" data-title="عجلة الاختيار" onclick="openModal('modalRandom')">🎲</button>
         <button class="side-icon bg-timer" data-title="المؤقت الذكي" onclick="openModal('modalTimer')">⏱️</button>
@@ -474,6 +483,39 @@
                         </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="modalQuizResults" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close-btn" onclick="closeModal('modalQuizResults')">&times;</span>
+            <div class="modal-header"><h3 style="color:#e74c3c;">📑 إجابات الطلاب (الاختبارات التفاعلية)</h3></div>
+            <div class="modal-large-body">
+                <button onclick="loadQuizResults()" style="background:#27ae60; color:white; border:none; padding:8px 15px; border-radius:5px; font-weight:bold; cursor:pointer; margin-bottom:15px;">🔄 تحديث البيانات واستيراد الإجابات</button>
+                <div style="overflow-x: auto;">
+                    <table class="quiz-res-table">
+                        <thead class="header-blue">
+                            <tr>
+                                <th>الوقت</th>
+                                <th>الطالب</th>
+                                <th>الصف/الشعبة</th>
+                                <th>رمز الاختبار</th>
+                                <th>مؤشر الغش</th>
+                                <th>التفاصيل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="quizResultsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalStudentAnswers" class="modal" style="z-index: 2010;">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modalStudentAnswers')">&times;</span>
+            <div class="modal-header"><h3 style="color:#2c3e50;">ورقة إجابة الطالب</h3></div>
+            <div id="studentAnswersContent" style="max-height: 60vh; overflow-y: auto; padding: 10px; line-height: 1.6;"></div>
         </div>
     </div>
 
@@ -1543,6 +1585,84 @@
                 alert("❌ حدث خطأ أثناء الاتصال بالشبكة ولم يتم الحذف.");
                 loadQuizHistory();
             });
+        }
+
+        // --- دوال نتائج الاختبارات المضافة حديثاً ---
+        function openQuizResultsModal() {
+            openModal('modalQuizResults');
+            loadQuizResults();
+        }
+
+        function loadQuizResults() {
+            const tbody = document.getElementById("quizResultsBody");
+            tbody.innerHTML = `<tr><td colspan="6">جاري جلب إجابات الطلاب من السحابة... ⏳</td></tr>`;
+            
+            fetch(`${scriptURL}?action=get_student_results`)
+            .then(r => r.json())
+            .then(data => {
+                if(data.status === "success" && data.results && data.results.length > 0) {
+                    let html = '';
+                    // عكس الترتيب لعرض الأحدث في الأعلى
+                    const reversedResults = [...data.results].reverse();
+                    reversedResults.forEach((row, i) => {
+                        const date = new Date(row[0]).toLocaleString('ar-OM');
+                        const name = row[1];
+                        const grade = row[2];
+                        const code = row[3];
+                        const cheatCount = parseInt(row[4]) || 0;
+                        const ansJson = row[5];
+                        
+                        const cheatBadge = cheatCount > 0 
+                            ? `<span class="cheat-alert">⚠️ غادر الصفحة (${cheatCount}) مرة</span>`
+                            : `<span class="safe-status">✅ سليم</span>`;
+                            
+                        const encodedAns = encodeURIComponent(ansJson);
+                        
+                        html += `<tr>
+                            <td dir="ltr" style="font-size:12px;">${date}</td>
+                            <td style="font-weight:bold;">${name}</td>
+                            <td>${grade}</td>
+                            <td style="font-family:monospace; font-weight:bold; font-size:15px;">${code}</td>
+                            <td>${cheatBadge}</td>
+                            <td><button class="btn-view-ans" onclick="showStudentAnswers('${name}', ${cheatCount}, '${encodedAns}')">عرض الإجابات 👁️</button></td>
+                        </tr>`;
+                    });
+                    tbody.innerHTML = html;
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" style="color:#7f8c8d; padding:20px;">لا توجد إجابات مسجلة حتى الآن.</td></tr>`;
+                }
+            })
+            .catch(err => {
+                tbody.innerHTML = `<tr><td colspan="6" style="color:#e74c3c;">❌ حدث خطأ في الاتصال بالسيرفر.</td></tr>`;
+            });
+        }
+
+        function showStudentAnswers(studentName, cheatCount, encodedAns) {
+            const container = document.getElementById("studentAnswersContent");
+            container.innerHTML = "";
+            
+            let html = `<h4 style="color:#2980b9; border-bottom:2px solid #eee; padding-bottom:10px;">الطالب: ${studentName}</h4>`;
+            
+            if(cheatCount > 0) {
+                html += `<div style="background:#fadbd8; color:#c0392b; padding:10px; border-radius:5px; margin-bottom:15px; font-weight:bold; text-align:center;">⚠️ تنبيه: تم رصد خروج الطالب من شاشة الاختبار ${cheatCount} مرة!</div>`;
+            }
+
+            try {
+                const answers = JSON.parse(decodeURIComponent(encodedAns));
+                answers.forEach((item, index) => {
+                    html += `
+                        <div style="background:var(--category-bg); border:1px solid var(--border-color); padding:15px; border-radius:8px; margin-bottom:10px;">
+                            <div style="font-weight:bold; color:var(--text-color); margin-bottom:8px;">${index + 1}. ${item.question}</div>
+                            <div style="background:var(--input-bg); padding:10px; border-radius:5px; border:1px solid #bdc3c7; color:#27ae60; font-weight:bold;">📝 الإجابة: ${item.answer}</div>
+                        </div>
+                    `;
+                });
+            } catch(e) {
+                html += `<div style="color:red;">عذراً، حدث خطأ في قراءة بيانات الإجابة.</div>`;
+            }
+            
+            container.innerHTML = html;
+            openModal('modalStudentAnswers');
         }
         
         // --- المساعد الذكي ---
