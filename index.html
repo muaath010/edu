@@ -98,6 +98,7 @@
         .bg-seating { background: #16a085; }
         .bg-reports { background: #34495e; }
         .bg-honor { background: #f1c40f; color:#000; }
+        .bg-arena { background: #d35400; }
 
         .btn-floating-save {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -216,7 +217,7 @@
         .ai-msg { padding: 10px; border-radius: 10px; max-width: 85%; line-height: 1.4; }
         .ai-msg.user { background: #e0e0e0; align-self: flex-start; color: #333; }
         .ai-msg.bot { background: #6c5ce7; color: white; align-self: flex-end; }
-        .ai-footer { padding: 10px; display: flex; gap: 5px; border-top: 1px solid var(--border-color); }
+        .ai-footer { padding: 10px; display: gap: 5px; border-top: 1px solid var(--border-color); }
         .ai-input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); }
         .ai-send { background: #6c5ce7; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
         
@@ -240,6 +241,44 @@
         .safe-status { color: #27ae60; font-weight: bold; background: #d5f5e3; padding: 4px 8px; border-radius: 4px; display:inline-block;}
         .btn-view-ans { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; transition:0.3s;}
         .btn-view-ans:hover { background: #2980b9; }
+
+        /* الألعاب التفاعلية وساحة التحدي (إضافة جديدة) */
+        .arena-btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; color: white; transition:0.2s;}
+        .arena-btn:active { transform: scale(0.95); }
+        .arena-question-box { background: var(--input-bg); border: 2px solid var(--border-color); padding: 20px; border-radius: 12px; text-align: center; font-size: 22px; font-weight: bold; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; margin-bottom: 15px; color: var(--text-color);}
+        
+        /* شد الحبل */
+        .arena-rope-container { position: relative; width: 100%; height: 40px; background: #ecf0f1; border-radius: 20px; margin: 20px 0; overflow: hidden; border: 2px solid #bdc3c7;}
+        .arena-rope-line { position: absolute; top: 50%; transform: translateY(-50%); width: 100%; height: 8px; background: repeating-linear-gradient(45deg, #8e44ad, #8e44ad 10px, #9b59b6 10px, #9b59b6 20px);}
+        .arena-knot { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px; background: #f1c40f; border-radius: 50%; border: 3px solid #fff; z-index: 2; transition: left 0.5s; display: flex; justify-content: center; align-items: center; font-size: 16px;}
+        
+        /* القنبلة */
+        .bomb-container { text-align:center; position:relative; margin: 20px 0;}
+        .bomb-icon { font-size: 100px; animation: pulse 1s infinite; }
+        .bomb-timer { font-size: 60px; font-weight: bold; color: #e74c3c; font-family: monospace;}
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        
+        /* صيد الكنز */
+        .treasure-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0;}
+        .treasure-box { background: #d35400; color: white; border-radius: 10px; height: 80px; display: flex; justify-content: center; align-items: center; font-size: 30px; cursor: pointer; transition: 0.3s; border: 3px solid #e67e22; box-shadow: 0 4px 0 #a04000;}
+        .treasure-box:active { transform: translateY(4px); box-shadow: none; }
+        .treasure-box.opened { background: #ecf0f1; border-color: #bdc3c7; cursor: default; font-size: 24px; color:#2c3e50;}
+
+        /* سباق السيارات */
+        .race-track { background: #34495e; height: 60px; border-radius: 10px; margin: 15px 0; position: relative; border: 2px dashed #95a5a6; display: flex; align-items: center; padding: 0 10px;}
+        .race-car { font-size: 35px; position: absolute; left: 10px; transition: left 0.5s ease-in-out;}
+        .finish-line { position: absolute; right: 10px; top: 0; height: 100%; width: 15px; background: repeating-linear-gradient(45deg, #fff, #fff 5px, #000 5px, #000 10px);}
+
+        /* الإعصار (الأسماء) */
+        .tornado-area { height: 200px; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; background: var(--input-bg); border-radius: 10px; border: 2px solid #3498db;}
+        .tornado-name { position: absolute; font-weight: bold; font-size: 18px; color: #2980b9; transition: all 0.1s; opacity: 0; white-space: nowrap;}
+        
+        /* حرب الفضاء */
+        .space-area { height: 250px; background: #0b0c10; border-radius: 10px; position: relative; overflow: hidden; border: 2px solid #e74c3c;}
+        .space-rocket { font-size: 40px; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); transition: left 0.2s;}
+        .space-laser { position: absolute; width: 4px; height: 20px; background: #00ff00; bottom: 50px; border-radius: 2px; box-shadow: 0 0 10px #00ff00;}
+        .space-alien { position: absolute; color: white; font-weight: bold; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 5px; border: 1px solid #444; font-size: 12px; transition: top 0.5s;}
+
     </style>
 </head>
 <body>
@@ -262,6 +301,8 @@
     </div>
 
     <div class="sidebar-left">
+        <button class="side-icon bg-arena" data-title="ساحة التحدي والألعاب" onclick="openModal('modalArenaSetup')">⚔️</button>
+
         <button class="side-icon" style="background: #2c3e50;" data-title="تجهيز الاختبارات" onclick="openModal('modalQuizForm'); loadQuizHistory();">📝</button>
         <button class="side-icon" style="background: #e74c3c;" data-title="استلام الإجابات" onclick="openQuizResultsModal()">📑</button>
         <button class="side-icon" style="background: #8e44ad;" data-title="دفتر التحضير" onclick="openNotesModal()">📓</button>
@@ -356,10 +397,31 @@
 
     <div id="modalRandom" class="modal">
         <div class="modal-content text-center">
-            <span class="close-btn" onclick="closeModal('modalRandom')">&times;</span>
-            <div class="modal-header"><h3 style="color:#9b59b6;">🎲 عجلة الاختيار الذكية</h3></div>
-            <div id="randomBox" class="random-box">اضغط للبدء</div>
-            <button onclick="spinWheel()" style="width:100%; background:#9b59b6; color:white; border:none; padding:12px; border-radius:8px; font-size:18px; font-weight:bold; cursor:pointer;">لف العجلة</button>
+            <span class="close-btn" onclick="closeModal('modalRandom'); stopRandomizers();">&times;</span>
+            <div class="modal-header"><h3 style="color:#9b59b6;">🎲 عجلة الاختيار الذكية والتفاعلية</h3></div>
+            
+            <select id="randomizerType" class="note-input" style="font-size:16px; margin-bottom: 15px;" onchange="changeRandomizerView()">
+                <option value="classic">📦 الصندوق الكلاسيكي السريع</option>
+                <option value="tornado">🌀 إعصار الأسماء (Tornado)</option>
+                <option value="space">🚀 حرب الفضاء (Space War)</option>
+            </select>
+
+            <div id="viewClassic" style="display:block;">
+                <div id="randomBox" class="random-box" style="margin-bottom:0;">اضغط للبدء</div>
+            </div>
+
+            <div id="viewTornado" style="display:none;">
+                <div id="tornadoArea" class="tornado-area"></div>
+            </div>
+
+            <div id="viewSpace" style="display:none;">
+                <div id="spaceArea" class="space-area">
+                    <div id="rocket" class="space-rocket">🚀</div>
+                </div>
+            </div>
+
+            <button id="btnSpin" onclick="startRandomizer()" style="width:100%; background:#9b59b6; color:white; border:none; padding:12px; border-radius:8px; font-size:18px; font-weight:bold; cursor:pointer; margin-top:15px;">🏁 ابدأ الاختيار</button>
+            <div id="winnerNameDisplay" style="font-size: 28px; font-weight: bold; color: #27ae60; margin-top: 15px; min-height: 40px;"></div>
         </div>
     </div>
 
@@ -446,7 +508,7 @@
 
             <div style="margin-top: 15px;">
                 <input type="text" id="lessonTitle" placeholder="عنوان الدرس الذي توقفنا عنده..." class="note-input">
-                <textarea id="lessonNotes" placeholder="ملاحظات إضافية (الواجب، أدوات مطلوبة، سلوكيات...)" class="note-input"></textarea>
+                <textarea id="lessonNotes" placeholder="ملاحظات إضافية (الواجب، أدوات مطلوبة، سلويات...)" class="note-input"></textarea>
                 <button onclick="saveNote()" class="btn-save-note" id="btnSaveNote">💾 حفظ الملاحظة لهذه الشعبة</button>
             </div>
             
@@ -516,6 +578,47 @@
             <span class="close-btn" onclick="closeModal('modalStudentAnswers')">&times;</span>
             <div class="modal-header"><h3 style="color:#2c3e50;">ورقة إجابة الطالب</h3></div>
             <div id="studentAnswersContent" style="max-height: 60vh; overflow-y: auto; padding: 10px; line-height: 1.6;"></div>
+        </div>
+    </div>
+
+    <div id="modalArenaSetup" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close-btn" onclick="closeModal('modalArenaSetup')">&times;</span>
+            <div class="modal-header"><h3 style="color:#d35400;">⚔️ ساحة التحدي - إعداد الألعاب التفاعلية</h3></div>
+            <div class="modal-large-body">
+                <div style="background:var(--category-bg); padding:15px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:15px;">
+                    <p style="margin-top:0; font-weight:bold; color:var(--text-color);">اكتب أسئلة التحدي هنا (سؤال في سطر، والإجابة تحته في سطر آخر):</p>
+                    <textarea id="arenaQuestionsInput" class="note-input" style="min-height: 150px; font-family:Tahoma;" placeholder="ما هي عاصمة سلطنة عمان؟&#10;مسقط&#10;كم عدد وحدات البايت في الكيلوبايت؟&#10;1024"></textarea>
+                    
+                    <label style="font-weight:bold; color:var(--text-color); margin-top:10px; display:block;">اختر اللعبة التفاعلية:</label>
+                    <select id="arenaGameSelector" class="note-input" style="font-size:16px;">
+                        <option value="tugOfWar">🪢 لعبة شد الحبل (بين فريقين)</option>
+                        <option value="bomb">💣 القنبلة الموقوتة (تحدي السرعة)</option>
+                        <option value="treasure">🎁 صيد الكنز (حظ ومخاطرة)</option>
+                        <option value="race">🏎️ سباق السيارات (منافسة فرق)</option>
+                    </select>
+
+                    <button onclick="startArenaGame()" style="background:#d35400; color:white; border:none; padding:12px 20px; border-radius:8px; font-weight:bold; font-size:18px; width:100%; cursor:pointer; margin-top:15px;">🚀 بدء التحدي الآن على الشاشة</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalActiveGame" class="modal" style="z-index: 2100; background: rgba(0,0,0,0.9);">
+        <div class="modal-content modal-large" style="background: var(--card-bg); max-width: 95vw; height: 90vh; display: flex; flex-direction: column;">
+            <span class="close-btn" onclick="closeGameAndStop()" style="font-size: 35px; top: 5px;">&times;</span>
+            <div class="modal-header" style="border-bottom: none;"><h2 id="activeGameTitle" style="color:#d35400; font-size:35px; margin-bottom: 0;">⚔️ ساحة التحدي ⚔️</h2></div>
+            
+            <div style="flex:1; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div id="gameUIContainer" style="flex: 1; display:flex; flex-direction:column; justify-content:center;"></div>
+
+                <div class="arena-question-box">
+                    <div id="arenaCurrentQ" style="font-size: 28px;">اضغط على (السؤال التالي) للبدء</div>
+                    <div id="arenaCurrentA" style="font-size: 22px; color: #27ae60; margin-top: 15px; display: none;">الإجابة ستظهر هنا</div>
+                </div>
+
+                <div id="gameControlsContainer" style="background: #eee; padding: 15px; border-radius: 12px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;"></div>
+            </div>
         </div>
     </div>
 
@@ -737,15 +840,6 @@
         }
         function pauseTimer() { clearInterval(timerInterval); } 
         function resetTimer() { clearInterval(timerInterval); timeRemaining=defaultTime; updateTimerDisplay(); }
-
-        function spinWheel() {
-            const g = document.getElementById("gradeSelect").value; const s = document.getElementById("sectionSelect").value;
-            const students = studentsData[g][s] || []; if (students.length === 0) return;
-            const box = document.getElementById("randomBox"); let spins = 0;
-            const interval = setInterval(() => { box.innerText = students[Math.floor(Math.random() * students.length)]; playSound(600, 'triangle', 0.1, 0.1);
-                if (++spins >= 20) { clearInterval(interval); playSound(500, 'sine', 1, 0.2); box.style.background = "#f1c40f"; box.style.color="#000"; setTimeout(()=>{box.style.background="var(--input-bg)"; box.style.color="#9b59b6";}, 1500); }
-            }, 80);
-        }
 
         function setTrafficLight(color) {
             document.querySelectorAll('.light').forEach(l => l.classList.remove('active')); document.querySelector('.light.' + color).classList.add('active');
@@ -1402,7 +1496,380 @@
             });
         }
 
-        // --- دوال تجهيز الاختبار الجديدة ---
+        // --- دوال الألعاب والاختيار العشوائي التفاعلي المضافة حديثاً ---
+        let randomizerInterval;
+        let isSpinning = false;
+        let currentRandomizerList = [];
+
+        function changeRandomizerView() {
+            document.getElementById('viewClassic').style.display = 'none';
+            document.getElementById('viewTornado').style.display = 'none';
+            document.getElementById('viewSpace').style.display = 'none';
+            document.getElementById('winnerNameDisplay').innerText = '';
+            
+            let val = document.getElementById('randomizerType').value;
+            if(val === 'classic') document.getElementById('viewClassic').style.display = 'block';
+            if(val === 'tornado') document.getElementById('viewTornado').style.display = 'block';
+            if(val === 'space') document.getElementById('viewSpace').style.display = 'block';
+        }
+
+        function stopRandomizers() {
+            clearInterval(randomizerInterval);
+            isSpinning = false;
+            if (document.getElementById('btnSpin')) document.getElementById('btnSpin').disabled = false;
+        }
+
+        function startRandomizer() {
+            if (isSpinning) return;
+            const g = document.getElementById("gradeSelect").value; 
+            const s = document.getElementById("sectionSelect").value;
+            currentRandomizerList = studentsData[g][s] || [];
+            
+            if (currentRandomizerList.length === 0) return alert("لا توجد أسماء في هذه الشعبة.");
+            
+            isSpinning = true;
+            document.getElementById('btnSpin').disabled = true;
+            document.getElementById('winnerNameDisplay').innerText = '';
+            
+            let type = document.getElementById('randomizerType').value;
+            
+            if (type === 'classic') runClassicRandom();
+            else if (type === 'tornado') runTornadoRandom();
+            else if (type === 'space') runSpaceRandom();
+        }
+
+        // دعم الأمر الصوتي القديم وتحويله للميزة الجديدة
+        function spinWheel() {
+            if(document.getElementById('randomizerType')) {
+                document.getElementById('randomizerType').value = 'classic';
+                changeRandomizerView();
+                startRandomizer();
+            }
+        }
+
+        function runClassicRandom() {
+            const box = document.getElementById("randomBox");
+            let spins = 0;
+            randomizerInterval = setInterval(() => { 
+                box.innerText = currentRandomizerList[Math.floor(Math.random() * currentRandomizerList.length)]; 
+                playSound(600, 'triangle', 0.1, 0.1);
+                if (++spins >= 20) { 
+                    clearInterval(randomizerInterval); 
+                    playSound(500, 'sine', 1, 0.2);
+                    box.style.background = "#f1c40f"; box.style.color="#000"; 
+                    setTimeout(()=>{box.style.background="var(--input-bg)"; box.style.color="#9b59b6"; isSpinning = false; document.getElementById('btnSpin').disabled = false;}, 1500); 
+                    document.getElementById('winnerNameDisplay').innerText = "🎉 " + box.innerText + " 🎉";
+                }
+            }, 80);
+        }
+
+        function runTornadoRandom() {
+            const area = document.getElementById('tornadoArea');
+            area.innerHTML = '';
+            let els = [];
+            
+            playSound(100, 'sine', 3, 0.2);
+            currentRandomizerList.slice(0, 15).forEach((name, i) => {
+                let el = document.createElement('div');
+                el.className = 'tornado-name';
+                el.innerText = name;
+                el.style.left = '50%'; el.style.top = '50%';
+                area.appendChild(el);
+                els.push(el);
+            });
+
+            let angle = 0;
+            let radius = 10;
+            let time = 0;
+            let winner = currentRandomizerList[Math.floor(Math.random() * currentRandomizerList.length)];
+
+            randomizerInterval = setInterval(() => {
+                angle += 0.2;
+                radius = Math.min(80, radius + 1);
+                time += 50;
+
+                els.forEach((el, i) => {
+                    let offset = i * (Math.PI * 2 / els.length);
+                    let x = Math.cos(angle + offset) * radius;
+                    let y = Math.sin(angle + offset) * (radius * 0.5);
+                    el.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(${1 + Math.sin(angle+offset)*0.2})`;
+                    el.style.opacity = Math.random() > 0.2 ? 1 : 0.3;
+                });
+
+                if (time > 3000) {
+                    clearInterval(randomizerInterval);
+                    playSound(500, 'sine', 1, 0.3);
+                    area.innerHTML = `<div style="font-size: 35px; font-weight: bold; color: #e74c3c; animation: pulse 1s infinite;">${winner}</div>`;
+                    document.getElementById('winnerNameDisplay').innerText = "🎉 " + winner + " 🎉";
+                    isSpinning = false;
+                    document.getElementById('btnSpin').disabled = false;
+                }
+            }, 50);
+        }
+
+        function runSpaceRandom() {
+            const area = document.getElementById('spaceArea');
+            const rocket = document.getElementById('rocket');
+            
+            Array.from(area.children).forEach(c => { if(c.id !== 'rocket') c.remove(); });
+
+            let aliens = [];
+            let activeNames = [...currentRandomizerList].slice(0, 10);
+            let winner = activeNames[Math.floor(Math.random() * activeNames.length)];
+
+            activeNames.forEach((name, i) => {
+                let alien = document.createElement('div');
+                alien.className = 'space-alien';
+                alien.innerText = name + " 🛸";
+                alien.style.left = (Math.random() * 80 + 10) + '%';
+                alien.style.top = (Math.random() * 40 + 10) + 'px';
+                area.appendChild(alien);
+                aliens.push(alien);
+            });
+
+            let shots = 0;
+            randomizerInterval = setInterval(() => {
+                if (aliens.length <= 1) {
+                    clearInterval(randomizerInterval);
+                    if(aliens.length === 1) {
+                        playSound(500, 'sine', 1, 0.3);
+                        aliens[0].innerText = aliens[0].innerText.replace("🛸", "👑");
+                        aliens[0].style.fontSize = "24px";
+                        aliens[0].style.color = "#f1c40f";
+                        document.getElementById('winnerNameDisplay').innerText = "الفائز الناجي: " + aliens[0].innerText;
+                    }
+                    isSpinning = false;
+                    document.getElementById('btnSpin').disabled = false;
+                    return;
+                }
+
+                let targetIdx = Math.floor(Math.random() * aliens.length);
+                if (aliens[targetIdx].innerText.includes(winner) && aliens.length > 1) {
+                    targetIdx = (targetIdx + 1) % aliens.length; 
+                }
+
+                let target = aliens[targetIdx];
+                rocket.style.left = target.style.left; 
+
+                setTimeout(() => {
+                    playSound(800, 'square', 0.1, 0.1);
+                    let laser = document.createElement('div');
+                    laser.className = 'space-laser';
+                    laser.style.left = target.style.left;
+                    area.appendChild(laser);
+                    
+                    let laserInterval = setInterval(() => {
+                        let bottom = parseInt(laser.style.bottom || '50');
+                        laser.style.bottom = (bottom + 20) + 'px';
+                        if (bottom > 150) {
+                            clearInterval(laserInterval);
+                            laser.remove();
+                            target.innerText = "💥";
+                            playSound(150, 'sawtooth', 0.2, 0.2);
+                            setTimeout(() => { target.remove(); aliens.splice(targetIdx, 1); }, 200);
+                        }
+                    }, 20);
+                }, 200);
+
+            }, 800);
+        }
+
+        // --- محرك ألعاب ساحة التحدي ---
+        let arenaQuestions = [];
+        let currentQIndex = 0;
+        let currentGameType = "";
+        let gameData = {};
+        let bombTimerInterval;
+
+        function startArenaGame() {
+            const rawText = document.getElementById('arenaQuestionsInput').value.trim();
+            if(!rawText) return alert("الرجاء إضافة أسئلة التحدي!");
+
+            const lines = rawText.split('\n').map(l => l.trim()).filter(l => l !== "");
+            arenaQuestions = [];
+            for(let i = 0; i < lines.length; i += 2) {
+                if(lines[i+1]) arenaQuestions.push({ q: lines[i], a: lines[i+1] });
+            }
+            if(arenaQuestions.length === 0) return alert("تنسيق الأسئلة غير صحيح.");
+
+            currentGameType = document.getElementById('arenaGameSelector').value;
+            currentQIndex = -1;
+            gameData = {};
+
+            closeModal('modalArenaSetup');
+            openModal('modalActiveGame');
+            
+            setupGameUI(currentGameType);
+        }
+
+        function closeGameAndStop() {
+            closeModal('modalActiveGame');
+            clearInterval(bombTimerInterval);
+        }
+
+        function setupGameUI(type) {
+            const ui = document.getElementById('gameUIContainer');
+            const controls = document.getElementById('gameControlsContainer');
+            const title = document.getElementById('activeGameTitle');
+
+            document.getElementById('arenaCurrentQ').innerText = "اضغط (السؤال الأول) للبدء";
+            document.getElementById('arenaCurrentA').style.display = "none";
+
+            if (type === 'tugOfWar') {
+                title.innerText = "🪢 تحدي شد الحبل 🪢";
+                gameData.score = 0;
+                ui.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; font-size:24px; font-weight:bold;">
+                        <span style="color:#2980b9;">🔵 فريق اليمين</span><span style="color:#c0392b;">فريق اليسار 🔴</span>
+                    </div>
+                    <div class="arena-rope-container">
+                        <div class="arena-rope-line"></div>
+                        <div style="position:absolute; left:50%; width:2px; height:100%; background:red;"></div>
+                        <div class="arena-knot" id="knot">🚩</div>
+                    </div>`;
+                controls.innerHTML = `
+                    <button class="arena-btn" style="background:#2980b9;" onclick="updateTugOfWar(1)">+ سحب لليمين</button>
+                    <button class="arena-btn" style="background:#f39c12;" onclick="showArenaAnswer()">إظهار الإجابة</button>
+                    <button class="arena-btn" style="background:#27ae60;" onclick="nextArenaQuestion()">السؤال التالي</button>
+                    <button class="arena-btn" style="background:#c0392b;" onclick="updateTugOfWar(-1)">سحب لليسار +</button>`;
+            } 
+            else if (type === 'bomb') {
+                title.innerText = "💣 تفكيك القنبلة الموقوتة 💣";
+                gameData.time = 60;
+                ui.innerHTML = `
+                    <div class="bomb-container">
+                        <div class="bomb-icon" id="bombIcon">💣</div>
+                        <div class="bomb-timer" id="bombTimer">01:00</div>
+                        <div style="margin-top:10px; font-size:18px;">الإجابة الخاطئة تسرّع العداد (-10ث)! أجب لتفكيكها!</div>
+                    </div>`;
+                controls.innerHTML = `
+                    <button class="arena-btn" style="background:#27ae60;" onclick="startBomb()">▶️ بدء العداد للسؤال الأول</button>
+                    <button class="arena-btn" style="background:#3498db;" onclick="defuseBomb()">✂️ إجابة صحيحة (تفكيك)</button>
+                    <button class="arena-btn" style="background:#c0392b;" onclick="wrongBomb()">❌ إجابة خاطئة (تسريع)</button>
+                    <button class="arena-btn" style="background:#f39c12;" onclick="showArenaAnswer()">إظهار الإجابة</button>`;
+            }
+            else if (type === 'treasure') {
+                title.innerText = "🎁 صيد الكنز 🎁";
+                gameData.teamA = 0; gameData.teamB = 0;
+                let grid = `<div class="treasure-grid">`;
+                for(let i=1; i<=8; i++) grid += `<div class="treasure-box" id="tbox${i}" onclick="openTreasure(${i})">🎁 ${i}</div>`;
+                grid += `</div>`;
+                ui.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; font-size:24px; font-weight:bold; margin-bottom:10px;">
+                        <span>فريق (أ): <span id="tScoreA">0</span></span>
+                        <span>فريق (ب): <span id="tScoreB">0</span></span>
+                    </div>
+                    ${grid}`;
+                controls.innerHTML = `
+                    <button class="arena-btn" style="background:#27ae60;" onclick="nextArenaQuestion()">السؤال التالي</button>
+                    <button class="arena-btn" style="background:#f39c12;" onclick="showArenaAnswer()">إظهار الإجابة</button>
+                    <span style="padding:10px;">اختر الصندوق من الشاشة مباشرة للفريق الفائز</span>`;
+            }
+            else if (type === 'race') {
+                title.innerText = "🏎️ سباق السيارات المثير 🏎️";
+                gameData.carA = 10; gameData.carB = 10;
+                ui.innerHTML = `
+                    <div class="race-track"><div class="finish-line"></div><div class="race-car" id="carA" style="left:10%;">🏎️</div></div>
+                    <div class="race-track" style="background:#2c3e50;"><div class="finish-line"></div><div class="race-car" id="carB" style="left:10%;">🚓</div></div>`;
+                controls.innerHTML = `
+                    <button class="arena-btn" style="background:#e74c3c;" onclick="moveCar('A')">تقديم سيارة 🏎️</button>
+                    <button class="arena-btn" style="background:#27ae60;" onclick="nextArenaQuestion()">السؤال التالي</button>
+                    <button class="arena-btn" style="background:#f39c12;" onclick="showArenaAnswer()">إظهار الإجابة</button>
+                    <button class="arena-btn" style="background:#3498db;" onclick="moveCar('B')">تقديم سيارة 🚓</button>`;
+            }
+        }
+
+        function nextArenaQuestion() {
+            currentQIndex++;
+            if (currentQIndex < arenaQuestions.length) {
+                playSound(600, 'triangle', 0.1, 0.1);
+                document.getElementById('arenaCurrentQ').innerText = `س ${currentQIndex + 1}: ${arenaQuestions[currentQIndex].q}`;
+                document.getElementById('arenaCurrentA').innerText = `الإجابة: ${arenaQuestions[currentQIndex].a}`;
+                document.getElementById('arenaCurrentA').style.display = "none";
+            } else {
+                playSound(500, 'sine', 1, 0.2);
+                document.getElementById('arenaCurrentQ').innerText = "🎉 انتهت الأسئلة! أعلن الفريق الفائز 🎉";
+            }
+        }
+
+        function showArenaAnswer() {
+            document.getElementById('arenaCurrentA').style.display = "block";
+        }
+
+        function updateTugOfWar(val) {
+            gameData.score += val;
+            let knot = document.getElementById('knot');
+            let pct = 50 - (gameData.score * 10);
+            knot.style.left = pct + '%';
+            if(gameData.score >= 5) { playSound(500, 'sine', 1, 0.3); alert("فريق اليمين يسحب الحبل ويفوز!"); }
+            if(gameData.score <= -5) { playSound(500, 'sine', 1, 0.3); alert("فريق اليسار يسحب الحبل ويفوز!"); }
+        }
+
+        function startBomb() {
+            nextArenaQuestion();
+            clearInterval(bombTimerInterval);
+            document.getElementById('bombIcon').innerText = "💣";
+            bombTimerInterval = setInterval(() => {
+                gameData.time--;
+                updateBombDisplay();
+                playSound(800, 'square', 0.05, 0.05); // صوت تكّات القنبلة
+                if(gameData.time <= 0) {
+                    clearInterval(bombTimerInterval);
+                    document.getElementById('bombIcon').innerText = "💥";
+                    document.getElementById('bombTimer').innerText = "انفجرت!";
+                    document.getElementById('bombTimer').style.color = "red";
+                    playSound(150, 'sawtooth', 1, 0.5);
+                }
+            }, 1000);
+        }
+
+        function wrongBomb() {
+            gameData.time -= 10;
+            if(gameData.time < 0) gameData.time = 0;
+            updateBombDisplay();
+            document.getElementById('bombIcon').style.transform = "scale(1.2)";
+            setTimeout(()=> document.getElementById('bombIcon').style.transform = "scale(1)", 200);
+        }
+
+        function defuseBomb() {
+            clearInterval(bombTimerInterval);
+            document.getElementById('bombIcon').innerText = "✅";
+            document.getElementById('bombTimer').innerText = "تم التفكيك بنجاح!";
+            document.getElementById('bombTimer').style.color = "#27ae60";
+            playSound(600, 'sine', 1, 0.2);
+        }
+
+        function updateBombDisplay() {
+            let m = Math.floor(gameData.time / 60);
+            let s = gameData.time % 60;
+            document.getElementById('bombTimer').innerText = `0${m}:${s<10?'0':''}${s}`;
+        }
+
+        function openTreasure(id) {
+            let box = document.getElementById('tbox'+id);
+            if(box.classList.contains('opened')) return;
+            
+            box.classList.add('opened');
+            let rand = Math.random();
+            let pts = 0;
+            if(rand < 0.2) { box.innerText = "💣 -5"; pts = -5; box.style.background="#e74c3c"; box.style.color="white"; playSound(150, 'sawtooth', 0.5, 0.3); }
+            else if (rand < 0.6) { box.innerText = "💰 +10"; pts = 10; playSound(800, 'sine', 0.2, 0.2); }
+            else { box.innerText = "💎 +20"; pts = 20; box.style.background="#f1c40f"; playSound(1000, 'sine', 0.4, 0.2); }
+
+            let team = prompt("أضف النقاط لأي فريق؟ (أ / ب)").toLowerCase();
+            if(team === 'أ' || team === 'a') { gameData.teamA += pts; document.getElementById('tScoreA').innerText = gameData.teamA; }
+            else { gameData.teamB += pts; document.getElementById('tScoreB').innerText = gameData.teamB; }
+        }
+
+        function moveCar(car) {
+            if(car === 'A') { gameData.carA += 15; document.getElementById('carA').style.left = gameData.carA + '%'; }
+            if(car === 'B') { gameData.carB += 15; document.getElementById('carB').style.left = gameData.carB + '%'; }
+            
+            if(gameData.carA >= 90) { playSound(600, 'sine', 1, 0.2); alert("السيارة 🏎️ فازت بالسباق!"); }
+            if(gameData.carB >= 90) { playSound(600, 'sine', 1, 0.2); alert("السيارة 🚓 فازت بالسباق!"); }
+        }
+
+        // --- دوال تجهيز الاختبار المحدثة ---
         let currentParsedQuiz = [];
 
         function parseAndPreviewQuiz() {
@@ -1422,13 +1889,11 @@
                     let opts = [];
                     let previewItem = '';
 
-                    // تحديد نوع السؤال
                     if(lines.length >= 2) {
                         type = 'mcq';
                         opts = lines.slice(1);
                         previewItem = opts.map(o => `<div class="quiz-option-item">○ ${o}</div>`).join('');
                     } else {
-                        // سطر واحد: التحقق هل هو مقالي طويل أم قصير
                         if(/اشرح|علل|قارن|لماذا|كيف|تحدث|مقال|وضح/.test(q)) {
                             type = 'long';
                             previewItem = `<textarea disabled placeholder="مربع إجابة طويلة للطالب..." class="note-input" style="background:#eee;"></textarea>`;
@@ -1438,7 +1903,6 @@
                         }
                     }
 
-                    // حفظ السؤال بالنوع الصحيح
                     currentParsedQuiz.push({ question: q, type: type, options: opts });
                     
                     previewHTML += `<div style="background:var(--input-bg); padding:12px; margin-bottom:10px; border-radius:6px; border:1px solid var(--border-color);">
@@ -1463,7 +1927,6 @@
         }
 
         function generateQuizLink() {
-            // 1. التحقق من كتابة اسم الاختبار
             const quizName = document.getElementById('quizNameInput').value.trim();
             if(!quizName) {
                 alert("⚠️ الرجاء كتابة 'اسم الاختبار' في الحقل المخصص بالأعلى قبل توليد الكود!");
@@ -1476,10 +1939,8 @@
             btn.disabled = true;
             btn.innerText = "⏳ جاري تجهيز الكود...";
             
-            // 2. توليد رمز الكود فقط
             const quizId = Math.random().toString(36).substring(2, 6).toUpperCase();
             
-            // 3. عرض المربع الأخضر وبداخله الكود
             res.innerHTML = `
                 <div style="background:#eafaf1; border:1px solid #27ae60; padding:15px; border-radius:8px; margin-top:15px; text-align: center; width: 100%; box-sizing: border-box;">
                     <span style="font-size:24px; display:block; margin-bottom:5px;">✅</span>
@@ -1502,16 +1963,14 @@
             btn.disabled = false;
             btn.innerText = "🔑 إنشاء كود اختبار جديد";
 
-            // 4. حفظ الاختبار في السجل المحلي للمنصة
             saveQuizToHistory(quizName, quizId, quizId);
 
-            // 5. الحفظ في السيرفر في الخلفية
             const payload = { 
                 action: "save_quiz", 
                 quizId: quizId, 
                 quizName: quizName, 
                 questions: currentParsedQuiz,
-                quizLink: quizId // أرسلنا الكود بدلاً من الرابط ليتم حفظه في السحابة
+                quizLink: quizId 
             };
             
             fetch(scriptURL, { 
@@ -1520,14 +1979,11 @@
                 body: JSON.stringify(payload) 
             }).catch(e => console.log("Background save error", e));
         }
-
-        // --- دوال إدارة سجل الاختبارات السابقة ---
         
         function saveQuizToHistory(name, url, id) {
-            setTimeout(loadQuizHistory, 2500); // تحديث القائمة بعد 2.5 ثانية لضمان حفظها في جوجل
+            setTimeout(loadQuizHistory, 2500); 
         }
 
-        // ب. جلب السجل من السحابة (جوجل شيت)
         function loadQuizHistory() {
             const container = document.getElementById('quizHistoryContainer');
             if(!container) return; 
@@ -1563,7 +2019,6 @@
             });
         }
 
-        // ج. حذف الرابط من السحابة (جوجل شيت)
         function deleteQuizHistory(quizId) {
             if(!confirm("⚠️ هل أنت متأكد من حذف هذا الكود؟\n(سيتم حذفه من جميع أجهزتك نهائياً)")) return;
             
@@ -1579,7 +2034,7 @@
             })
             .then(r => r.json())
             .then(d => {
-                loadQuizHistory(); // إعادة تحميل القائمة بعد الحذف الناجح
+                loadQuizHistory(); 
             })
             .catch(err => {
                 alert("❌ حدث خطأ أثناء الاتصال بالشبكة ولم يتم الحذف.");
@@ -1587,7 +2042,6 @@
             });
         }
 
-        // --- دوال نتائج الاختبارات المضافة حديثاً ---
         function openQuizResultsModal() {
             openModal('modalQuizResults');
             loadQuizResults();
@@ -1602,7 +2056,6 @@
             .then(data => {
                 if(data.status === "success" && data.results && data.results.length > 0) {
                     let html = '';
-                    // عكس الترتيب لعرض الأحدث في الأعلى
                     const reversedResults = [...data.results].reverse();
                     reversedResults.forEach((row, i) => {
                         const date = new Date(row[0]).toLocaleString('ar-OM');
@@ -1665,7 +2118,6 @@
             openModal('modalStudentAnswers');
         }
         
-        // --- المساعد الذكي ---
         function toggleAIWindow() {
             const win = document.getElementById("aiWindow");
             win.style.display = (win.style.display === "flex") ? "none" : "flex";
