@@ -217,7 +217,7 @@
         .ai-msg { padding: 10px; border-radius: 10px; max-width: 85%; line-height: 1.4; }
         .ai-msg.user { background: #e0e0e0; align-self: flex-start; color: #333; }
         .ai-msg.bot { background: #6c5ce7; color: white; align-self: flex-end; }
-        .ai-footer { padding: 10px; display: gap: 5px; border-top: 1px solid var(--border-color); }
+        .ai-footer { padding: 10px; display: flex; gap: 5px; border-top: 1px solid var(--border-color); }
         .ai-input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); }
         .ai-send { background: #6c5ce7; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
         
@@ -234,7 +234,6 @@
         .quiz-option-item { padding: 5px 10px; margin: 4px 0; background: #eaf2f8; border-radius: 4px; border: 1px solid #dcdde1; font-size: 14px;}
         .dark-mode .quiz-option-item { background: #2c3e50; border-color: #34495e;}
 
-        /* تنسيقات نافذة إجابات الطلاب الجديدة */
         .quiz-res-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px;}
         .quiz-res-table th, .quiz-res-table td { padding: 10px; border: 1px solid var(--border-color); text-align: center; color: var(--text-color);}
         .cheat-alert { color: #c0392b; font-weight: bold; background: #fadbd8; padding: 4px 8px; border-radius: 4px; display:inline-block;}
@@ -242,19 +241,14 @@
         .btn-view-ans { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; transition:0.3s;}
         .btn-view-ans:hover { background: #2980b9; }
 
-        /* الألعاب التفاعلية وساحة التحدي (إضافة جديدة) */
+        /* الألعاب التفاعلية وساحة التحدي */
         .arena-btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; color: white; transition:0.2s;}
         .arena-btn:active { transform: scale(0.95); }
         .arena-question-box { background: var(--input-bg); border: 2px solid var(--border-color); padding: 20px; border-radius: 12px; text-align: center; font-size: 22px; font-weight: bold; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; margin-bottom: 15px; color: var(--text-color);}
         
-        /* شد الحبل */
-        .arena-rope-container { position: relative; width: 100%; height: 40px; background: #ecf0f1; border-radius: 20px; margin: 20px 0; overflow: hidden; border: 2px solid #bdc3c7;}
-        .arena-rope-line { position: absolute; top: 50%; transform: translateY(-50%); width: 100%; height: 8px; background: repeating-linear-gradient(45deg, #8e44ad, #8e44ad 10px, #9b59b6 10px, #9b59b6 20px);}
-        .arena-knot { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px; background: #f1c40f; border-radius: 50%; border: 3px solid #fff; z-index: 2; transition: left 0.5s; display: flex; justify-content: center; align-items: center; font-size: 16px;}
-        
         /* القنبلة */
         .bomb-container { text-align:center; position:relative; margin: 20px 0;}
-        .bomb-icon { font-size: 100px; animation: pulse 1s infinite; }
+        .bomb-icon { font-size: 100px; animation: pulse 1s infinite; display:inline-block; }
         .bomb-timer { font-size: 60px; font-weight: bold; color: #e74c3c; font-family: monospace;}
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         
@@ -302,7 +296,6 @@
 
     <div class="sidebar-left">
         <button class="side-icon bg-arena" data-title="ساحة التحدي والألعاب" onclick="openModal('modalArenaSetup')">⚔️</button>
-
         <button class="side-icon" style="background: #2c3e50;" data-title="تجهيز الاختبارات" onclick="openModal('modalQuizForm'); loadQuizHistory();">📝</button>
         <button class="side-icon" style="background: #e74c3c;" data-title="استلام الإجابات" onclick="openQuizResultsModal()">📑</button>
         <button class="side-icon" style="background: #8e44ad;" data-title="دفتر التحضير" onclick="openNotesModal()">📓</button>
@@ -508,7 +501,7 @@
 
             <div style="margin-top: 15px;">
                 <input type="text" id="lessonTitle" placeholder="عنوان الدرس الذي توقفنا عنده..." class="note-input">
-                <textarea id="lessonNotes" placeholder="ملاحظات إضافية (الواجب، أدوات مطلوبة، سلويات...)" class="note-input"></textarea>
+                <textarea id="lessonNotes" placeholder="ملاحظات إضافية (الواجب، أدوات مطلوبة، سلوكيات...)" class="note-input"></textarea>
                 <button onclick="saveNote()" class="btn-save-note" id="btnSaveNote">💾 حفظ الملاحظة لهذه الشعبة</button>
             </div>
             
@@ -613,7 +606,7 @@
                 <div id="gameUIContainer" style="flex: 1; display:flex; flex-direction:column; justify-content:center;"></div>
 
                 <div class="arena-question-box">
-                    <div id="arenaCurrentQ" style="font-size: 28px;">اضغط على (السؤال التالي) للبدء</div>
+                    <div id="arenaCurrentQ" style="font-size: 28px;">جاري تجهيز السؤال...</div>
                     <div id="arenaCurrentA" style="font-size: 22px; color: #27ae60; margin-top: 15px; display: none;">الإجابة ستظهر هنا</div>
                 </div>
 
@@ -676,7 +669,6 @@
             localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light"); 
         }
         
-        // إقلاع النظام للمعلم فقط بدون التحقق من روابط الاختبار
         window.onload = () => { 
             if (localStorage.getItem("theme") === "dark") toggleDarkMode(); 
             if(!navigator.onLine) document.getElementById('offline-banner').style.display = 'block'; 
@@ -1538,7 +1530,6 @@
             else if (type === 'space') runSpaceRandom();
         }
 
-        // دعم الأمر الصوتي القديم وتحويله للميزة الجديدة
         function spinWheel() {
             if(document.getElementById('randomizerType')) {
                 document.getElementById('randomizerType').value = 'classic';
@@ -1700,6 +1691,7 @@
             openModal('modalActiveGame');
             
             setupGameUI(currentGameType);
+            nextArenaQuestion(); // إظهار السؤال الأول تلقائياً
         }
 
         function closeGameAndStop() {
@@ -1712,26 +1704,30 @@
             const controls = document.getElementById('gameControlsContainer');
             const title = document.getElementById('activeGameTitle');
 
-            document.getElementById('arenaCurrentQ').innerText = "اضغط (السؤال الأول) للبدء";
             document.getElementById('arenaCurrentA').style.display = "none";
 
             if (type === 'tugOfWar') {
                 title.innerText = "🪢 تحدي شد الحبل 🪢";
                 gameData.score = 0;
                 ui.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; font-size:24px; font-weight:bold;">
+                    <div style="display:flex; justify-content:space-between; font-size:24px; font-weight:bold; padding: 0 20px;">
                         <span style="color:#2980b9;">🔵 فريق اليمين</span><span style="color:#c0392b;">فريق اليسار 🔴</span>
                     </div>
-                    <div class="arena-rope-container">
-                        <div class="arena-rope-line"></div>
-                        <div style="position:absolute; left:50%; width:2px; height:100%; background:red;"></div>
-                        <div class="arena-knot" id="knot">🚩</div>
+                    <div class="arena-rope-container" style="position: relative; width: 100%; height: 100px; background: #ecf0f1; border-radius: 20px; margin: 20px 0; overflow: hidden; border: 2px solid #bdc3c7; display:flex; align-items:center;">
+                        <div style="position:absolute; left:50%; width:4px; height:100%; background:red; z-index:1;"></div>
+                        <div id="ropeGroup" style="position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); display:flex; align-items:center; transition: left 0.5s ease-in-out; white-space:nowrap; z-index:2;">
+                            <div style="font-size:45px; transform: scaleX(-1); margin-right:-5px;">🏃‍♂️🏃‍♂️🏃‍♂️</div>
+                            <div style="width: 150px; height: 12px; background: repeating-linear-gradient(45deg, #d35400, #d35400 10px, #e67e22 10px, #e67e22 20px); border: 2px solid #a04000; border-right:none;"></div>
+                            <div style="width: 40px; height: 40px; background: #f1c40f; border-radius: 50%; border: 4px solid #fff; display: flex; justify-content: center; align-items: center; font-size: 20px; z-index:4; box-shadow: 0 0 10px rgba(0,0,0,0.3);">🚩</div>
+                            <div style="width: 150px; height: 12px; background: repeating-linear-gradient(45deg, #d35400, #d35400 10px, #e67e22 10px, #e67e22 20px); border: 2px solid #a04000; border-left:none;"></div>
+                            <div style="font-size:45px; margin-left:-5px;">🏃‍♂️🏃‍♂️🏃‍♂️</div>
+                        </div>
                     </div>`;
                 controls.innerHTML = `
-                    <button class="arena-btn" style="background:#2980b9;" onclick="updateTugOfWar(1)">+ سحب لليمين</button>
-                    <button class="arena-btn" style="background:#f39c12;" onclick="showArenaAnswer()">إظهار الإجابة</button>
-                    <button class="arena-btn" style="background:#27ae60;" onclick="nextArenaQuestion()">السؤال التالي</button>
-                    <button class="arena-btn" style="background:#c0392b;" onclick="updateTugOfWar(-1)">سحب لليسار +</button>`;
+                    <button class="arena-btn" style="background:#2980b9; font-size:18px;" onclick="updateTugOfWar(1)">+ سحب لليمين 🔵</button>
+                    <button class="arena-btn" style="background:#f39c12; font-size:18px;" onclick="showArenaAnswer()">👀 إظهار الإجابة</button>
+                    <button class="arena-btn" style="background:#27ae60; font-size:18px;" onclick="nextArenaQuestion()">⏭️ السؤال التالي</button>
+                    <button class="arena-btn" style="background:#c0392b; font-size:18px;" onclick="updateTugOfWar(-1)">🔴 سحب لليسار +</button>`;
             } 
             else if (type === 'bomb') {
                 title.innerText = "💣 تفكيك القنبلة الموقوتة 💣";
@@ -1740,11 +1736,12 @@
                     <div class="bomb-container">
                         <div class="bomb-icon" id="bombIcon">💣</div>
                         <div class="bomb-timer" id="bombTimer">01:00</div>
-                        <div style="margin-top:10px; font-size:18px;">الإجابة الخاطئة تسرّع العداد (-10ث)! أجب لتفكيكها!</div>
+                        <div style="margin-top:10px; font-size:18px; font-weight:bold; color:#e74c3c;">تنبيه: الإجابة الخاطئة تسرّع العداد (-10 ثوانٍ)!</div>
                     </div>`;
                 controls.innerHTML = `
-                    <button class="arena-btn" style="background:#27ae60;" onclick="startBomb()">▶️ بدء العداد للسؤال الأول</button>
-                    <button class="arena-btn" style="background:#3498db;" onclick="defuseBomb()">✂️ إجابة صحيحة (تفكيك)</button>
+                    <button class="arena-btn" style="background:#8e44ad;" onclick="startBombTimer()">▶️ بدء عداد القنبلة</button>
+                    <button class="arena-btn" style="background:#27ae60;" onclick="nextArenaQuestion()">السؤال التالي</button>
+                    <button class="arena-btn" style="background:#3498db;" onclick="defuseBomb()">✅ تفكيك وإنقاذ (إجابة صحيحة)</button>
                     <button class="arena-btn" style="background:#c0392b;" onclick="wrongBomb()">❌ إجابة خاطئة (تسريع)</button>
                     <button class="arena-btn" style="background:#f39c12;" onclick="showArenaAnswer()">إظهار الإجابة</button>`;
             }
@@ -1756,14 +1753,14 @@
                 grid += `</div>`;
                 ui.innerHTML = `
                     <div style="display:flex; justify-content:space-between; font-size:24px; font-weight:bold; margin-bottom:10px;">
-                        <span>فريق (أ): <span id="tScoreA">0</span></span>
-                        <span>فريق (ب): <span id="tScoreB">0</span></span>
+                        <span>فريق اليمين: <span id="tScoreA">0</span></span>
+                        <span>فريق اليسار: <span id="tScoreB">0</span></span>
                     </div>
                     ${grid}`;
                 controls.innerHTML = `
                     <button class="arena-btn" style="background:#27ae60;" onclick="nextArenaQuestion()">السؤال التالي</button>
                     <button class="arena-btn" style="background:#f39c12;" onclick="showArenaAnswer()">إظهار الإجابة</button>
-                    <span style="padding:10px;">اختر الصندوق من الشاشة مباشرة للفريق الفائز</span>`;
+                    <span style="padding:10px; font-weight:bold; color:#2c3e50;">💡 ملاحظة: اختر الصندوق من الشاشة مباشرة للفريق المُجيب</span>`;
             }
             else if (type === 'race') {
                 title.innerText = "🏎️ سباق السيارات المثير 🏎️";
@@ -1789,6 +1786,7 @@
             } else {
                 playSound(500, 'sine', 1, 0.2);
                 document.getElementById('arenaCurrentQ').innerText = "🎉 انتهت الأسئلة! أعلن الفريق الفائز 🎉";
+                document.getElementById('arenaCurrentA').style.display = "none";
             }
         }
 
@@ -1798,21 +1796,20 @@
 
         function updateTugOfWar(val) {
             gameData.score += val;
-            let knot = document.getElementById('knot');
-            let pct = 50 - (gameData.score * 10);
-            knot.style.left = pct + '%';
-            if(gameData.score >= 5) { playSound(500, 'sine', 1, 0.3); alert("فريق اليمين يسحب الحبل ويفوز!"); }
-            if(gameData.score <= -5) { playSound(500, 'sine', 1, 0.3); alert("فريق اليسار يسحب الحبل ويفوز!"); }
+            let ropeGroup = document.getElementById('ropeGroup');
+            let pct = 50 + (gameData.score * 10); 
+            ropeGroup.style.left = pct + '%';
+            if(gameData.score >= 4) { playSound(500, 'sine', 1, 0.3); alert("فريق اليمين 🔵 يسحب الحبل بقوة ويفوز!"); }
+            if(gameData.score <= -4) { playSound(500, 'sine', 1, 0.3); alert("فريق اليسار 🔴 يسحب الحبل بقوة ويفوز!"); }
         }
 
-        function startBomb() {
-            nextArenaQuestion();
+        function startBombTimer() {
             clearInterval(bombTimerInterval);
             document.getElementById('bombIcon').innerText = "💣";
             bombTimerInterval = setInterval(() => {
                 gameData.time--;
                 updateBombDisplay();
-                playSound(800, 'square', 0.05, 0.05); // صوت تكّات القنبلة
+                playSound(800, 'square', 0.05, 0.05); 
                 if(gameData.time <= 0) {
                     clearInterval(bombTimerInterval);
                     document.getElementById('bombIcon').innerText = "💥";
@@ -1856,8 +1853,8 @@
             else if (rand < 0.6) { box.innerText = "💰 +10"; pts = 10; playSound(800, 'sine', 0.2, 0.2); }
             else { box.innerText = "💎 +20"; pts = 20; box.style.background="#f1c40f"; playSound(1000, 'sine', 0.4, 0.2); }
 
-            let team = prompt("أضف النقاط لأي فريق؟ (أ / ب)").toLowerCase();
-            if(team === 'أ' || team === 'a') { gameData.teamA += pts; document.getElementById('tScoreA').innerText = gameData.teamA; }
+            let team = prompt("أضف النقاط لأي فريق؟ (يمين / يسار)").toLowerCase();
+            if(team.includes('يمين')) { gameData.teamA += pts; document.getElementById('tScoreA').innerText = gameData.teamA; }
             else { gameData.teamB += pts; document.getElementById('tScoreB').innerText = gameData.teamB; }
         }
 
@@ -1869,7 +1866,6 @@
             if(gameData.carB >= 90) { playSound(600, 'sine', 1, 0.2); alert("السيارة 🚓 فازت بالسباق!"); }
         }
 
-        // --- دوال تجهيز الاختبار المحدثة ---
         let currentParsedQuiz = [];
 
         function parseAndPreviewQuiz() {
