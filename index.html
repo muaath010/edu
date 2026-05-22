@@ -282,6 +282,32 @@
     <div id="offline-banner">⚠️ أنت غير متصل بالإنترنت حالياً. التغييرات ستحفظ محلياً وتُرسل لاحقاً.</div>
     <div id="honorTickerWrap" class="honor-ticker-wrap" onclick="this.style.display='none'"><div class="honor-ticker-container"><div id="honorTickerText" class="honor-ticker"></div></div></div>
     
+    <div id="loginOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); z-index:99999; justify-content:center; align-items:center;">
+        <div style="background:var(--card-bg); width:90%; max-width:400px; padding:30px; border-radius:15px; box-shadow:0 10px 30px rgba(0,0,0,0.5); text-align:center;">
+            <img src="logo.png" style="width:150px; margin-bottom:20px;">
+            <h2 style="color:var(--text-color); margin-bottom:20px;">بوابة المعلمين</h2>
+            
+            <div style="display:flex; margin-bottom:20px; border-bottom:2px solid var(--border-color);">
+                <button onclick="toggleAuth('login')" id="tabLogin" style="flex:1; background:none; border:none; padding:10px; font-weight:bold; color:#2980b9; border-bottom:3px solid #2980b9; cursor:pointer;">تسجيل دخول</button>
+                <button onclick="toggleAuth('register')" id="tabReg" style="flex:1; background:none; border:none; padding:10px; font-weight:bold; color:var(--text-color); cursor:pointer;">حساب جديد</button>
+            </div>
+
+            <div id="loginForm">
+                <input type="email" id="logEmail" placeholder="البريد الإلكتروني" class="note-input" style="font-size:16px;">
+                <input type="password" id="logPass" placeholder="كلمة المرور" class="note-input" style="font-size:16px;">
+                <button onclick="doLogin()" style="width:100%; background:#27ae60; color:white; border:none; padding:12px; border-radius:8px; font-size:18px; font-weight:bold; cursor:pointer; margin-top:10px;">دخول</button>
+            </div>
+
+            <div id="regForm" style="display:none;">
+                <input type="text" id="regName" placeholder="الاسم الكامل (مثال: أ. معاذ)" class="note-input" style="font-size:16px;">
+                <input type="email" id="regEmail" placeholder="البريد الإلكتروني" class="note-input" style="font-size:16px;">
+                <input type="password" id="regPass" placeholder="كلمة المرور (6 أحرف على الأقل)" class="note-input" style="font-size:16px;">
+                <button onclick="doRegister()" style="width:100%; background:#3498db; color:white; border:none; padding:12px; border-radius:8px; font-size:18px; font-weight:bold; cursor:pointer; margin-top:10px;">إنشاء حساب</button>
+            </div>
+            <div id="authMsg" style="margin-top:15px; font-weight:bold; color:#e74c3c;"></div>
+        </div>
+    </div>
+    
     <button class="btn-floating-save" id="btnFloatSave" onclick="submitData()">
         💾 حفظ ومزامنة البيانات
     </button>
@@ -319,6 +345,8 @@
             <select id="sectionSelect" onchange="updateView()"></select>
             <button class="theme-toggle" onclick="toggleDarkMode()" id="themeBtn">تغيير المظهر</button>
             <button class="theme-toggle" onclick="toggleTableVisibility()" id="toggleTableBtn" style="background:#3498db; color:white; border-color:#2980b9;">إظهار الكشف</button>
+            <span id="teacherWelcome" style="font-weight:bold; color:#2980b9; margin-left:15px;"></span>
+            <button onclick="doLogout()" class="theme-toggle" style="background:#c0392b; color:white; border-color:#a93226;">تسجيل خروج</button>
         </div>
     </div>
 
@@ -633,11 +661,69 @@
             if (localStorage.getItem("theme") === "dark") toggleDarkMode(); 
             if(!navigator.onLine) document.getElementById('offline-banner').style.display = 'block'; 
             
+            if (!localStorage.getItem('teacher_id')) {
+                document.getElementById('loginOverlay').style.display = 'flex';
+            } else {
+                document.getElementById('teacherWelcome').innerText = "أهلاً بك، " + localStorage.getItem('teacher_name');
+                loadInitialData();
+            }
+        };
+
+        function toggleAuth(type) {
+            document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
+            document.getElementById('regForm').style.display = type === 'register' ? 'block' : 'none';
+            document.getElementById('tabLogin').style.borderBottom = type === 'login' ? '3px solid #2980b9' : 'none';
+            document.getElementById('tabLogin').style.color = type === 'login' ? '#2980b9' : 'var(--text-color)';
+            document.getElementById('tabReg').style.borderBottom = type === 'register' ? '3px solid #2980b9' : 'none';
+            document.getElementById('tabReg').style.color = type === 'register' ? '#2980b9' : 'var(--text-color)';
+            document.getElementById('authMsg').innerText = '';
+        }
+
+        function doLogin() {
+            let email = document.getElementById('logEmail').value;
+            let pass = document.getElementById('logPass').value;
+            if(!email || !pass) return alert("يرجى إدخال البيانات");
+            
+            document.getElementById('authMsg').innerText = '⏳ جاري التحقق...';
+            fetch(scriptURL, { method: 'POST', body: JSON.stringify({action: 'login', email: email, password: pass}) })
+            .then(r=>r.json()).then(d => {
+                if(d.status === 'success') {
+                    localStorage.setItem('teacher_id', d.teacher_id);
+                    localStorage.setItem('teacher_name', d.name);
+                    location.reload();
+                } else { document.getElementById('authMsg').innerText = d.message; }
+            });
+        }
+
+        function doRegister() {
+            let name = document.getElementById('regName').value;
+            let email = document.getElementById('regEmail').value;
+            let pass = document.getElementById('regPass').value;
+            if(!name || !email || !pass) return alert("يرجى تعبئة جميع الحقول");
+            
+            document.getElementById('authMsg').innerText = '⏳ جاري إنشاء الحساب...';
+            fetch(scriptURL, { method: 'POST', body: JSON.stringify({action: 'register', name: name, email: email, password: pass}) })
+            .then(r=>r.json()).then(d => {
+                if(d.status === 'success') {
+                    localStorage.setItem('teacher_id', d.teacher_id);
+                    localStorage.setItem('teacher_name', d.name);
+                    location.reload();
+                } else { document.getElementById('authMsg').innerText = d.message; }
+            });
+        }
+
+        function doLogout() {
+            localStorage.removeItem('teacher_id');
+            localStorage.removeItem('teacher_name');
+            location.reload();
+        }
+
+        function loadInitialData() {
             const headerTitle = document.querySelector('.header-container h2');
             const originalTitle = headerTitle.innerHTML;
             headerTitle.innerHTML = "⏳ جاري تحديث سجلات الطلاب من السحابة...";
 
-            fetch(`${scriptURL}?action=getStudentDirectory`)
+            fetch(`${scriptURL}?action=getStudentDirectory&teacher_id=${localStorage.getItem('teacher_id')}`)
             .then(r => r.json())
             .then(d => {
                 headerTitle.innerHTML = originalTitle;
@@ -652,7 +738,7 @@
                 headerTitle.innerHTML = originalTitle;
                 alert("خطأ في الاتصال بالملف البرمجي api.php. يرجى التحقق من وجوده بالقرب من الملف.");
             });
-        };
+        }
 
         window.addEventListener('online', () => { document.getElementById('offline-banner').style.display = 'none'; syncOfflineData(); });
         window.addEventListener('offline', () => { document.getElementById('offline-banner').style.display = 'block'; });
@@ -755,7 +841,7 @@
             const rGrid = document.getElementById("reinforcementGrid");
             rGrid.innerHTML = `<div style="text-align:center; width:100%; grid-column: 1 / -1;">جاري جلب بيانات التعزيز... ⏳</div>`;
             
-            fetch(`${scriptURL}?grade=${g}&section=${s}`)
+            fetch(`${scriptURL}?grade=${g}&section=${s}&teacher_id=${localStorage.getItem('teacher_id')}`)
             .then(r => r.json()).then(d => { 
                 currentSheetData = (d.result === 'success') ? d.data : {}; 
                 if(d.adminPassword) currentAdminPassword = d.adminPassword; 
@@ -832,7 +918,8 @@
                 sub_action: "add",
                 grade: grade,
                 section: section,
-                names: namesArray
+                names: namesArray,
+                teacher_id: localStorage.getItem('teacher_id')
             };
 
             fetch(scriptURL, { 
@@ -869,7 +956,8 @@
                 action: "manage_students",
                 sub_action: "delete_section",
                 grade: grade,
-                section: section
+                section: section,
+                teacher_id: localStorage.getItem('teacher_id')
             };
 
             fetch(scriptURL, { 
@@ -1364,7 +1452,8 @@
                 quizId: quizId, 
                 quizName: quizName, 
                 questions: currentParsedQuiz,
-                quizLink: quizId 
+                quizLink: quizId,
+                teacher_id: localStorage.getItem('teacher_id')
             };
             
             fetch(scriptURL, { 
@@ -1384,7 +1473,7 @@
 
             container.innerHTML = `<div style="text-align:center; color:#7f8c8d; font-size:14px; padding:15px;">جاري جلب الأكواد من السحابة... ⏳</div>`;
 
-            fetch(`${scriptURL}?action=get_quiz_history`)
+            fetch(`${scriptURL}?action=get_quiz_history&teacher_id=${localStorage.getItem('teacher_id')}`)
             .then(r => r.json())
             .then(data => {
                 if(data.status === "success" && data.history && data.history.length > 0) {
@@ -1419,7 +1508,7 @@
             const container = document.getElementById('quizHistoryContainer');
             container.innerHTML = `<div style="text-align:center; color:#f39c12; font-size:14px; padding:15px;">جاري الحذف من السحابة... ⏳</div>`;
 
-            const payload = { action: "delete_quiz_history", quizId: quizId };
+            const payload = { action: "delete_quiz_history", quizId: quizId, teacher_id: localStorage.getItem('teacher_id') };
             
             fetch(scriptURL, { 
                 method: 'POST', 
@@ -1445,7 +1534,7 @@
             const tbody = document.getElementById("quizResultsBody");
             tbody.innerHTML = `<tr><td colspan="6">جاري جلب إجابات الطلاب من السحابة... ⏳</td></tr>`;
             
-            fetch(`${scriptURL}?action=get_student_results`)
+            fetch(`${scriptURL}?action=get_student_results&teacher_id=${localStorage.getItem('teacher_id')}`)
             .then(r => r.json())
             .then(data => {
                 if(data.status === "success" && data.results && data.results.length > 0) {
@@ -1534,7 +1623,7 @@
             fetch(`${scriptURL}?action=askAI`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: msg })
+                body: JSON.stringify({ prompt: msg, teacher_id: localStorage.getItem('teacher_id') })
             })
             .then(r => r.json())
             .then(data => {
