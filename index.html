@@ -287,6 +287,7 @@
     </button>
 
     <div class="sidebar-right">
+        <button class="side-icon" style="background: #1abc9c;" data-title="إدارة الطلاب والشعب" onclick="openModal('modalStudentManager')">🧑‍🎓</button>
         <button class="side-icon" style="background: #c0392b;" id="voiceBtn" onclick="toggleVoice()" data-title="التحكم الصوتي">🎤</button>
         <button class="side-icon bg-export" data-title="تصدير إكسل" onclick="exportToExcel()">📊</button>
         <button class="side-icon bg-repo" data-title="المستودع السحابي" onclick="openRepoModal()">📂</button>
@@ -314,13 +315,8 @@
         
         <p class="author-name">إعداد: أ. معاذ اليعقوبي</p>
         <div class="controls">
-            <select id="gradeSelect" onchange="updateView()">
-                <option value="6">الصف السادس</option>
-                <option value="9">الصف التاسع</option>
-            </select>
-            <select id="sectionSelect" onchange="updateView()">
-                <option value="1">شعبة 1</option><option value="2">شعبة 2</option><option value="3">شعبة 3</option><option value="4">شعبة 4</option><option value="5" id="sec5">شعبة 5</option>
-            </select>
+            <select id="gradeSelect" onchange="buildSectionDropdown()"></select>
+            <select id="sectionSelect" onchange="updateView()"></select>
             <button class="theme-toggle" onclick="toggleDarkMode()" id="themeBtn">تغيير المظهر</button>
             <button class="theme-toggle" onclick="toggleTableVisibility()" id="toggleTableBtn" style="background:#3498db; color:white; border-color:#2980b9;">إظهار الكشف</button>
         </div>
@@ -332,42 +328,35 @@
     </div>
 
     <div id="tableAreaWrapper" style="display: none;">
-        <div id="form6" class="form-section active-form">
-            <div class="table-container">
-                <table id="gradesTable6">
-                    <thead>
-                        <tr>
-                            <th rowspan="2" class="header-blue" style="width:30px;">م</th><th rowspan="2" class="header-blue" style="width:200px;">إسم الطالب</th>
-                            <th colspan="2" class="header-blue">الحوار</th><th rowspan="2" class="header-orange">مجموع</th>
-                            <th colspan="4" class="header-blue">الأسئلة القصيرة</th><th rowspan="2" class="header-orange">مجموع</th>
-                            <th colspan="2" class="header-blue">الأنشطة</th><th rowspan="2" class="header-orange">مجموع</th>
-                            <th rowspan="2" class="header-blue">المشروع</th><th rowspan="2" class="header-orange">الكلية</th>
-                        </tr>
-                        <tr><th>10</th><th>10</th><th>5</th><th>5</th><th>5</th><th>5</th><th>20</th><th>20</th></tr>
-                    </thead>
-                    <tbody id="tbody6"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="form9" class="form-section">
-            <div class="table-container">
-                <table id="gradesTable9">
-                    <thead>
-                        <tr>
-                            <th rowspan="2" class="header-blue" style="width:30px;">م</th><th rowspan="2" class="header-blue" style="width:200px;">إسم الطالب</th>
-                            <th colspan="2" class="header-blue">الحوار</th><th rowspan="2" class="header-orange">مجموع</th>
-                            <th colspan="2" class="header-blue">الأنشطة</th><th rowspan="2" class="header-orange">مجموع</th>
-                            <th class="header-blue">اختبار</th><th class="header-blue">مشروع</th><th rowspan="2" class="header-orange">الكلية</th>
-                        </tr>
-                        <tr><th>10</th><th>10</th><th>20</th><th>20</th><th>20</th><th>20</th></tr>
-                    </thead>
-                    <tbody id="tbody9"></tbody>
-                </table>
-            </div>
-        </div>
-    </div> 
+        </div> 
     
+    <div id="modalStudentManager" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modalStudentManager')">&times;</span>
+            <div class="modal-header"><h3 style="color:#1abc9c;">🧑‍🎓 لوحة إدارة الطلاب والشعب</h3></div>
+            
+            <div style="background:var(--category-bg); padding:15px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:15px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <div style="flex: 1;">
+                        <label style="font-weight:bold;">رقم الصف:</label>
+                        <input type="text" id="mgrGrade" class="note-input" placeholder="مثال: 6 أو 9 أو 10">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-weight:bold;">رقم الشعبة:</label>
+                        <input type="text" id="mgrSection" class="note-input" placeholder="مثال: 1 أو 2">
+                    </div>
+                </div>
+
+                <label style="font-weight:bold; display:block; margin-bottom:5px;">انسخ وألصق أسماء الطلاب هنا (كل اسم في سطر):</label>
+                <textarea id="mgrNamesList" class="note-input" style="min-height: 150px;" placeholder="أحمد بن محمد...&#10;سالم بن علي..."></textarea>
+                
+                <button id="btnAddStudents" onclick="saveStudentsToCloud()" style="background:#27ae60; color:white; border:none; padding:10px; border-radius:5px; font-weight:bold; width:100%; cursor:pointer; margin-bottom:10px; font-size:16px;">➕ إضافة/إنشاء وحفظ في السحابة</button>
+                
+                <button id="btnDeleteSection" onclick="deleteSectionFromCloud()" style="background:#c0392b; color:white; border:none; padding:10px; border-radius:5px; font-weight:bold; width:100%; cursor:pointer; font-size:16px;">🗑️ حذف هذا الصف والشعبة بالكامل</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modalRepo" class="modal">
         <div class="modal-content modal-large">
             <span class="close-btn" onclick="closeModal('modalRepo')" style="z-index:99;">&times;</span>
@@ -631,22 +620,8 @@
     </div>
 
     <script>
-        const studentsData = { 
-            "9": { 
-                "1": ["أحمد بن محمد بن خميس ضحي الغافري", "أنس بن سالم بن مسلم سالم المعمري", "المؤيد بن سباع بن خلفان سعيد الغافري", "المنذر بن سعيد بن علي سالم الشهومي", "تركي بن سعيد بن مطر علي الحاتمي", "تركي بن سلطان بن عبدالله سيف الغافري", "تميم بن خالد بن سيف حمد التميمي", "تيمور بن سعيد بن سليـّم خميس المقرشي", "جاسم بن عبدالله بن حميد راشد العبري", "جراح بن سعيد بن سالم سعيد الغافري", "حميد بن سعيد بن حميد سعيد الغافري", "خالد الوليد عمر يعقوب", "راشد بن جمعه بن عبدالله خميس الغافري", "سامي بن أحمد بن سرور عبدالله المقبالي", "سعود بن راشد بن ظاهر ظاوي الغافري", "سعود بن سعيد بن خلفان سعيد الغافري", "سعيد بن خالد بن سعيد حمد السعيدي", "سلطان بن سعيد بن صياح مبارك الغافري", "سلطان بن محمود بن عيد محبوب الغافري", "سيف بن عبدالله بن سيف سليمان الحاتمي", "عبد الملك بن سعيد بن مانع عامر الغافري", "عمار بن بخيت بن علي بخيت الغافري", "عمر بن سالم بن حميد مرهون الشكيلي", "غيث بن أيوب بن سيف سلطان الغافري", "فلا ح بن ناصر بن سالم أحمد الغافري", "كهلان بن قحطان بن زاهر ناصر الغريبي", "لؤي بن أنور بن حمد راشد الشكيلي", "محمد بن أحمد بن طالب سيف الغافري", "محمد بن عبدالله بن مبارك سعيد الناصري", "محمد بن عمر بن سالم أحمد الغافري", "نهيان بن علي بن خميس سيف الغافري", "نواف بن محمد بن مطر علي الحاتمي", "هشام بن راشد بن مسعود راشد الناصري", "وسام بن عبدالله بن حمد عبيد الغافري", "يوسف بن أحمد بن حمد عبيد الغافري"], 
-                "2": ["أحمد بن خالد بن حميد سعيد الكلباني", "أحمد بن خليل بن سالم أحمد الغافري", "أسامه بن سالم بن زاهر ناصر الغريبي", "أسعد بن محمد بن مبارك حمد السعيدي", "أكرم بن طاهر بن حميد ضحي الغافري", "الأمير بن غالب بن علي حمد المقبالي", "الأيهم بن سالم بن سليّم حمود المقرشي", "الوليد بن سيف بن حارب سيف الغافري", "اليزن بن سليمان بن محمد سالم الشهومي", "اياد بن سلمان بن راشد حسن الهنائي", "بدر بن ناصر بن زاهر ناصر الغريبي", "تركي بن خليل بن محمد سيف الغافري", "حارب بن ناصر بن حارب سعيد الغافري", "حمزه بن حميد بن حمد سليمان الحاتمي", "خالد بن وليد بن علي مرهون المعمري", "داود بن عباس بن داود كوهرام الزدجالي", "راشــد بن سلطان بن راشد سيف القتبي", "سعود بن بدر بن سليمان خليفه الحاتمي", "سعيد بن محمد بن سعيد راشد الغافري", "سلطان بن ماجد بن سالم سيف المجرفي", "عبدالعزيز بن حمد بن خليفه حميد الغافري", "عزان بن أحمد بن محمد سيف الغافري", "عمار بن ياسر بن سالم خميس المقبالي", "عمر بن حسين بن خميس علي الناصري", "قيصر بن بدر بن محمد سعيد السالمي", "مؤيد خالد إبراهيم محمد", "ماجد بن عبدالله بن سعيد عبيد الغافري", "محمـد بن حميد بن سالم حميد الغافري", "محمد بن سالم بن ناصر محمد الغافري", "محمد بن سليمان بن سلوم راشد الغافري", "محمد بن سيف بن مصبح خميس الغافري", "محمود بن سليمان بن سلوم راشد الغافري", "هزاع بن محمد بن حمدان مرهون الحاتمي", "يوسف بن راشد بن محمد حمد الغافري", "يوسف بن سالم بن ربيع عبدالله الغافري"], 
-                "3": ["أحمد بن شهاب بن حمود حمد التميمي", "أحمد بن عبيد بن سعيد عبيد الغافري", "الحسين بن علي بن سيف عبدالله الغافري", "الراشد بن أحمد بن صالح سالم الغافري", "المعتصم بن خالد بن سيف حمد الغريبي", "الهيثم بن ثويني بن شوين سلام السعيدي", "الوارث بن هلال بن مانع حمود الفارسي", "اليزن بن علي بن حارب مبارك الغافري", "اليمان بن أحمد بن عبدالله بخيت الغافري", "تركي بن زايد بن سليم خميس المقرشي", "حمدان بن راشد بن حميد ظفير الغافري", "راشد بن هاني بن راشد سعيد البادي", "راكان بن عبدالجليل بن جمعه الهنائي", "سالم بن سليمان بن سالم سليمان العبري", "سعود بن محمد بن علي محمد الناصري", "سلطان بن سالم بن ناصر علي الزيدي", "سلطان بن مسعود بن محمد مانع الغافري", "سيف الله بن محمد بن سيف سليمان الهنائي", "سيف بن هزاع بن سيف حمد الغافري", "شهاب بن الأحمد بن مسلم سالم الغافري", "عبدالرحمن بن ناصر بن حمد خميس الناصري", "عبدالله بن بدر بن عبدالله علي الناصري", "عبدالله بن محمد بن عبدالله سعيد المجرفي", "عزام بن سليـّم بن خلفان مبارك الغافري", "عمر بن حسن بن ناصر سليمان الهنائي", "عمّار بن ياسر بن شخبوط علي الغافري", "فيصل بن سعيد بن مسلم سالم الغافري", "مجاهد بن حمود بن حمد سيف التميمي", "محمد بن ابراهيم بن خلفان سعيد المقبالي", "محـمد بن حمير بن حميد محمد الحاتمي", "محمد بن عوض بن خلفان راشد الغافري", "نواف بن عوض بن سباع خلفان الغافري", "هزاع بن محمد بن علي سليمان الناصري", "يحيى بن عامر بن سيف سليمان الهنائي", "يوسف بن سعيد بن مبارك راشد الغافري"], 
-                "4": ["أحمد بن مطر بن سيف خلفان الغافري", "إسحاق بن سيف بن علي سالم الشهومي", "الحسن بن خليفه بن الذيب المر الناصري", "الهيثم بن حميد بن مبارك سيف الغافري", "بدر بن سيف بن بدر محسن الكلباني", "تركي بن ابراهيم بن سيف سليمان الفارسي", "حمدان بن سلطان بن محمد خلفان الحاتمي", "حميد بن عاقل بن حميد خميس الغافري", "خلفان بن وليد بن عبدالله خميس الغافري", "زكريا بن زايد بن عبدالله محمد الناصري", "سالم بن علي بن سالم حمد الغافري", "سعود بن عوض بن خلفان سليـّم الغافري", "ســلطان بن خليفه بن ربيع علي الغافري", "سيف بن راشد بن سيف راشد الناصري", "صالح بن سالم بن صالح راشد الغافري", "عـبدالله بن أحمد بن عبدالله عديم الشهومي", "علي بن خميس بن سعيد خميس الناصري", "عمر بن عبدالسلام بن خميس سعيد الناصري", "غيث بن خليفه بن خميس سعيد البادي", "فراس بن أحمد بن سالم حمد الغافري", "ليث بن مسعود بن سالم حميد الغافري", "ماجد بن مبارك بن سعيد مصبح الغافري", "محمد بن اسماعيل بن عبدالله راشد الغافري", "محمد بن حمد بن ناصر حميد الشهومي", "محمد بن خليفه بن مرزوق سالمين الغافري", "محمد بن سلطان بن سيف ناصر الصارخي", "مصعب بن سالم بن خلفان محمد الغافري", "منصور بن خليفه بن ناصر علي الغافري", "مهند بن محمد بن خلفان سعيد المقبالي", "نواف بن راشد بن مصبح خلفان الغافري", "نوح بن يعقوب بن خلفان سعيد الغافري", "هزاع بن محمد بن راشد عبدالله الغافري", "هشام بن سيف بن سالم عبدالله المجرفي", "يوسف بن محمد بن عبدالله راشد الغافري"] 
-            }, 
-            "6": { 
-                "1": ["أحمد بن ابراهيم بن سيف سليمان الفارسي", "أحمد بن حمد بن سعيد سالم الغافري", "أحمد بن حمد بن سعيد محمد البادي", "أحمد بن راشد بن مسعود راشد الغافري", "أحمد بن سعيد بن علي بخيت الغافري", "أحمد بن سلطان بن محمد خلفان الحاتمي", "أحمد بن محمد بن خليفه محمد الحاتمي", "أحمد بن هلال بن أحمد سليمان الحاتمي", "أحمد بن يعقوب بن عبدالله راشد الغافري", "أزد بن عوض بن سالم سعيد الغافري", "أسامة بن خليل بن سالم أحمد الغافري", "أسامة بن خميس بن صالح خميس الغافري", "أسامه بن أحمد بن محمد سيف الغافري", "أسامه بن محمد بن سند راشد الحاتمي", "أمجد بن أحمد بن سالم سعيد الغافري", "أنس بن خليفه بن حمد علي الحاتمي", "أنس بن سالم بن سعد سرور الغافري", "أنس بن يونس بن خلفان سعيد المقبالي", "ابراهيم بن أحمد بن عبدالله عديم الشهومي", "ابراهيم بن فيصل بن عبدالله مبارك الغافري", "ابراهيم بن ناصر بن محمد ناصر الغافري", "الحسن بن علي بن عوض حارب الغافري", "الخليل بن أحمد بن حمود حمد التميمي", "الفيصل بن سعيد بن بطي سعيد الغافري", "القسام بن سلطان بن سيف ناصر الصارخي", "المعتز بن خالد بن مسلم حمد الغافري", "الهيثم بن ابراهيم بن سالم هشول الغافري", "الوليد بن خالد بن سعيد خلفان الغافري", "الوليد بن خالد بن محمد علي الهنائي", "الياس بن محمد بن مرزوق ظفير الغافري", "اياد بن عديم بن حمد عديم الغافري"], 
-                "2": ["بشار بن سعيد بن حميد سعيد الهنائي", "تميم بن خليفه بن سعيد مهنا المقرشي", "تيمور بن فهد بن عبدالله سالم الغافري", "جابر بن الأحمد بن مسلم سالم الغافري", "جرناس بن سعيد بن سالم سعيد الغافري", "جواد بن هلال بن سعيد رهين الجامودي", "حسان بن حسن بن خلفان مبارك الغافري", "حسان بن طلال بن محمد حمد الغافري", "حكيم بن عوض بن سالم عبدالله الغافري", "حمد جمال صالح عتيق", "حمد بن عوض بن مبارك سعيد الناصري", "حمد بن غالب بن علي حمد المقبالي", "حمدان بن راشد بن سليم خميس المقرشي", "حمدان بن محمد بن حمد مبارك العبري", "حمدان بن هلال بن حمدان حمد الغافري", "حمود بن راشد بن حمود علي الغافري", "حمود بن محمد بن شيخان علي الغافري", "حميد بن سلطان بن سعيد سليمان الحاتمي", "حميد بن محمد بن حميد محمد الغافري", "حميد بن ياسر بن حميد ظفير الغافري", "خالد بن راشد بن ظاهر ظاوي الغافري", "خالد بن عبدالله بن حميد راشد العبري", "خالد بن ماجد بن سمسوم زيد المغربي", "خالد بن وليد بن خلفان سالم اليعقوبي", "خليفه بن أحمد بن خليفه علي النيري", "راشد بن سامي بن راشد حميد الشهومي", "راشد بن سعيد بن راشد عامر الغافري", "راشد بن سيف بن راشد سيف الناصري", "راشد بن ناصر بن سليمان سعيد الناصري", "راكان بن محمد بن خليفه سالم الشكيلي", "ربيع بن مصبح بن ربيع عبدالله الغافري"], 
-                "3": ["سالم بن أحمد بن سالم حارب الغافري", "سالم بن مسلم بن سالم ضاوي الغافري", "سام بن شهاب بن سالم سيف المجرفي", "سعد بن رائد بن سعد الشين الغافري", "سعد بن محمود بن خميس عبدالله الغافري", "سعود بن بدر بن علي مرهون المعمري", "سعود بن سعيد بن خلفان سعيد المقبالي", "سعود بن سليمان بن راشد حمدان الغافري", "سعود بن عبدالعزيز بن سعيد مسعد الشهومي", "سعيد بن خليفه بن سعيد مبارك الغافري", "سعيد بن عوض بن سالم خاتم القتبي", "سعيد بن محمد بن حميد عبيد الهنائي", "سلطان بن أحمد بن سلمان سالم المنظري", "سلطان بن جاسم بن مصبح سيف القتبي", "سلطان بن زايد بن خلفان صالح المقبالي", "سلطان بن زايد بن محمد راشد الناصري", "سلطان بن سيف بن خلفان سعيد المقبالي", "سلطان بن سيف بن سعيد خلف الحاتمي", "سلطان بن عادل بن سلطان سالم الناصري", "سند بن سيف بن سلطان سليمان الكلباني", "سيف بن سلطان بن سيف ناصر الصارخي", "شهاب بن حمد بن حميد حمد الغريبي", "صخر بن هلال بن محمد سلطان الغافري", "عبدالعزيز بن راشد بن سنيدي سالم الغافري", "عبدالعزيز بن سالم بن علي حارب الهنائي", "عبدالعزيز بن سلطان بن خلفان أحمد الغافري", "عبدالله بن حمود بن عبدالله حمود الغافري", "عبدالله بن حميد بن عبدالله سيف الغريبي", "عبدالله بن سعيد بن عبدالله محمد الناصري", "قاسم بن محمد بن خلفان محمد المقبالي"], 
-                "4": ["عبدالملك بن حمدان بن عبدالله الهنائي", "عثمان بن حسين بن خميس علي الناصري", "عدي بن حميد بن سالم سيف المجرفي", "عزام بن ابراهيم بن خميس محمد المقبالي", "عزان بن عثمان بن مرزوق ظفير الغافري", "علي بن الحسن بن هلال علي الغافري", "علي بن فهد بن حمدان حمد الغافري", "علي بن ناصر بن محمد سيف المقبالي", "عماد بن علي بن خميس عبدالله المنظري", "عمر بن الأحمد بن مسلم سالم الغافري", "عمر بن ثويني بن سلطان سلام السعيدي", "عمر بن جمعه بن حمد أحمد الغافري", "عمر بن عبدالرحمن بن سرور عبدالله المقبالي", "عمر بن عبدالله بن خليفه مسعود المقرشي", "عمر بن وليد بن علي مرهون المعمري", "عمر بن ياسر بن زايد محمد الحاتمي", "عيسى بن موسى بن مبارك سعد الغافري", "فخر بن هزاع بن سالم سيف الغريبي", "فراس بن سعيد بن خميس سعيد الكلباني", "فراس بن محمد بن سالم عبدالله المجرفي", "فهد بن سيف بن مصبح خميس الغافري", "فهد بن طلال بن صالح راشد الغافري", "لؤي بن نمر بن فرحان مبارك الكلباني", "مؤيد بن خليفة بن سيف خميس الشهومي", "مازن بن سعيد بن محمد راشد الناصري", "محمد بن أحمد بن سالم حمد الغافري", "محمد بن أحمد بن سالم حميد الغافري", "محمد بن أحمد بن محمد حمدان الحاتمي", "محمد بن حميد بن محمد سليمان الحاتمي", "ياسين بن ياسر بن علي حمدان الناصري"], 
-                "5": ["محمد بن خالد بن حامد حمود الناصري", "محمد بن خميس بن سيف حمد الحاتمي", "محمد بن راشد بن محمد عبدالله الغافري", "محمد بن زايد بن محمد سعيد المقبالي", "محمد بن سالم بن سليم حمد الناصري", "محمد بن سالم بن صالح راشد الغافري", "محمد بن علي بن سليّم راشد الحاتمي", "محمد بن مانع بن سالم خايف الهنائي", "محمد بن محمود بن سلمان سالم المنظري", "محمد بن محمود بن محمد سعيد المقبالي", "محمد بن مطر بن عبيد باروت الغافري", "مسعود بن خليفه بن مسعود سيف المجرفي", "منذر بن مرزوق بن حميد عبدالله الغافري", "مهند بن محمد بن عبيد عيد الكلباني", "ناصر بن محمود بن ناصر سليمان الهنائي", "نهيان بن أحمد بن سيف سليمان الغافري", "نهيان بن محمود بن عيد محبوب الغافري", "نواف بن حميد بن سالم سعيد العبري", "نواف بن قاسم بن حمد سعيد الغافري", "هزاع بن ابراهيم بن خلفان سعيد المقبالي", "هزاع بن ناجي بن سعيد سعيّد الغافري", "هزاع بن ناصر بن حمد خميس الناصري", "هناد بن سيف بن سالم سيف المجرفي", "وسام بن عبدالله بن ناصر حميد الشهومي", "وسام بن عمر بن صالح خميس الغافري", "يعقوب بن يوسف بن سعيد سيف المعمري", "يوسف بن حميد بن علي ناصر الشقصي", "يوسف بن خالد بن سيف حمد التميمي", "يوسف بن سليمان بن سليّم سعيد المقبالي", "يوسف بن مالك بن سباع زياد الغافري", "يوسف بن يعقوب بن مرهون سليمان الناصري"] 
-            } 
-        };
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbz3xghS-cY5YKyYK73JQvkWVZ84x1FfOnsigQ3ahEKV0chrw1Dqq4snd9jVfEUbxW62vQ/exec';
+        let studentsData = {}; // أصبحت متغيرة وديناميكية
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbyJbPSuV6V6UclmF2BN9oRd017EQSCSgV5K066pBT7V7N4YOz3oef9I_PygTxK1efOKRQ/exec';
         
         let currentSheetData = {};
         let currentAdminPassword = "";
@@ -672,34 +647,137 @@
         window.onload = () => { 
             if (localStorage.getItem("theme") === "dark") toggleDarkMode(); 
             if(!navigator.onLine) document.getElementById('offline-banner').style.display = 'block'; 
-            updateView(); 
+            
+            const headerTitle = document.querySelector('.header-container h2');
+            const originalTitle = headerTitle.innerHTML;
+            headerTitle.innerHTML = "⏳ جاري تحديث سجلات الطلاب من السحابة...";
+
+            fetch(`${scriptURL}?action=getStudentDirectory`)
+            .then(r => r.json())
+            .then(d => {
+                headerTitle.innerHTML = originalTitle;
+                if(d.status === "success") {
+                    studentsData = d.students;
+                    buildGradeDropdown(); 
+                } else {
+                    alert("فشل جلب دليل الطلاب: " + d.message);
+                }
+            })
+            .catch(err => {
+                headerTitle.innerHTML = originalTitle;
+                alert("خطأ في الاتصال بالسحابة لجلب الأسماء. تأكد من إعدادات الـ Deploy والإنترنت.");
+            });
         };
 
         window.addEventListener('online', () => { document.getElementById('offline-banner').style.display = 'none'; syncOfflineData(); });
         window.addEventListener('offline', () => { document.getElementById('offline-banner').style.display = 'block'; });
 
-        function updateView() {
-            const g = document.getElementById("gradeSelect").value; const s = document.getElementById("sectionSelect").value;
-            document.getElementById("sec5").style.display = (g === "9") ? "none" : "block";
-            if(g==="9" && s==="5") document.getElementById("sectionSelect").value = "1";
-            document.getElementById("form6").classList.toggle("active-form", g==="6"); 
-            document.getElementById("form9").classList.toggle("active-form", g==="9");
+        function buildGradeDropdown() {
+            const gradeSelect = document.getElementById("gradeSelect");
+            gradeSelect.innerHTML = ""; 
             
-            document.getElementById("tbody6").innerHTML = "";
-            document.getElementById("tbody9").innerHTML = "";
+            const grades = Object.keys(studentsData).sort((a,b) => a - b);
+            
+            grades.forEach(g => {
+                let opt = document.createElement("option");
+                opt.value = g;
+                opt.innerText = `الصف ${g}`;
+                gradeSelect.appendChild(opt);
+            });
 
+            if (grades.length > 0) {
+                buildSectionDropdown();
+            }
+        }
+
+        function buildSectionDropdown() {
+            const g = document.getElementById("gradeSelect").value;
+            const sectionSelect = document.getElementById("sectionSelect");
+            sectionSelect.innerHTML = ""; 
+            
+            if (studentsData[g]) {
+                const sections = Object.keys(studentsData[g]).sort((a,b) => a - b);
+                sections.forEach(s => {
+                    let opt = document.createElement("option");
+                    opt.value = s;
+                    opt.innerText = `شعبة ${s}`;
+                    sectionSelect.appendChild(opt);
+                });
+            }
+            
+            updateView();
+        }
+
+        function updateView() {
+            const g = document.getElementById("gradeSelect").value; 
+            const s = document.getElementById("sectionSelect").value;
+            if(!g || !s) return;
+            
+            if (!document.getElementById("form" + g)) {
+                let newForm = document.createElement("div");
+                newForm.id = "form" + g;
+                newForm.className = "form-section";
+                
+                // الاعتماد على تخطيط الصف التاسع كافتراضي لأي صف آخر غير السادس
+                let isGrade6 = (g === "6");
+                let tableHTML = "";
+                
+                if (isGrade6) {
+                    tableHTML = `
+                        <div class="table-container">
+                            <table id="gradesTable${g}">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2" class="header-blue" style="width:30px;">م</th><th rowspan="2" class="header-blue" style="width:200px;">إسم الطالب</th>
+                                        <th colspan="2" class="header-blue">الحوار</th><th rowspan="2" class="header-orange">مجموع</th>
+                                        <th colspan="4" class="header-blue">الأسئلة القصيرة</th><th rowspan="2" class="header-orange">مجموع</th>
+                                        <th colspan="2" class="header-blue">الأنشطة</th><th rowspan="2" class="header-orange">مجموع</th>
+                                        <th rowspan="2" class="header-blue">المشروع</th><th rowspan="2" class="header-orange">الكلية</th>
+                                    </tr>
+                                    <tr><th>10</th><th>10</th><th>5</th><th>5</th><th>5</th><th>5</th><th>20</th><th>20</th></tr>
+                                </thead>
+                                <tbody id="tbody${g}"></tbody>
+                            </table>
+                        </div>
+                    `;
+                } else {
+                    tableHTML = `
+                        <div class="table-container">
+                            <table id="gradesTable${g}">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2" class="header-blue" style="width:30px;">م</th><th rowspan="2" class="header-blue" style="width:200px;">إسم الطالب</th>
+                                        <th colspan="2" class="header-blue">الحوار</th><th rowspan="2" class="header-orange">مجموع</th>
+                                        <th colspan="2" class="header-blue">الأنشطة</th><th rowspan="2" class="header-orange">مجموع</th>
+                                        <th class="header-blue">اختبار</th><th class="header-blue">مشروع</th><th rowspan="2" class="header-orange">الكلية</th>
+                                    </tr>
+                                    <tr><th>10</th><th>10</th><th>20</th><th>20</th><th>20</th><th>20</th></tr>
+                                </thead>
+                                <tbody id="tbody${g}"></tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+                
+                newForm.innerHTML = tableHTML;
+                document.getElementById("tableAreaWrapper").appendChild(newForm);
+            }
+
+            document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active-form'));
+            document.getElementById("form" + g).classList.add("active-form");
+            
             const tbody = document.getElementById("tbody" + g); 
             tbody.innerHTML = `<tr><td colspan="15">جاري جلب البيانات... ⏳</td></tr>`;
             const rGrid = document.getElementById("reinforcementGrid");
             rGrid.innerHTML = `<div style="text-align:center; width:100%; grid-column: 1 / -1;">جاري جلب بيانات التعزيز... ⏳</div>`;
             
-            fetch(`${scriptURL}?grade=${g}&section=${document.getElementById("sectionSelect").value}`)
+            fetch(`${scriptURL}?grade=${g}&section=${s}`)
             .then(r => r.json()).then(d => { 
                 currentSheetData = (d.result === 'success') ? d.data : {}; 
                 if(d.adminPassword) currentAdminPassword = d.adminPassword; 
-                renderTableAndReinforcements(g, document.getElementById("sectionSelect").value); 
+                renderTableAndReinforcements(g, s); 
             })
-            .catch(() => { currentSheetData = {}; renderTableAndReinforcements(g, document.getElementById("sectionSelect").value); });
+            .catch(() => { currentSheetData = {}; renderTableAndReinforcements(g, s); });
         }
 
         function changeReinfVal(id, amt) { 
@@ -1488,7 +1566,6 @@
             });
         }
 
-        // --- دوال الألعاب والاختيار العشوائي التفاعلي المضافة حديثاً ---
         let randomizerInterval;
         let isSpinning = false;
         let currentRandomizerList = [];
@@ -1515,7 +1592,7 @@
             if (isSpinning) return;
             const g = document.getElementById("gradeSelect").value; 
             const s = document.getElementById("sectionSelect").value;
-            currentRandomizerList = studentsData[g][s] || [];
+            currentRandomizerList = studentsData[g] && studentsData[g][s] ? studentsData[g][s] : [];
             
             if (currentRandomizerList.length === 0) return alert("لا توجد أسماء في هذه الشعبة.");
             
@@ -1665,7 +1742,6 @@
             }, 800);
         }
 
-        // --- محرك ألعاب ساحة التحدي ---
         let arenaQuestions = [];
         let currentQIndex = 0;
         let currentGameType = "";
@@ -1691,7 +1767,7 @@
             openModal('modalActiveGame');
             
             setupGameUI(currentGameType);
-            nextArenaQuestion(); // إظهار السؤال الأول تلقائياً
+            nextArenaQuestion(); 
         }
 
         function closeGameAndStop() {
@@ -1713,14 +1789,14 @@
                     <div style="display:flex; justify-content:space-between; font-size:24px; font-weight:bold; padding: 0 20px;">
                         <span style="color:#2980b9;">🔵 فريق اليمين</span><span style="color:#c0392b;">فريق اليسار 🔴</span>
                     </div>
-                    <div class="arena-rope-container" style="position: relative; width: 100%; height: 100px; background: #ecf0f1; border-radius: 20px; margin: 20px 0; overflow: hidden; border: 2px solid #bdc3c7; display:flex; align-items:center;">
+                    <div class="arena-rope-container" style="position: relative; width: 100%; height: 120px; background: #ecf0f1; border-radius: 20px; margin: 20px 0; overflow: hidden; border: 2px solid #bdc3c7; display:flex; align-items:center;">
                         <div style="position:absolute; left:50%; width:4px; height:100%; background:red; z-index:1;"></div>
                         <div id="ropeGroup" style="position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); display:flex; align-items:center; transition: left 0.5s ease-in-out; white-space:nowrap; z-index:2;">
-                            <img src="https://cdn-icons-png.flaticon.com/512/3043/3043888.png" style="width: 60px; transform: scaleX(-1); margin-right: -10px; z-index: 5;">
-                            <div style="width: 150px; height: 12px; background: repeating-linear-gradient(45deg, #d35400, #d35400 10px, #e67e22 10px, #e67e22 20px); border: 2px solid #a04000; border-right:none;"></div>
+                            <img src="https://cdn-icons-png.flaticon.com/512/3043/3043888.png" style="height: 80px; transform: scaleX(-1); margin-right: -15px; z-index: 5;">
+                            <div style="width: 150px; height: 8px; background: repeating-linear-gradient(45deg, #8e44ad, #8e44ad 10px, #9b59b6 10px, #9b59b6 20px); border: 2px solid #34495e; border-right:none;"></div>
                             <div style="width: 40px; height: 40px; background: #f1c40f; border-radius: 50%; border: 4px solid #fff; display: flex; justify-content: center; align-items: center; font-size: 20px; z-index:4; box-shadow: 0 0 10px rgba(0,0,0,0.3);">🚩</div>
-                            <div style="width: 150px; height: 12px; background: repeating-linear-gradient(45deg, #d35400, #d35400 10px, #e67e22 10px, #e67e22 20px); border: 2px solid #a04000; border-left:none;"></div>
-                            <img src="https://cdn-icons-png.flaticon.com/512/3043/3043888.png" style="width: 60px; margin-left: -10px; z-index: 5;">
+                            <div style="width: 150px; height: 8px; background: repeating-linear-gradient(45deg, #8e44ad, #8e44ad 10px, #9b59b6 10px, #9b59b6 20px); border: 2px solid #34495e; border-left:none;"></div>
+                            <img src="https://cdn-icons-png.flaticon.com/512/3043/3043888.png" style="height: 80px; margin-left: -15px; z-index: 5; filter: hue-rotate(150deg);">
                         </div>
                     </div>`;
                 controls.innerHTML = `
@@ -1766,8 +1842,15 @@
                 title.innerText = "🏎️ سباق السيارات المثير 🏎️";
                 gameData.carA = 10; gameData.carB = 10;
                 ui.innerHTML = `
-                    <div class="race-track"><div class="finish-line"></div><div class="race-car" id="carA" style="left:10%;">🏎️</div></div>
-                    <div class="race-track" style="background:#2c3e50;"><div class="finish-line"></div><div class="race-car" id="carB" style="left:10%;">🚓</div></div>`;
+                    <div class="race-track" style="background:#bdc3c7; border: 3px solid #7f8c8d; height: 80px; display: flex; align-items: center; padding: 0 10px;">
+                        <div class="finish-line" style="width: 20px; background: repeating-linear-gradient(45deg, #fff, #fff 10px, #000 10px, #000 20px);"></div>
+                        <img id="carA" src="https://cdn-icons-png.flaticon.com/512/3085/3085330.png" style="height: 55px; position: absolute; left: 10%; transition: left 0.5s ease-in-out; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3));">
+                    </div>
+                    
+                    <div class="race-track" style="background:#95a5a6; border: 3px solid #7f8c8d; height: 80px; display: flex; align-items: center; padding: 0 10px;">
+                        <div class="finish-line" style="width: 20px; background: repeating-linear-gradient(45deg, #fff, #fff 10px, #000 10px, #000 20px);"></div>
+                        <img id="carB" src="https://cdn-icons-png.flaticon.com/512/3085/3085330.png" style="height: 55px; position: absolute; left: 10%; transition: left 0.5s ease-in-out; filter: hue-rotate(200deg) drop-shadow(2px 4px 6px rgba(0,0,0,0.3));">
+                    </div>`;
                 controls.innerHTML = `
                     <button class="arena-btn" style="background:#e74c3c;" onclick="moveCar('A')">تقديم سيارة 🏎️</button>
                     <button class="arena-btn" style="background:#27ae60;" onclick="nextArenaQuestion()">السؤال التالي</button>
@@ -2247,6 +2330,84 @@
             const btn = document.getElementById('voiceBtn');
             btn.classList.remove('listening');
             btn.innerText = '🎤';
+        }
+
+        // دوال إدارة الطلاب الجديدة
+        function saveStudentsToCloud() {
+            const grade = document.getElementById("mgrGrade").value.trim();
+            const section = document.getElementById("mgrSection").value.trim();
+            const namesRaw = document.getElementById("mgrNamesList").value.trim();
+
+            if (!grade || !section || !namesRaw) return alert("الرجاء تعبئة الصف، الشعبة، ولصق الأسماء!");
+
+            const namesArray = namesRaw.split('\n').map(n => n.trim()).filter(n => n !== "");
+            if (namesArray.length === 0) return alert("القائمة لا تحتوي على أسماء صالحة!");
+
+            const btn = document.getElementById("btnAddStudents");
+            btn.innerHTML = "⏳ جاري الحفظ في السحابة...";
+            btn.disabled = true;
+
+            const payload = {
+                action: "manage_students",
+                sub_action: "add",
+                grade: grade,
+                section: section,
+                names: namesArray
+            };
+
+            fetch(scriptURL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify(payload) 
+            })
+            .then(r => r.json())
+            .then(d => {
+                if(d.status === "success") {
+                    alert("✅ تم الحفظ بنجاح! سيتم تحديث الصفحة لجلب البيانات الجديدة.");
+                    location.reload(); 
+                } else {
+                    alert("❌ حدث خطأ: " + d.message);
+                }
+            })
+            .catch(e => alert("خطأ في الاتصال!"))
+            .finally(() => { btn.innerHTML = "➕ إضافة/إنشاء وحفظ في السحابة"; btn.disabled = false; });
+        }
+
+        function deleteSectionFromCloud() {
+            const grade = document.getElementById("mgrGrade").value.trim();
+            const section = document.getElementById("mgrSection").value.trim();
+
+            if (!grade || !section) return alert("الرجاء تحديد الصف والشعبة المراد حذفهما!");
+            
+            if (!confirm(`⚠️ هل أنت متأكد من حذف (الصف ${grade} - شعبة ${section}) نهائياً بجميع طلابه؟`)) return;
+
+            const btn = document.getElementById("btnDeleteSection");
+            btn.innerHTML = "⏳ جاري الحذف...";
+            btn.disabled = true;
+
+            const payload = {
+                action: "manage_students",
+                sub_action: "delete_section",
+                grade: grade,
+                section: section
+            };
+
+            fetch(scriptURL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify(payload) 
+            })
+            .then(r => r.json())
+            .then(d => {
+                if(d.status === "success") {
+                    alert("✅ تم الحذف بنجاح!");
+                    location.reload(); 
+                } else {
+                    alert("❌ حدث خطأ: " + d.message);
+                }
+            })
+            .catch(e => alert("خطأ في الاتصال!"))
+            .finally(() => { btn.innerHTML = "🗑️ حذف هذا الصف والشعبة بالكامل"; btn.disabled = false; });
         }
     </script>
 </body>
