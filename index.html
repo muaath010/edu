@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#2980b9">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2 family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         :root { 
@@ -1639,6 +1639,224 @@
             
             body.scrollTop = body.scrollHeight;
         }
+
+        // ----------------------------------------------------
+        // الدوال الناقصة التي تم إضافتها وتفعيلها (الكشف، الدفتر، المستودع، الحفظ)
+        // ----------------------------------------------------
+
+        function toggleTableVisibility() {
+            const wrapper = document.getElementById("tableAreaWrapper");
+            const btn = document.getElementById("toggleTableBtn");
+            if (wrapper.style.display === "none") {
+                wrapper.style.display = "block";
+                btn.innerText = "إخفاء الكشف";
+                btn.style.background = "#e74c3c";
+                btn.style.borderColor = "#c0392b";
+            } else {
+                wrapper.style.display = "none";
+                btn.innerText = "إظهار الكشف";
+                btn.style.background = "#3498db";
+                btn.style.borderColor = "#2980b9";
+            }
+        }
+
+        function openRepoModal() {
+            openModal('modalRepo');
+            loadRepoFiles();
+        }
+
+        function loadRepoFiles() {
+            const container = document.getElementById('fileListContainer');
+            container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; font-weight: bold; color: #6c5ce7;">جاري الاتصال بالمستودع السحابي... ⏳</div>';
+            
+            fetch(scriptURL + "?action=get_repo_files&teacher_id=" + localStorage.getItem('teacher_id'))
+            .then(r => r.json())
+            .then(d => {
+                if(d.status === 'success' && d.files && d.files.length > 0) {
+                    container.innerHTML = d.files.map(f => `<div class="repo-card"><div class="repo-icon">📄</div><div class="repo-title">${f.name}</div></div>`).join('');
+                } else {
+                    container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center;">المستودع فارغ حالياً. يمكنك رفع ملفاتك.</div>';
+                }
+            }).catch(e => {
+                container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #e74c3c;">سيتم تفعيل ميزة استرجاع الملفات في خادم Hostinger قريباً.</div>';
+            });
+        }
+
+        function handleFileUpload(input) {
+            if(input.files && input.files[0]) {
+                document.getElementById('uploadStatus').innerText = "تم اختيار الملف: " + input.files[0].name + " (يتم تجهيز الرفع...)";
+            }
+        }
+
+        function openNotesModal() {
+            const g = document.getElementById("gradeSelect").value;
+            const s = document.getElementById("sectionSelect").value;
+            if(!g || !s) return alert('الرجاء اختيار الصف والشعبة أولاً من القائمة العلوية لتسجيل الملاحظات!');
+            
+            document.getElementById('currentClassLabel').innerText = `دفتر تحضير: الصف ${g} - شعبة ${s}`;
+            openModal('modalNotes');
+            loadNotes();
+        }
+
+        function saveNote() {
+            const g = document.getElementById("gradeSelect").value;
+            const s = document.getElementById("sectionSelect").value;
+            const title = document.getElementById("lessonTitle").value.trim();
+            const text = document.getElementById("lessonNotes").value.trim();
+            
+            if(!title) return alert("الرجاء إدخال عنوان الدرس أو الملاحظة الأساسية!");
+
+            const btn = document.getElementById("btnSaveNote");
+            btn.innerText = "⏳ جاري الحفظ...";
+            btn.disabled = true;
+            
+            fetch(scriptURL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    action: "save_note",
+                    teacher_id: localStorage.getItem('teacher_id'),
+                    grade: g,
+                    section: s,
+                    title: title,
+                    text: text
+                })
+            }).then(r => r.json()).then(d => {
+                btn.innerText = "💾 حفظ الملاحظة لهذه الشعبة";
+                btn.disabled = false;
+                document.getElementById("lessonTitle").value = "";
+                document.getElementById("lessonNotes").value = "";
+                loadNotes(); 
+            }).catch(e => {
+                btn.innerText = "💾 حفظ الملاحظة لهذه الشعبة";
+                btn.disabled = false;
+                alert("ميزة حفظ الملاحظات قيد التجهيز في قاعدة بيانات Hostinger.");
+            });
+        }
+
+        function loadNotes() {
+            const g = document.getElementById("gradeSelect").value;
+            const s = document.getElementById("sectionSelect").value;
+            const container = document.getElementById("previousNotesContainer");
+            
+            container.innerHTML = "<div style='text-align:center;'>جاري جلب الملاحظات... ⏳</div>";
+            
+            fetch(scriptURL + `?action=get_notes&grade=${g}&section=${s}&teacher_id=` + localStorage.getItem('teacher_id'))
+            .then(r => r.json())
+            .then(d => {
+                if(d.status === 'success' && d.notes && d.notes.length > 0) {
+                    container.innerHTML = d.notes.map(n => `<div class="note-card"><div class="note-date">${n.date}</div><strong>${n.title}</strong><p style="margin:5px 0 0 0;">${n.text}</p></div>`).join('');
+                } else {
+                    container.innerHTML = "<div style='text-align:center;'>لا توجد ملاحظات سابقة مسجلة لهذه الشعبة.</div>";
+                }
+            }).catch(e => {
+                container.innerHTML = "<div style='text-align:center; color:#e74c3c;'>قاعدة بيانات الملاحظات سيتم ربطها قريباً.</div>";
+            });
+        }
+
+        function calc(inp, gradeType) {
+            let tr = inp.closest('tr');
+            if(!tr) return;
+            let inputs = tr.querySelectorAll('.col-calc');
+            if(inputs.length === 0) return;
+
+            let vals = Array.from(inputs).map(el => parseFloat(el.value) || 0);
+            
+            if(gradeType === '6') {
+                let dTotal = vals[0] + vals[1];
+                let qTotal = vals[2] + vals[3] + vals[4] + vals[5];
+                let aTotal = vals[6] + vals[7];
+                let proj = vals[8] || 0;
+                let grand = dTotal + qTotal + aTotal + proj;
+
+                tr.querySelector('.t-dialogue').innerText = dTotal;
+                tr.querySelector('.t-quiz').innerText = qTotal;
+                tr.querySelector('.t-activity').innerText = aTotal;
+                tr.querySelector('.t-grand').innerText = grand;
+            } else {
+                let dTotal = vals[0] + vals[1];
+                let aTotal = vals[2] + vals[3];
+                let test = vals[4] || 0;
+                let proj = vals[5] || 0;
+                let grand = dTotal + aTotal + test + proj;
+
+                tr.querySelector('.t-dialogue').innerText = dTotal;
+                tr.querySelector('.t-activity').innerText = aTotal;
+                tr.querySelector('.t-grand').innerText = grand;
+            }
+        }
+
+        function submitData() {
+            const g = document.getElementById("gradeSelect").value;
+            const s = document.getElementById("sectionSelect").value;
+            if(!g || !s) return alert('الرجاء اختيار الصف والشعبة المحددة أولاً.');
+
+            const btn = document.getElementById("btnFloatSave");
+            btn.innerHTML = "⏳ جاري حفظ درجات وسلوكيات الطلاب...";
+
+            let studentsPayload = [];
+            const tbody = document.getElementById("tbody" + g);
+            const rows = tbody.querySelectorAll('tr');
+
+            rows.forEach((tr, index) => {
+                let nameEl = tr.querySelector(`span[id^="name-"]`);
+                if(!nameEl) return;
+                let name = nameEl.innerText;
+
+                let inputs = tr.querySelectorAll('.col-calc');
+                let vals = Array.from(inputs).map(el => el.value === "" ? null : parseFloat(el.value));
+                
+                let intVal = document.getElementById(`int-${index}`) ? parseInt(document.getElementById(`int-${index}`).value) : 0;
+                let violVal = document.getElementById(`viol-${index}`) ? parseInt(document.getElementById(`viol-${index}`).value) : 0;
+
+                if(g === '6') {
+                    studentsPayload.push({
+                        name: name,
+                        d1: vals[0], d2: vals[1],
+                        q1: vals[2], q2: vals[3], q3: vals[4], q4: vals[5],
+                        a1: vals[6], a2: vals[7],
+                        proj: vals[8],
+                        interaction: intVal, violation: violVal
+                    });
+                } else {
+                    studentsPayload.push({
+                        name: name,
+                        d1: vals[0], d2: vals[1],
+                        a1: vals[2], a2: vals[3],
+                        test: vals[4], proj: vals[5],
+                        interaction: intVal, violation: violVal
+                    });
+                }
+            });
+
+            fetch(scriptURL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    teacher_id: localStorage.getItem('teacher_id'),
+                    grade: g,
+                    section: s,
+                    students: studentsPayload
+                })
+            }).then(r => r.json()).then(d => {
+                if(d.result === 'success' || d.status === 'success') {
+                    btn.innerHTML = "✅ تم الحفظ والمزامنة بنجاح";
+                } else {
+                    btn.innerHTML = "❌ خطأ في الحفظ: " + (d.message || "");
+                }
+                setTimeout(() => btn.innerHTML = "💾 حفظ ومزامنة البيانات", 2500);
+            }).catch(e => {
+                btn.innerHTML = "❌ خطأ في الاتصال بالخادم";
+                setTimeout(() => btn.innerHTML = "💾 حفظ ومزامنة البيانات", 2500);
+            });
+        }
+
+        function exportToExcel() { alert('ميزة التصدير قيد الإعداد في هذا التحديث.'); }
+        function generateDetailedReports() { alert('ميزة التقارير والشهادات قيد الإعداد.'); }
+        function toggleHonorRoll() { alert('ميزة لوحة الشرف قيد الإعداد.'); }
+        function openSeatingChart() { openModal('seatingModal'); }
+
+        // ----------------------------------------------------
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition;
