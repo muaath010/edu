@@ -1683,10 +1683,37 @@
         }
 
         function handleFileUpload(input) {
-            if(input.files && input.files[0]) {
-                document.getElementById('uploadStatus').innerText = "تم اختيار الملف: " + input.files[0].name + " (يتم تجهيز الرفع...)";
+    if(input.files && input.files[0]) {
+        let file = input.files[0];
+        document.getElementById('uploadStatus').innerText = "⏳ جاري الرفع... " + file.name;
+
+        let formData = new FormData();
+        formData.append("file", file);
+        formData.append("action", "upload_file");
+        formData.append("teacher_id", localStorage.getItem('teacher_id'));
+
+        // في FormData لا نحتاج لكتابة Headers
+        fetch(scriptURL, {
+            method: 'POST',
+            body: formData 
+        })
+        .then(r => r.json())
+        .then(d => {
+            if(d.status === 'success') {
+                document.getElementById('uploadStatus').style.color = "#27ae60";
+                document.getElementById('uploadStatus').innerText = "✅ تم الرفع بنجاح!";
+                loadRepoFiles(); // تحديث القائمة فوراً
+            } else {
+                document.getElementById('uploadStatus').style.color = "#c0392b";
+                document.getElementById('uploadStatus').innerText = "❌ خطأ: " + d.message;
             }
-        }
+        })
+        .catch(e => {
+            document.getElementById('uploadStatus').style.color = "#c0392b";
+            document.getElementById('uploadStatus').innerText = "❌ فشل الاتصال بالسيرفر.";
+        });
+    }
+}
 
         function openNotesModal() {
             const g = document.getElementById("gradeSelect").value;
