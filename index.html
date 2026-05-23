@@ -1666,21 +1666,53 @@
         }
 
         function loadRepoFiles() {
-            const container = document.getElementById('fileListContainer');
-            container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; font-weight: bold; color: #6c5ce7;">جاري الاتصال بالمستودع السحابي... ⏳</div>';
+    const container = document.getElementById("repoGrid");
+    // إظهار رسالة تحميل تفاعلية أثناء جلب البيانات
+    container.innerHTML = "<div style='text-align:center; width:100%; grid-column: 1 / -1; font-weight:bold;'>⏳ جاري جلب الملفات من السحابة...</div>";
+    
+    // الاتصال بملف api.php لجلب قائمة الملفات
+    fetch(scriptURL + '?action=get_repo_files&teacher_id=' + localStorage.getItem('teacher_id'))
+    .then(r => r.json())
+    .then(d => {
+        if(d.status === 'success') {
+            container.innerHTML = '';
             
-            fetch(scriptURL + "?action=get_repo_files&teacher_id=" + localStorage.getItem('teacher_id'))
-            .then(r => r.json())
-            .then(d => {
-                if(d.status === 'success' && d.files && d.files.length > 0) {
-                    container.innerHTML = d.files.map(f => `<div class="repo-card"><div class="repo-icon">📄</div><div class="repo-title">${f.name}</div></div>`).join('');
-                } else {
-                    container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center;">المستودع فارغ حالياً. يمكنك رفع ملفاتك.</div>';
-                }
-            }).catch(e => {
-                container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #e74c3c;">سيتم تفعيل ميزة استرجاع الملفات في خادم Hostinger قريباً.</div>';
+            // إذا كان المستودع فارغاً
+            if(d.files.length === 0) {
+                container.innerHTML = "<div style='text-align:center; width:100%; grid-column: 1 / -1; color:#7f8c8d; font-weight:bold;'>📂 المستودع فارغ، لا توجد ملفات مرفوعة حالياً.</div>";
+                return;
+            }
+            
+            // استخراج الرابط الأساسي للاستضافة ليتم فتح الملفات عليه
+            let baseUrl = scriptURL.replace('api.php', '');
+            
+            // رسم الملفات كبطاقات تفاعلية
+            d.files.forEach(file => {
+                // تحديد الأيقونة المناسبة بناءً على صيغة الملف
+                let ext = file.name.split('.').pop().toLowerCase();
+                let icon = "📄";
+                if(['png','jpg','jpeg','gif'].includes(ext)) icon = "🖼️";
+                else if(['pdf'].includes(ext)) icon = "📕";
+                else if(['doc','docx'].includes(ext)) icon = "📘";
+                else if(['xls','xlsx'].includes(ext)) icon = "📗";
+                else if(['zip','rar'].includes(ext)) icon = "🗜️";
+
+                // إضافة بطاقة الملف إلى الشبكة
+                container.innerHTML += `
+                    <a href="${baseUrl}${file.url}" target="_blank" class="repo-card" style="text-decoration:none;">
+                        <div class="repo-icon">${icon}</div>
+                        <div class="repo-title">${file.name}</div>
+                    </a>
+                `;
             });
+        } else {
+            container.innerHTML = `<div style='text-align:center; color:#c0392b; width:100%; grid-column: 1 / -1;'>❌ خطأ: ${d.message}</div>`;
         }
+    })
+    .catch(e => {
+        container.innerHTML = "<div style='text-align:center; color:#c0392b; width:100%; grid-column: 1 / -1;'>❌ فشل الاتصال بالخادم. يرجى التحقق من الإنترنت.</div>";
+    });
+}
 
         function handleFileUpload(input) {
     if(input.files && input.files[0]) {
