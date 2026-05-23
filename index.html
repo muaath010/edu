@@ -2038,6 +2038,59 @@
             btn.classList.remove('listening');
             btn.innerText = '🎤';
         }
+        function loadStudentGrades() {
+    const grade = document.getElementById('classSelect').value;
+    const section = document.getElementById('sectionSelect').value;
+    const teacherId = localStorage.getItem('teacher_id');
+
+    if (!grade || !section || !teacherId) return;
+
+    fetch(`${scriptURL}?grade=${encodeURIComponent(grade)}&section=${encodeURIComponent(section)}&teacher_id=${teacherId}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.result === "success") {
+            displayDataInTable(data.data); 
+        } else {
+            console.log("تنبيه: " + data.message);
+        }
+    })
+    .catch(error => console.error("خطأ في جلب الدرجات:", error));
+}
+
+function saveStudentGrades() {
+    const grade = document.getElementById('classSelect').value;
+    const section = document.getElementById('sectionSelect').value;
+    const teacherId = localStorage.getItem('teacher_id');
+    
+    const studentsData = getGradesFromTable(); // الدالة التي تجمع الدرجات من جدولك
+
+    if (!teacherId) {
+        alert("❌ انتهت الجلسة، يرجى إعادة تسجيل الدخول.");
+        return;
+    }
+
+    const payload = {
+        grade: grade,
+        section: section,
+        teacher_id: teacherId,
+        students: studentsData
+    };
+
+    fetch(scriptURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.result === "success") {
+            alert("✅ تم حفظ درجات الطلاب بنجاح في السحابة!");
+        } else {
+            alert("❌ فشل الحفظ: " + data.message);
+        }
+    })
+    .catch(error => alert("❌ خطأ في الاتصال بالخادم أثناء الحفظ."));
+}
     </script>
 </body>
 </html>
