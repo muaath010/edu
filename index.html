@@ -1758,61 +1758,100 @@
         }
 
         function saveNote() {
-            const g = document.getElementById("gradeSelect").value;
-            const s = document.getElementById("sectionSelect").value;
-            const title = document.getElementById("lessonTitle").value.trim();
-            const text = document.getElementById("lessonNotes").value.trim();
-            
-            if(!title) return alert("الرجاء إدخال عنوان الدرس أو الملاحظة الأساسية!");
+    // جلب البيانات من الحقول (تأكد أن الـ IDs تطابق الموجودة في الكود لديك)
+    let grade = document.getElementById('classSelect') ? document.getElementById('classSelect').value : '';
+    let section = document.getElementById('sectionSelect') ? document.getElementById('sectionSelect').value : '';
+    let title = document.getElementById('noteTitle').value;
+    let text = document.getElementById('noteText').value;
+    let teacherId = localStorage.getItem('teacher_id');
 
-            const btn = document.getElementById("btnSaveNote");
-            btn.innerText = "⏳ جاري الحفظ...";
-            btn.disabled = true;
-            
-            fetch(scriptURL, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    action: "save_note",
-                    teacher_id: localStorage.getItem('teacher_id'),
-                    grade: g,
-                    section: s,
-                    title: title,
-                    text: text
-                })
-            }).then(r => r.json()).then(d => {
-                btn.innerText = "💾 حفظ الملاحظة لهذه الشعبة";
-                btn.disabled = false;
-                document.getElementById("lessonTitle").value = "";
-                document.getElementById("lessonNotes").value = "";
-                loadNotes(); 
-            }).catch(e => {
-                btn.innerText = "💾 حفظ الملاحظة لهذه الشعبة";
-                btn.disabled = false;
-                alert("ميزة حفظ الملاحظات قيد التجهيز في قاعدة بيانات Hostinger.");
-            });
+    if (!title || !text) {
+        alert("⚠️ يرجى كتابة عنوان ونص الملاحظة أولاً.");
+        return;
+    }
+    if (!grade || !section) {
+        alert("⚠️ يرجى اختيار الصف والشعبة أولاً لربط الملاحظة بهم.");
+        return;
+    }
+
+    let btn = document.getElementById('saveNoteBtn'); // إذا كان لديك زر حفظ
+    if(btn) btn.innerText = "⏳ جاري الحفظ...";
+
+    fetch(scriptURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'save_note',
+            teacher_id: teacherId,
+            grade: grade,
+            section: section,
+            title: title,
+            text: text
+        })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.status === 'success') {
+            alert("✅ تم حفظ الملاحظة بنجاح!");
+            // تفريغ الحقول بعد الحفظ
+            document.getElementById('noteTitle').value = "";
+            document.getElementById('noteText').value = "";
+            // تحديث قائمة الملاحظات لتظهر الملاحظة الجديدة فوراً
+            loadNotes(); 
+        } else {
+            alert("❌ فشل الحفظ: " + d.message);
         }
-
+        if(btn) btn.innerText = "حفظ الملاحظة";
+    })
+    .catch(e => {
+        alert("❌ خطأ في الاتصال بالخادم.");
+        if(btn) btn.innerText = "حفظ الملاحظة";
+    });
+}
         function loadNotes() {
-            const g = document.getElementById("gradeSelect").value;
-            const s = document.getElementById("sectionSelect").value;
-            const container = document.getElementById("previousNotesContainer");
-            
-            container.innerHTML = "<div style='text-align:center;'>جاري جلب الملاحظات... ⏳</div>";
-            
-            fetch(scriptURL + `?action=get_notes&grade=${g}&section=${s}&teacher_id=` + localStorage.getItem('teacher_id'))
-            .then(r => r.json())
-            .then(d => {
-                if(d.status === 'success' && d.notes && d.notes.length > 0) {
-                    container.innerHTML = d.notes.map(n => `<div class="note-card"><div class="note-date">${n.date}</div><strong>${n.title}</strong><p style="margin:5px 0 0 0;">${n.text}</p></div>`).join('');
-                } else {
-                    container.innerHTML = "<div style='text-align:center;'>لا توجد ملاحظات سابقة مسجلة لهذه الشعبة.</div>";
-                }
-            }).catch(e => {
-                container.innerHTML = "<div style='text-align:center; color:#e74c3c;'>قاعدة بيانات الملاحظات سيتم ربطها قريباً.</div>";
-            });
-        }
+    let grade = document.getElementById('classSelect') ? document.getElementById('classSelect').value : '';
+    let section = document.getElementById('sectionSelect') ? document.getElementById('sectionSelect').value : '';
+    let teacherId = localStorage.getItem('teacher_id');
+    
+    // معرف الحاوية التي ستظهر فيها الملاحظات (تأكد من الـ ID في ملفك)
+    let container = document.getElementById('notesContainer'); 
 
+    if (!container || !grade || !section) return;
+
+    container.innerHTML = "<div style='text-align:center; padding:20px; font-weight:bold; color:#34495e;'>⏳ جاري جلب الملاحظات من الخادم...</div>";
+
+    fetch(`${scriptURL}?action=get_notes&teacher_id=${teacherId}&grade=${grade}&section=${section}`)
+    .then(r => r.json())
+    .then(d => {
+        if (d.status === 'success') {
+            container.innerHTML = '';
+            
+            // إذا لم تكن هناك ملاحظات مسجلة
+            if (d.notes.length === 0) {
+                container.innerHTML = "<div style='text-align:center; color:#7f8c8d; padding:20px; font-weight:bold;'>📭 لا توجد ملاحظات مسجلة لهذا الصف والشعبة حالياً.</div>";
+                return;
+            }
+            
+            // رسم كل ملاحظة كبطاقة أنيقة
+            d.notes.forEach(note => {
+                container.innerHTML += `
+                    <div class="note-card" style="background: #ffffff; border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 15px; border-radius: 8px; border-right: 4px solid #2980b9; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <h4 style="margin: 0 0 10px 0; color: #2c3e50; display:flex; justify-content:space-between; align-items:center;">
+                            <span>📌 ${note.title}</span>
+                            <span style="font-size: 12px; color: #95a5a6; font-weight: normal;">🕒 ${note.date}</span>
+                        </h4>
+                        <p style="margin: 0; color: #34495e; white-space: pre-wrap; font-size: 14px; line-height:1.6;">${note.text}</p>
+                    </div>
+                `;
+            });
+        } else {
+            container.innerHTML = `<div style='text-align:center; color:#c0392b;'>❌ خطأ: ${d.message}</div>`;
+        }
+    })
+    .catch(e => {
+        container.innerHTML = "<div style='text-align:center; color:#c0392b;'>❌ فشل الاتصال بالخادم لجلب الملاحظات.</div>";
+    });
+}
         function calc(inp, gradeType) {
             let tr = inp.closest('tr');
             if(!tr) return;
