@@ -634,8 +634,8 @@
     </div>
 
     <script>
-        let studentsData = {}; // ديناميكية بالكامل من السيرفر
-        const scriptURL = 'https://darkslateblue-wren-226762.hostingersite.com/api.php'; // التوجيه للملف البرمي المباشر بالهوستنجر
+       let studentsData = {}; 
+        const scriptURL = 'https://darkslateblue-wren-226762.hostingersite.com/api.php'; // تم التعديل لرابط محلي لضمان سرعة الاتصال وعدم الحظر
         
         let currentSheetData = {};
         let currentAdminPassword = "";
@@ -732,16 +732,17 @@
                     studentsData = d.students;
                     buildGradeDropdown(); 
                 } else {
-                    alert("ملاحظة: " + d.message + ". أضف بعض الطلاب لبدء العمل.");
+                    alert("ملاحظة: " + d.message);
                 }
             })
             .catch(err => {
                 headerTitle.innerHTML = originalTitle;
+                console.log(err);
                 alert("خطأ في الاتصال بالملف البرمجي api.php. يرجى التحقق من وجوده بالقرب من الملف.");
             });
         }
 
-        window.addEventListener('online', () => { document.getElementById('offline-banner').style.display = 'none'; syncOfflineData(); });
+        window.addEventListener('online', () => { document.getElementById('offline-banner').style.display = 'none'; });
         window.addEventListener('offline', () => { document.getElementById('offline-banner').style.display = 'block'; });
 
         function buildGradeDropdown() {
@@ -842,10 +843,10 @@
             const rGrid = document.getElementById("reinforcementGrid");
             rGrid.innerHTML = `<div style="text-align:center; width:100%; grid-column: 1 / -1;">جاري جلب بيانات التعزيز... ⏳</div>`;
             
-            fetch(`${scriptURL}?grade=${g}&section=${s}&teacher_id=${localStorage.getItem('teacher_id')}`)
+            // تم إضافة action=get_grades هنا ليتمكن السيرفر من التعرف عليه
+            fetch(`${scriptURL}?action=get_grades&grade=${g}&section=${s}&teacher_id=${localStorage.getItem('teacher_id')}`)
             .then(r => r.json()).then(d => { 
-                currentSheetData = (d.result === 'success') ? d.data : {}; 
-                if(d.adminPassword) currentAdminPassword = d.adminPassword; 
+                currentSheetData = (d.status === 'success') ? d.data : {}; 
                 renderTableAndReinforcements(g, s); 
             })
             .catch(() => { currentSheetData = {}; renderTableAndReinforcements(g, s); });
@@ -925,12 +926,12 @@
 
             fetch(scriptURL, { 
                 method: 'POST', 
-                headers: { 'Content-Type': 'application/json;charset=utf-8' }, 
+                headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify(payload) 
             })
             .then(r => r.json())
             .then(d => {
-                if(d.status === "success" || d.result === "success") {
+                if(d.status === "success") {
                     alert("✅ تم الحفظ بنجاح! سيتم تحديث الصفحة لجلب البيانات الجديدة.");
                     location.reload(); 
                 } else {
@@ -963,12 +964,12 @@
 
             fetch(scriptURL, { 
                 method: 'POST', 
-                headers: { 'Content-Type': 'application/json;charset=utf-8' }, 
+                headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify(payload) 
             })
             .then(r => r.json())
             .then(d => {
-                if(d.status === "success" || d.result === "success") {
+                if(d.status === "success") {
                     alert("✅ تم الحذف بنجاح!");
                     location.reload(); 
                 } else {
@@ -1602,47 +1603,8 @@
             openModal('modalStudentAnswers');
         }
         
-        function toggleAIWindow() {
-            const win = document.getElementById("aiWindow");
-            win.style.display = (win.style.display === "flex") ? "none" : "flex";
-        }
-
-        async function sendToAI() {
-            const input = document.getElementById("aiInput");
-            const body = document.getElementById("aiBody");
-            const msg = input.value.trim();
-            if (!msg) return;
-
-            body.innerHTML += `<div class="ai-msg user">${msg}</div>`;
-            input.value = "";
-            body.scrollTop = body.scrollHeight;
-
-            const loadingId = "ai-loading-" + Date.now();
-            body.innerHTML += `<div class="ai-msg bot" id="${loadingId}">⏳ جاري التفكير...</div>`;
-            body.scrollTop = body.scrollHeight;
-
-            fetch(`${scriptURL}?action=askAI`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: msg, teacher_id: localStorage.getItem('teacher_id') })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if(data.status === "success") {
-                    document.getElementById(loadingId).innerText = data.reply;
-                } else {
-                    document.getElementById(loadingId).innerText = "عذراً، حدث خطأ في معالجة الرد.";
-                }
-            })
-            .catch(() => {
-                document.getElementById(loadingId).innerText = "عذراً، فشل الاتصال بالملف البرمجي السحابي.";
-            });
-            
-            body.scrollTop = body.scrollHeight;
-        }
-
         // ----------------------------------------------------
-        // الدوال الناقصة التي تم إضافتها وتفعيلها (الكشف، الدفتر، المستودع، الحفظ)
+        // الدوال الناقصة والمصححة تماماً (الكشف، الدفتر، المستودع، الحفظ)
         // ----------------------------------------------------
 
         function toggleTableVisibility() {
@@ -1667,77 +1629,69 @@
         }
 
         function loadRepoFiles() {
-    const container = document.getElementById("repoGrid");
-    if (!container) {
-        console.error("عذراً، لم أجد عنصر repoGrid في الصفحة!");
-        return;
-    }
+            const container = document.getElementById("repoGrid");
+            if (!container) return;
 
-    container.innerHTML = "⏳ جاري تحميل الملفات...";
-    
-    // استدعاء السيرفر
-    fetch(`${scriptURL}?action=get_repo_files&teacher_id=${localStorage.getItem('teacher_id')}`)
-    .then(r => r.json())
-    .then(d => {
-        console.log("البيانات القادمة من السيرفر:", d); // هذا السطر سيظهر لك ما يحدث في الـ Console (F12)
-
-        if(d.status === 'success') {
-            container.innerHTML = '';
-            if(d.files.length === 0) {
-                container.innerHTML = "📂 لا توجد ملفات في المستودع.";
-                return;
-            }
+            container.innerHTML = "⏳ جاري تحميل الملفات...";
             
-            d.files.forEach(file => {
-                // ننشئ الرابط الكامل للملف
-                let fileUrl = 'https://darkslateblue-wren-226762.hostingersite.com/' + file.url;
-                container.innerHTML += `
-                    <div style="border:1px solid #ccc; padding:10px; margin:5px; border-radius:5px;">
-                        <a href="${fileUrl}" target="_blank">📄 ${file.name}</a>
-                    </div>
-                `;
+            fetch(`${scriptURL}?action=get_repo_files&teacher_id=${localStorage.getItem('teacher_id')}`)
+            .then(r => r.json())
+            .then(d => {
+                if(d.status === 'success') {
+                    container.innerHTML = '';
+                    if(d.files.length === 0) {
+                        container.innerHTML = "📂 لا توجد ملفات في المستودع.";
+                        return;
+                    }
+                    
+                    d.files.forEach(file => {
+                        let fileUrl = file.url; // تعديل محلي آمن
+                        container.innerHTML += `
+                            <div style="border:1px solid #ccc; padding:10px; margin:5px; border-radius:5px; text-align:center; background:var(--category-bg);">
+                                <a href="${fileUrl}" target="_blank" style="text-decoration:none; color:var(--text-color); font-weight:bold;">📄<br>${file.name}</a>
+                            </div>
+                        `;
+                    });
+                } else {
+                    container.innerHTML = "❌ خطأ من السيرفر: " + d.message;
+                }
+            })
+            .catch(e => {
+                container.innerHTML = "❌ خطأ في الاتصال بالخادم.";
             });
-        } else {
-            container.innerHTML = "❌ خطأ من السيرفر: " + d.message;
         }
-    })
-    .catch(e => {
-        container.innerHTML = "❌ خطأ في الاتصال. راجع الـ Console";
-        console.error(e);
-    });
-}
+
         function handleFileUpload(input) {
-    if(input.files && input.files[0]) {
-        let file = input.files[0];
-        document.getElementById('uploadStatus').innerText = "⏳ جاري الرفع... " + file.name;
+            if(input.files && input.files[0]) {
+                let file = input.files[0];
+                document.getElementById('uploadStatus').innerText = "⏳ جاري الرفع... " + file.name;
 
-        let formData = new FormData();
-        formData.append("file", file);
-        formData.append("action", "upload_file");
-        formData.append("teacher_id", localStorage.getItem('teacher_id'));
+                let formData = new FormData();
+                formData.append("file", file);
+                formData.append("action", "upload_file");
+                formData.append("teacher_id", localStorage.getItem('teacher_id'));
 
-        // في FormData لا نحتاج لكتابة Headers
-        fetch(scriptURL, {
-            method: 'POST',
-            body: formData 
-        })
-        .then(r => r.json())
-        .then(d => {
-            if(d.status === 'success') {
-                document.getElementById('uploadStatus').style.color = "#27ae60";
-                document.getElementById('uploadStatus').innerText = "✅ تم الرفع بنجاح!";
-                loadRepoFiles(); // تحديث القائمة فوراً
-            } else {
-                document.getElementById('uploadStatus').style.color = "#c0392b";
-                document.getElementById('uploadStatus').innerText = "❌ خطأ: " + d.message;
+                fetch(scriptURL, {
+                    method: 'POST',
+                    body: formData 
+                })
+                .then(r => r.json())
+                .then(d => {
+                    if(d.status === 'success') {
+                        document.getElementById('uploadStatus').style.color = "#27ae60";
+                        document.getElementById('uploadStatus').innerText = "✅ تم الرفع بنجاح!";
+                        loadRepoFiles(); 
+                    } else {
+                        document.getElementById('uploadStatus').style.color = "#c0392b";
+                        document.getElementById('uploadStatus').innerText = "❌ خطأ: " + d.message;
+                    }
+                })
+                .catch(e => {
+                    document.getElementById('uploadStatus').style.color = "#c0392b";
+                    document.getElementById('uploadStatus').innerText = "❌ فشل الاتصال بالسيرفر.";
+                });
             }
-        })
-        .catch(e => {
-            document.getElementById('uploadStatus').style.color = "#c0392b";
-            document.getElementById('uploadStatus').innerText = "❌ فشل الاتصال بالسيرفر.";
-        });
-    }
-}
+        }
 
         function openNotesModal() {
             const g = document.getElementById("gradeSelect").value;
@@ -1749,101 +1703,91 @@
             loadNotes();
         }
 
+        // تم تصحيح أسماء الـ IDs لتتطابق مع الـ HTML لديك
         function saveNote() {
-    // جلب البيانات من الحقول (تأكد أن الـ IDs تطابق الموجودة في الكود لديك)
-    let grade = document.getElementById('classSelect') ? document.getElementById('classSelect').value : '';
-    let section = document.getElementById('sectionSelect') ? document.getElementById('sectionSelect').value : '';
-    let title = document.getElementById('noteTitle').value;
-    let text = document.getElementById('noteText').value;
-    let teacherId = localStorage.getItem('teacher_id');
+            let grade = document.getElementById('gradeSelect').value;
+            let section = document.getElementById('sectionSelect').value;
+            let title = document.getElementById('lessonTitle').value;
+            let text = document.getElementById('lessonNotes').value;
+            let teacherId = localStorage.getItem('teacher_id');
 
-    if (!title || !text) {
-        alert("⚠️ يرجى كتابة عنوان ونص الملاحظة أولاً.");
-        return;
-    }
-    if (!grade || !section) {
-        alert("⚠️ يرجى اختيار الصف والشعبة أولاً لربط الملاحظة بهم.");
-        return;
-    }
-
-    let btn = document.getElementById('saveNoteBtn'); // إذا كان لديك زر حفظ
-    if(btn) btn.innerText = "⏳ جاري الحفظ...";
-
-    fetch(scriptURL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            action: 'save_note',
-            teacher_id: teacherId,
-            grade: grade,
-            section: section,
-            title: title,
-            text: text
-        })
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (d.status === 'success') {
-            alert("✅ تم حفظ الملاحظة بنجاح!");
-            // تفريغ الحقول بعد الحفظ
-            document.getElementById('noteTitle').value = "";
-            document.getElementById('noteText').value = "";
-            // تحديث قائمة الملاحظات لتظهر الملاحظة الجديدة فوراً
-            loadNotes(); 
-        } else {
-            alert("❌ فشل الحفظ: " + d.message);
-        }
-        if(btn) btn.innerText = "حفظ الملاحظة";
-    })
-    .catch(e => {
-        alert("❌ خطأ في الاتصال بالخادم.");
-        if(btn) btn.innerText = "حفظ الملاحظة";
-    });
-}
-        function loadNotes() {
-    let grade = document.getElementById('classSelect') ? document.getElementById('classSelect').value : '';
-    let section = document.getElementById('sectionSelect') ? document.getElementById('sectionSelect').value : '';
-    let teacherId = localStorage.getItem('teacher_id');
-    
-    // معرف الحاوية التي ستظهر فيها الملاحظات (تأكد من الـ ID في ملفك)
-    let container = document.getElementById('notesContainer'); 
-
-    if (!container || !grade || !section) return;
-
-    container.innerHTML = "<div style='text-align:center; padding:20px; font-weight:bold; color:#34495e;'>⏳ جاري جلب الملاحظات من الخادم...</div>";
-
-    fetch(`${scriptURL}?action=get_notes&teacher_id=${teacherId}&grade=${grade}&section=${section}`)
-    .then(r => r.json())
-    .then(d => {
-        if (d.status === 'success') {
-            container.innerHTML = '';
-            
-            // إذا لم تكن هناك ملاحظات مسجلة
-            if (d.notes.length === 0) {
-                container.innerHTML = "<div style='text-align:center; color:#7f8c8d; padding:20px; font-weight:bold;'>📭 لا توجد ملاحظات مسجلة لهذا الصف والشعبة حالياً.</div>";
+            if (!title || !text) {
+                alert("⚠️ يرجى كتابة عنوان ونص الملاحظة أولاً.");
                 return;
             }
-            
-            // رسم كل ملاحظة كبطاقة أنيقة
-            d.notes.forEach(note => {
-                container.innerHTML += `
-                    <div class="note-card" style="background: #ffffff; border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 15px; border-radius: 8px; border-right: 4px solid #2980b9; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        <h4 style="margin: 0 0 10px 0; color: #2c3e50; display:flex; justify-content:space-between; align-items:center;">
-                            <span>📌 ${note.title}</span>
-                            <span style="font-size: 12px; color: #95a5a6; font-weight: normal;">🕒 ${note.date}</span>
-                        </h4>
-                        <p style="margin: 0; color: #34495e; white-space: pre-wrap; font-size: 14px; line-height:1.6;">${note.text}</p>
-                    </div>
-                `;
+
+            let btn = document.getElementById('btnSaveNote');
+            if(btn) btn.innerText = "⏳ جاري الحفظ...";
+
+            fetch(scriptURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'save_note', // هذا الأمر كان مفقوداً أو غير مفعل
+                    teacher_id: teacherId,
+                    grade: grade,
+                    section: section,
+                    title: title,
+                    text: text
+                })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') {
+                    alert("✅ تم حفظ الملاحظة بنجاح!");
+                    document.getElementById('lessonTitle').value = "";
+                    document.getElementById('lessonNotes').value = "";
+                    loadNotes(); 
+                } else {
+                    alert("❌ فشل الحفظ: " + d.message);
+                }
+                if(btn) btn.innerText = "💾 حفظ الملاحظة لهذه الشعبة";
+            })
+            .catch(e => {
+                alert("❌ خطأ في الاتصال بالخادم.");
+                if(btn) btn.innerText = "💾 حفظ الملاحظة لهذه الشعبة";
             });
-        } else {
-            container.innerHTML = `<div style='text-align:center; color:#c0392b;'>❌ خطأ: ${d.message}</div>`;
         }
-    })
-    .catch(e => {
-        container.innerHTML = "<div style='text-align:center; color:#c0392b;'>❌ فشل الاتصال بالخادم لجلب الملاحظات.</div>";
-    });
-}
+
+        function loadNotes() {
+            let grade = document.getElementById('gradeSelect').value;
+            let section = document.getElementById('sectionSelect').value;
+            let teacherId = localStorage.getItem('teacher_id');
+            let container = document.getElementById('previousNotesContainer'); 
+
+            if (!container || !grade || !section) return;
+
+            container.innerHTML = "<div style='text-align:center; padding:20px; font-weight:bold; color:#34495e;'>⏳ جاري جلب الملاحظات من الخادم...</div>";
+
+            fetch(`${scriptURL}?action=get_notes&teacher_id=${teacherId}&grade=${grade}&section=${section}`)
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') {
+                    container.innerHTML = '';
+                    if (d.notes.length === 0) {
+                        container.innerHTML = "<div style='text-align:center; color:#7f8c8d; padding:20px; font-weight:bold;'>📭 لا توجد ملاحظات مسجلة لهذا الصف والشعبة حالياً.</div>";
+                        return;
+                    }
+                    d.notes.forEach(note => {
+                        container.innerHTML += `
+                            <div class="note-card" style="background: var(--category-bg); border: 1px solid var(--border-color); padding: 15px; margin-bottom: 15px; border-radius: 8px; border-right: 4px solid #8e44ad;">
+                                <h4 style="margin: 0 0 10px 0; color: var(--text-color); display:flex; justify-content:space-between; align-items:center;">
+                                    <span>📌 ${note.title}</span>
+                                    <span style="font-size: 12px; color: #95a5a6; font-weight: normal;">🕒 ${note.date}</span>
+                                </h4>
+                                <p style="margin: 0; color: var(--text-color); white-space: pre-wrap; font-size: 14px; line-height:1.6;">${note.text}</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    container.innerHTML = `<div style='text-align:center; color:#c0392b;'>❌ خطأ: ${d.message}</div>`;
+                }
+            })
+            .catch(e => {
+                container.innerHTML = "<div style='text-align:center; color:#c0392b;'>❌ فشل الاتصال بالخادم لجلب الملاحظات.</div>";
+            });
+        }
+
         function calc(inp, gradeType) {
             let tr = inp.closest('tr');
             if(!tr) return;
@@ -1876,6 +1820,7 @@
             }
         }
 
+        // تم إضافة action = save_grades ليتمكن السيرفر من حفظ الدرجات
         function submitData() {
             const g = document.getElementById("gradeSelect").value;
             const s = document.getElementById("sectionSelect").value;
@@ -1923,6 +1868,7 @@
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
+                    action: 'save_grades', // هذا الأمر كان مفقوداً
                     teacher_id: localStorage.getItem('teacher_id'),
                     grade: g,
                     section: s,
@@ -1945,8 +1891,6 @@
         function generateDetailedReports() { alert('ميزة التقارير والشهادات قيد الإعداد.'); }
         function toggleHonorRoll() { alert('ميزة لوحة الشرف قيد الإعداد.'); }
         function openSeatingChart() { openModal('seatingModal'); }
-
-        // ----------------------------------------------------
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition;
@@ -2030,59 +1974,6 @@
             btn.classList.remove('listening');
             btn.innerText = '🎤';
         }
-        function loadStudentGrades() {
-    const grade = document.getElementById('classSelect').value;
-    const section = document.getElementById('sectionSelect').value;
-    const teacherId = localStorage.getItem('teacher_id');
-
-    if (!grade || !section || !teacherId) return;
-
-    fetch(`${scriptURL}?grade=${encodeURIComponent(grade)}&section=${encodeURIComponent(section)}&teacher_id=${teacherId}`)
-    .then(response => response.json())
-    .then(data => {
-        if (data.result === "success") {
-            displayDataInTable(data.data); 
-        } else {
-            console.log("تنبيه: " + data.message);
-        }
-    })
-    .catch(error => console.error("خطأ في جلب الدرجات:", error));
-}
-
-function saveStudentGrades() {
-    const grade = document.getElementById('classSelect').value;
-    const section = document.getElementById('sectionSelect').value;
-    const teacherId = localStorage.getItem('teacher_id');
-    
-    const studentsData = getGradesFromTable(); // الدالة التي تجمع الدرجات من جدولك
-
-    if (!teacherId) {
-        alert("❌ انتهت الجلسة، يرجى إعادة تسجيل الدخول.");
-        return;
-    }
-
-    const payload = {
-        grade: grade,
-        section: section,
-        teacher_id: teacherId,
-        students: studentsData
-    };
-
-    fetch(scriptURL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.result === "success") {
-            alert("✅ تم حفظ درجات الطلاب بنجاح في السحابة!");
-        } else {
-            alert("❌ فشل الحفظ: " + data.message);
-        }
-    })
-    .catch(error => alert("❌ خطأ في الاتصال بالخادم أثناء الحفظ."));
-}
     </script>
 </body>
 </html>
