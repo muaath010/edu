@@ -1634,7 +1634,10 @@
 
             container.innerHTML = "⏳ جاري تحميل الملفات...";
             
-            fetch(`${scriptURL}?action=get_repo_files&teacher_id=${localStorage.getItem('teacher_id')}`)
+            // إضافة ختم زمني (t=...) لمنع المتصفح من تخزين النتيجة مؤقتاً
+            const timestamp = new Date().getTime();
+            
+            fetch(`${scriptURL}?action=get_repo_files&teacher_id=${localStorage.getItem('teacher_id')}&t=${timestamp}`)
             .then(r => r.json())
             .then(d => {
                 if(d.status === 'success') {
@@ -1645,7 +1648,7 @@
                     }
                     
                     d.files.forEach(file => {
-                        let fileUrl = file.url; // تعديل محلي آمن
+                        let fileUrl = file.url; 
                         container.innerHTML += `
                             <div style="border:1px solid #ccc; padding:10px; margin:5px; border-radius:5px; text-align:center; background:var(--category-bg);">
                                 <a href="${fileUrl}" target="_blank" style="text-decoration:none; color:var(--text-color); font-weight:bold;">📄<br>${file.name}</a>
