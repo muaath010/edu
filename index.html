@@ -1282,11 +1282,6 @@ function copyGradesToClipboard() {
             clearInterval(bombTimerInterval);
         }
 
-         function submitOrder(e) {
-           if (!isWithinWorkingHours()) {
-               alert(`⚠️ عذراً! أنت تطلب خارج أوقات العمل الرسمية لفريق نعاون.\nساعات العمل من ${workStartTime} إلى ${workEndTime}.\nالرجاء المحاولة خلال الأوقات المتاحة.`);
-               return;
-           }
 
         function setupGameUI(type) {
             const ui = document.getElementById('gameUIContainer');
