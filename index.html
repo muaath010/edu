@@ -381,6 +381,11 @@
             <button class="theme-toggle" onclick="copyGradesToClipboard()" style="background:#27ae60; color:white; border-color:#219653;">📋 نسخ درجات الشعبة</button>
             <select id="gradeSelect" onchange="buildSectionDropdown()"></select>
             <select id="sectionSelect" onchange="updateView()"></select>
+            <select id="subjectTemplate" onchange="changeSubjectTemplate()" style="background:#eafaf1; color:#27ae60;">
+    <option value="it">💻 كشف التقنية (الافتراضي)</option>
+    <option value="math">📐 كشف الرياضيات/العلوم</option>
+    <option value="islamic">🕌 كشف التربية الإسلامية/العربية</option>
+</select>
             <button class="theme-toggle" onclick="toggleTableVisibility()" id="toggleTableBtn" style="background:#3498db; color:white; border-color:#2980b9;">إظهار الكشف</button>
             <span id="teacherWelcome" style="font-weight:bold; color:#2980b9; margin-left:15px;"></span>
             
@@ -1962,9 +1967,82 @@ function copyGradesToClipboard() {
             });
         }
 
-        function exportToExcel() { alert('ميزة التصدير قيد الإعداد في هذا التحديث.'); }
-        function generateDetailedReports() { alert('ميزة التقارير والشهادات قيد الإعداد.'); }
-        function toggleHonorRoll() { alert('ميزة لوحة الشرف قيد الإعداد.'); }
+        // --- 4. تصدير الكشف إلى Excel ---
+function exportToExcel() {
+    const g = document.getElementById("gradeSelect").value;
+    let table = document.getElementById("gradesTable" + g);
+    if (!table) return alert('لا يوجد كشف درجات لتصديره.');
+    
+    let clone = table.cloneNode(true);
+    // تحويل حقول الإدخال إلى نصوص عادية للإكسل
+    clone.querySelectorAll('input').forEach(inp => {
+        inp.parentNode.replaceChild(document.createTextNode(inp.value || "0"), inp);
+    });
+    clone.querySelectorAll('.risk-alert').forEach(e => e.remove()); // إزالة أيقونات التنبيه
+    
+    let wb = XLSX.utils.table_to_book(clone, {sheet:"درجات"});
+    XLSX.writeFile(wb, `كشف_الدرجات_صف_${g}.xlsx`);
+}
+
+// --- 5. لوحة الشرف (الأوائل) ---
+function toggleHonorRoll() {
+    const g = document.getElementById("gradeSelect").value;
+    let tbody = document.getElementById("tbody" + g);
+    if(!tbody || tbody.innerHTML.includes("جاري جلب")) return alert("لا توجد بيانات مسجلة.");
+
+    let arr = [];
+    tbody.querySelectorAll('tr').forEach(tr => {
+        let nameEl = tr.querySelector(`span[id^="name-"]`);
+        let totalCell = tr.querySelector('.t-grand');
+        if(nameEl && totalCell) {
+            arr.push({name: nameEl.innerText.split(' ').slice(0,3).join(' '), score: parseFloat(totalCell.innerText) || 0});
+        }
+    });
+    
+    arr.sort((a,b) => b.score - a.score);
+    let top = arr.slice(0, 5).filter(st => st.score > 0); // أفضل 5 طلاب
+    if(top.length === 0) return alert('لم يتم رصد درجات بعد.');
+
+    let text = "🏆 فرسان التميز الأوائل 🏆:  " + top.map((t, i) => `${i+1}. ${t.name} (${t.score})`).join("  ⭐  ");
+    document.getElementById('honorTickerText').innerText = text;
+    document.getElementById('honorTickerWrap').style.display = 'flex';
+    playSound(1000, 'sine', 1, 0.2);
+    setTimeout(() => { document.getElementById('honorTickerWrap').style.display = 'none'; }, 20000);
+}
+
+// --- 6. الشهادات والتقارير الفردية ---
+function generateDetailedReports() {
+    const g = document.getElementById("gradeSelect").value;
+    let tbody = document.getElementById("tbody" + g);
+    let container = document.getElementById("reportsContainer");
+    
+    if(!tbody || tbody.innerHTML.includes("جاري جلب")) return alert("يجب إظهار الكشف أولاً لجلب البيانات.");
+    
+    openModal('reportsModal');
+    let html = '';
+    
+    tbody.querySelectorAll('tr').forEach((tr, idx) => {
+        let nameEl = tr.querySelector(`span[id^="name-"]`);
+        if(!nameEl) return;
+        let name = nameEl.innerText;
+        let total = tr.querySelector('.t-grand').innerText;
+        let status = (total >= 90) ? "ممتاز 🌟" : (total >= 70) ? "جيد جداً 👍" : "يحتاج متابعة ⚠️";
+        
+        html += `
+        <div class="report-img-card" id="rep-${idx}" style="margin:20px; border:2px solid #3498db;">
+            <div class="report-img-header" style="text-align:center; font-size:22px;">📜 شهادة تقييم أداء</div>
+            <div class="report-img-body" style="font-size:18px; text-align:center; padding: 30px; background:#fff;">
+                يشهد معلم المادة بأن الطالب: <strong style="color:#2980b9; font-size:24px;">${name}</strong><br><br>
+                قد حصل على مجموع: <strong style="color:#e74c3c; font-size:28px;">${total}</strong> / 100<br>
+                التقدير العام: <strong>${status}</strong>
+            </div>
+            <div class="report-img-actionbar" style="justify-content:center;">
+                <button class="cert-btn" onclick="html2pdf().from(document.getElementById('rep-${idx}')).save('شهادة_${name}.pdf')">📥 تحميل كشهادة PDF</button>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
         function openSeatingChart() { openModal('seatingModal'); }
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2049,6 +2127,125 @@ function copyGradesToClipboard() {
             btn.classList.remove('listening');
             btn.innerText = '🎤';
         }
+        // --- 1. المؤقت الذكي ---
+let countdownTimer;
+let timeLeft = 300;
+let timerRunning = false;
+
+function setCustomTimer() {
+    timeLeft = parseInt(document.getElementById('timerMinutesInput').value) * 60;
+    updateTimerDisplay();
+}
+function startTimer() {
+    if (timerRunning) return;
+    timerRunning = true;
+    countdownTimer = setInterval(() => {
+        if (timeLeft > 0) {
+            timeLeft--;
+            updateTimerDisplay();
+        } else {
+            clearInterval(countdownTimer);
+            timerRunning = false;
+            playSound(1000, 'sine', 1, 0.5); // جرس النهاية
+            alert('⏱️ انتهى الوقت المخصص للنشاط!');
+        }
+    }, 1000);
+}
+function pauseTimer() { clearInterval(countdownTimer); timerRunning = false; }
+function resetTimer() { pauseTimer(); setCustomTimer(); }
+function updateTimerDisplay() {
+    let m = Math.floor(timeLeft / 60); let s = timeLeft % 60;
+    document.getElementById('timerDisplay').innerText = (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+}
+
+// --- 2. الإشارات الضوئية والرادار (يعتمد على الميكروفون) ---
+function setTrafficLight(color) {
+    document.querySelectorAll('.light').forEach(el => el.classList.remove('active'));
+    document.querySelector('.light.' + color).classList.add('active');
+    let status = document.getElementById('trafficStatus');
+    if(color === 'red') { status.innerText = '🔴 توقف وانتباه'; status.style.color = '#e74c3c'; playSound(300, 'sawtooth', 0.5, 0.2); }
+    if(color === 'yellow') { status.innerText = '🟡 استعد / هدوء'; status.style.color = '#f1c40f'; }
+    if(color === 'green') { status.innerText = '🟢 انطلق / عمل جماعي'; status.style.color = '#27ae60'; }
+}
+
+let audioStream = null; let audioContext = null; let radarInterval = null;
+async function toggleNoiseRadar() {
+    const btn = document.getElementById('btnRadarToggle');
+    if (audioStream) {
+        audioStream.getTracks().forEach(t => t.stop());
+        audioStream = null; clearInterval(radarInterval);
+        document.getElementById('radarLevel').style.width = '0%';
+        btn.innerText = '🎙️ تفعيل الرادار الذكي';
+        return;
+    }
+    try {
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let source = audioContext.createMediaStreamSource(audioStream);
+        let analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256; source.connect(analyser);
+        let dataArray = new Uint8Array(analyser.frequencyBinCount);
+        btn.innerText = '🛑 إيقاف الرادار';
+
+        radarInterval = setInterval(() => {
+            analyser.getByteFrequencyData(dataArray);
+            let sum = dataArray.reduce((a, b) => a + b, 0);
+            let avg = sum / dataArray.length;
+            let width = Math.min(100, (avg / 128) * 100);
+            let bar = document.getElementById('radarLevel');
+            bar.style.width = width + '%';
+            if (width > 80) { bar.style.backgroundColor = '#e74c3c'; setTrafficLight('red'); }
+            else if (width > 50) { bar.style.backgroundColor = '#f1c40f'; setTrafficLight('yellow'); }
+            else { bar.style.backgroundColor = '#27ae60'; setTrafficLight('green'); }
+        }, 300);
+    } catch(e) { alert("⚠️ يجب السماح باستخدام الميكروفون لتفعيل الرادار!"); }
+}
+
+// --- 3. مقسم المجموعات العشوائي ---
+function generateGroups() {
+    const g = document.getElementById("gradeSelect").value;
+    const s = document.getElementById("sectionSelect").value;
+    let list = studentsData[g] && studentsData[g][s] ? [...studentsData[g][s]] : [];
+    if(list.length === 0) return alert("لا يوجد طلاب في هذه الشعبة.");
+
+    list.sort(() => Math.random() - 0.5); // خلط عشوائي سريع
+    let groupCount = parseInt(document.getElementById('groupCount').value) || 4;
+    let groups = Array.from({length: groupCount}, () => []);
+
+    list.forEach((name, i) => { groups[i % groupCount].push(name); });
+
+    let html = '';
+    groups.forEach((grp, i) => {
+        html += `<div style="background:#eaf2f8; padding:15px; margin-bottom:10px; border-radius:8px; border:2px dashed #3498db; font-size:16px;">
+            <strong style="color:#2980b9; font-size:18px;">المجموعة ${i+1}</strong><br><br>
+            ${grp.join('  |  ')}
+        </div>`;
+    });
+    document.getElementById('groupsDisplay').innerHTML = html;
+}
+function downloadGroupsPDF() {
+    let el = document.getElementById('groupsDisplay');
+    if(!el.innerHTML) return alert('قم بتوليد المجموعات أولاً.');
+    html2pdf().from(el).save('تقسيم_المجموعات.pdf');
+}
+        function changeSubjectTemplate() {
+    let type = document.getElementById("subjectTemplate").value;
+    let tables = document.querySelectorAll("table thead");
+    
+    tables.forEach(thead => {
+        let textHTML = thead.innerHTML;
+        // إعادة التعيين للافتراضي قبل التعديل
+        textHTML = textHTML.replace(/الواجبات/g, "الحوار").replace(/تلاوة وحفظ/g, "الحوار")
+                           .replace(/اختبارات قصيرة/g, "الأنشطة").replace(/تعبير وقراءة/g, "الأنشطة");
+        
+        if (type === "math") {
+            textHTML = textHTML.replace(/الحوار/g, "الواجبات").replace(/الأنشطة/g, "اختبارات قصيرة");
+        } else if (type === "islamic") {
+            textHTML = textHTML.replace(/الحوار/g, "تلاوة وحفظ").replace(/الأنشطة/g, "تعبير وقراءة");
+        }
+        thead.innerHTML = textHTML;
+    });
+}
     </script>
 </body>
 </html>
