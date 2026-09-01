@@ -273,9 +273,46 @@
         .space-laser { position: absolute; width: 4px; height: 20px; background: #00ff00; bottom: 50px; border-radius: 2px; box-shadow: 0 0 10px #00ff00;}
         .space-alien { position: absolute; color: white; font-weight: bold; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 5px; border: 1px solid #444; font-size: 12px; transition: top 0.5s;}
 
+        /* --- القائمة الجانبية (Hamburger Menu) --- */
+.hamburger-btn { position: fixed; top: 20px; right: 20px; z-index: 1001; background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 10px; padding: 8px 12px; cursor: pointer; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: var(--text-color); transition: 0.3s;}
+.hamburger-btn:hover { transform: scale(1.1); border-color: #3498db; }
+.side-menu { position: fixed; top: 0; right: -320px; width: 280px; height: 100vh; background: var(--card-bg); z-index: 1000; transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: -5px 0 25px rgba(0,0,0,0.2); padding: 80px 20px 20px; display: flex; flex-direction: column; gap: 15px; border-left: 3px solid #3498db;}
+.side-menu.open { right: 0; }
+.menu-item { padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 12px; transition: 0.2s; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color); font-size: 16px;}
+.menu-item:hover { background: #3498db; color: white; border-color: #2980b9; transform: translateX(-5px);}
+.menu-item.danger:hover { background: #e74c3c; color: white; border-color: #c0392b;}
+.menu-item.admin:hover { background: #8e44ad; color: white; border-color: #732d91;}
+
+/* --- التصميم العصري للوحة التعزيزات --- */
+.reinforcement-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px; max-height: 450px; overflow-y: auto; padding: 10px 5px;}
+.reinf-card { background: linear-gradient(145deg, var(--input-bg), var(--card-bg)); border: 2px solid transparent; border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 12px; box-shadow: 5px 5px 15px rgba(0,0,0,0.05), -5px -5px 15px rgba(255,255,255,0.8); transition: 0.3s; position: relative;}
+.dark-mode .reinf-card { box-shadow: 5px 5px 15px rgba(0,0,0,0.3), -5px -5px 15px rgba(255,255,255,0.02); }
+.reinf-card:hover { transform: translateY(-5px); border-color: #3498db; box-shadow: 0 10px 25px rgba(52, 152, 219, 0.2);}
+.reinf-name { font-size: 16px; font-weight: bold; color: var(--text-color); border-bottom: 2px dashed #bdc3c7; padding-bottom: 8px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;}
+.reinf-row { display: flex; justify-content: space-between; align-items: center; background: var(--category-bg); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color);}
+.reinf-row-title { font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 5px;}
+.reinf-btn-group { display: flex; gap: 8px; align-items: center; }
+.r-btn { width: 30px; height: 30px; border: none; border-radius: 50%; font-weight: bold; cursor: pointer; color: white; font-size: 18px; display:flex; justify-content:center; align-items:center; transition:0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+.r-btn:hover { transform: scale(1.15); }
+.r-inp { width: 35px; text-align: center; border: 2px solid var(--border-color); background: var(--card-bg); border-radius: 8px; font-weight: bold; font-size: 15px; padding: 4px; color: var(--text-color);}
+.r-inp.viol { color: #e74c3c; border-color: #fadbd8;}
+.r-inp.excel { color: #27ae60; border-color: #d5f5e3;}
+
     </style>
 </head>
 <body>
+    <!-- زر القائمة الجانبية -->
+    <button class="hamburger-btn" onclick="toggleMenu()" id="btnMenuToggle">☰</button>
+
+    <!-- القائمة الجانبية -->
+    <div class="side-menu" id="sideMenu">
+        <div style="text-align: center; margin-bottom: 10px;"><img src="logo.png" style="width: 100px;"></div>
+        <div class="menu-item admin" onclick="openAdminPanel()">⚙️ إعدادات النظام (المدير)</div>
+        <div class="menu-item" onclick="toggleDarkMode()">🎨 تغيير المظهر</div>
+        <div class="menu-item" onclick="toggleTableVisibility()" id="menuToggleTableBtn">👁️ إخفاء/إظهار الكشف</div>
+        <div class="menu-item" onclick="alert('منصة مِحور الإصدار 4.0\nتطوير: أ. معاذ اليعقوبي')">ℹ️ نبذة عن المنصة</div>
+        <div class="menu-item danger" onclick="doLogout()">🚪 تسجيل خروج</div>
+    </div>
     <div style="font-family: 'Amiri', serif; position: absolute; visibility: hidden; width: 0; height: 0; pointer-events: none;">تحميل خط الشهادة</div>
 
     <div class="glass-overlay"></div>
@@ -341,12 +378,12 @@
         
         <p class="author-name">إعداد: أ. معاذ اليعقوبي</p>
         <div class="controls">
+            <button class="theme-toggle" onclick="copyGradesToClipboard()" style="background:#27ae60; color:white; border-color:#219653;">📋 نسخ درجات الشعبة</button>
             <select id="gradeSelect" onchange="buildSectionDropdown()"></select>
             <select id="sectionSelect" onchange="updateView()"></select>
-            <button class="theme-toggle" onclick="toggleDarkMode()" id="themeBtn">تغيير المظهر</button>
             <button class="theme-toggle" onclick="toggleTableVisibility()" id="toggleTableBtn" style="background:#3498db; color:white; border-color:#2980b9;">إظهار الكشف</button>
             <span id="teacherWelcome" style="font-weight:bold; color:#2980b9; margin-left:15px;"></span>
-            <button onclick="doLogout()" class="theme-toggle" style="background:#c0392b; color:white; border-color:#a93226;">تسجيل خروج</button>
+            
         </div>
     </div>
 
@@ -718,6 +755,41 @@
             localStorage.removeItem('teacher_name');
             location.reload();
         }
+        // تشغيل وإغلاق القائمة الجانبية
+function toggleMenu() {
+    document.getElementById('sideMenu').classList.toggle('open');
+}
+
+// دالة نسخ الدرجات إلى الحافظة (متوافقة مع الإكسل)
+function copyGradesToClipboard() {
+    const g = document.getElementById("gradeSelect").value;
+    const tbody = document.getElementById("tbody" + g);
+    if (!tbody || tbody.innerHTML.includes("جاري جلب")) return alert("لا توجد بيانات لنسخها حالياً.");
+
+    let rows = tbody.querySelectorAll('tr');
+    let copyText = "";
+
+    rows.forEach(tr => {
+        let rowData = [];
+        tr.querySelectorAll('td').forEach(td => {
+            let input = td.querySelector('input');
+            if (input) {
+                rowData.push(input.value || "0"); // نسخ الرقم من الحقل
+            } else {
+                // تنظيف النص من التنبيهات مثل "تراجع بالمستوى"
+                let text = td.innerText.replace("⚠️ تراجع بالمستوى", "").replace(/\n/g, " ").trim();
+                rowData.push(text);
+            }
+        });
+        if(rowData.length > 0) copyText += rowData.join("\t") + "\n";
+    });
+
+    navigator.clipboard.writeText(copyText).then(() => {
+        alert("✅ تم نسخ جميع الدرجات بنجاح! افتح ملف الإكسل واضغط (لصق - Paste).");
+    }).catch(err => {
+        alert("❌ فشل النسخ، يرجى المحاولة مرة أخرى.");
+    });
+}
 
         function loadInitialData() {
             const headerTitle = document.querySelector('.header-container h2');
@@ -870,22 +942,22 @@
 
                 let shortName = name.split(' ').slice(0, 3).join(' ');
                 let rCard = document.createElement("div"); rCard.className = "reinf-card";
-                rCard.innerHTML = `
-                    <div class="reinf-name" title="${name}">${i+1}. ${shortName}</div>
+               rCard.innerHTML = `
+                    <div class="reinf-name" title="${name}">🧑‍🎓 ${i+1}. ${shortName}</div>
                     <div class="reinf-row">
-                        <span class="reinf-row-title">🌟 تميز</span>
+                        <span class="reinf-row-title">🌟 تميز/مشاركة</span>
                         <div class="reinf-btn-group">
-                            <button class="r-btn" style="background:#27ae60" onclick="changeReinfVal('int-${i}', 1)">+</button>
-                            <input type="text" id="int-${i}" class="r-inp" value="${valZero(intIdx)}" readonly>
-                            <button class="r-btn" style="background:#95a5a6" onclick="changeReinfVal('int-${i}', -1)">-</button>
+                            <button class="r-btn" style="background:#27ae60" onclick="changeReinfVal('int-${i}', 1); playSound(800, 'sine', 0.1, 0.1);">+</button>
+                            <input type="text" id="int-${i}" class="r-inp excel" value="${valZero(intIdx)}" readonly>
+                            <button class="r-btn" style="background:#7f8c8d" onclick="changeReinfVal('int-${i}', -1)">-</button>
                         </div>
                     </div>
                     <div class="reinf-row">
-                        <span class="reinf-row-title">⚠️ المخالفة</span>
+                        <span class="reinf-row-title">⚠️ مخالفة/نقص</span>
                         <div class="reinf-btn-group">
-                            <button class="r-btn" style="background:#e74c3c" onclick="changeReinfVal('viol-${i}', 1)">+</button>
+                            <button class="r-btn" style="background:#e74c3c" onclick="changeReinfVal('viol-${i}', 1); playSound(150, 'sawtooth', 0.2, 0.2);">+</button>
                             <input type="text" id="viol-${i}" class="r-inp viol" value="${valZero(violIdx)}" readonly>
-                            <button class="r-btn" style="background:#95a5a6" onclick="changeReinfVal('viol-${i}', -1)">-</button>
+                            <button class="r-btn" style="background:#7f8c8d" onclick="changeReinfVal('viol-${i}', -1)">-</button>
                         </div>
                     </div>`;
                 rGrid.appendChild(rCard);
