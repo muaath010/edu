@@ -675,6 +675,31 @@
         </div>
     </div>
 
+    <!-- نافذة إعدادات النظام (المدير) -->
+    <div id="modalAdminPanel" class="modal" style="z-index: 3000;">
+        <div class="modal-content modal-large">
+            <span class="close-btn" onclick="closeModal('modalAdminPanel')">&times;</span>
+            <div class="modal-header"><h3 style="color:#8e44ad;">⚙️ لوحة تحكم النظام المركزية</h3></div>
+            <div class="modal-large-body">
+                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap: wrap;">
+                    <button class="btn-save-note" style="flex:1; background:#34495e;" onclick="renderAdminData('teachers')">👨‍🏫 إدارة المعلمين</button>
+                    <button class="btn-save-note" style="flex:1; background:#2980b9;" onclick="renderAdminData('classes')">🏫 الصفوف والشعب</button>
+                    <button class="btn-save-note" style="flex:1; background:#16a085;" onclick="renderAdminData('files')">📂 الملفات المرفوعة</button>
+                </div>
+                
+                <div style="background:var(--input-bg); padding:15px; border-radius:8px; border:1px solid var(--border-color); overflow-x: auto;">
+                    <table style="width:100%; border-collapse: collapse; text-align:center; font-size:14px;" id="adminTable">
+                        <thead class="header-blue" id="adminThead">
+                            <tr><th>يرجى اختيار قسم لعرض البيانات</th></tr>
+                        </thead>
+                        <tbody id="adminTbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
        let studentsData = {}; 
         const scriptURL = 'https://darkslateblue-wren-226762.hostingersite.com/api.php'; // تم التعديل لرابط محلي لضمان سرعة الاتصال وعدم الحظر
@@ -2244,6 +2269,97 @@ function downloadGroupsPDF() {
             textHTML = textHTML.replace(/الحوار/g, "تلاوة وحفظ").replace(/الأنشطة/g, "تعبير وقراءة");
         }
         thead.innerHTML = textHTML;
+    });
+}
+        // --- وظائف لوحة تحكم المدير ---
+let adminGlobalData = {};
+
+function openAdminPanel() {
+    // التحقق من كلمة مرور المدير (كما في الإعدادات الأصلية)
+    let pass = prompt("الرجاء إدخال كلمة مرور مدير النظام:");
+    if (pass !== "Muath2026") {
+        return alert("❌ كلمة المرور غير صحيحة. تم رفض الوصول.");
+    }
+    
+    // إغلاق القائمة الجانبية وفتح نافذة الإدارة
+    document.getElementById('sideMenu').classList.remove('open');
+    openModal('modalAdminPanel');
+    
+    document.getElementById('adminTbody').innerHTML = `<tr><td colspan="5">⏳ جاري جلب بيانات النظام...</td></tr>`;
+    
+    // جلب البيانات من السيرفر
+    const timestamp = new Date().getTime();
+    fetch(`${scriptURL}?action=admin_get_all&t=${timestamp}`)
+    .then(r => r.json())
+    .then(d => {
+        if(d.status === 'success') {
+            adminGlobalData = d;
+            renderAdminData('teachers'); // عرض المعلمين كشاشة افتراضية
+        } else {
+            document.getElementById('adminTbody').innerHTML = `<tr><td colspan="5">❌ خطأ: ${d.message}</td></tr>`;
+        }
+    }).catch(e => {
+        document.getElementById('adminTbody').innerHTML = `<tr><td colspan="5">❌ فشل الاتصال بالسيرفر.</td></tr>`;
+    });
+}
+
+function renderAdminData(type) {
+    const thead = document.getElementById('adminThead');
+    const tbody = document.getElementById('adminTbody');
+    let html = '';
+
+    if (type === 'teachers') {
+        thead.innerHTML = `<tr><th>م</th><th>اسم المعلم</th><th>البريد الإلكتروني</th><th>تاريخ التسجيل</th><th>إجراء</th></tr>`;
+        if (adminGlobalData.teachers.length === 0) html = `<tr><td colspan="5">لا يوجد معلمين.</td></tr>`;
+        adminGlobalData.teachers.forEach((t, i) => {
+            html += `<tr>
+                <td>${i+1}</td><td><strong>${t.name}</strong></td><td>${t.email}</td><td dir="ltr">${t.date}</td>
+                <td><button onclick="adminDeleteEntity('teacher', ${t.id}, '${t.name}')" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">🗑️ حذف شامل</button></td>
+            </tr>`;
+        });
+    } 
+    else if (type === 'classes') {
+        thead.innerHTML = `<tr><th>م</th><th>المعلم</th><th>الصف</th><th>الشعبة</th></tr>`;
+        if (adminGlobalData.classes.length === 0) html = `<tr><td colspan="4">لا توجد صفوف مسجلة.</td></tr>`;
+        adminGlobalData.classes.forEach((c, i) => {
+            html += `<tr><td>${i+1}</td><td style="color:#2980b9; font-weight:bold;">${c.teacher_name}</td><td>${c.grade}</td><td>${c.section}</td></tr>`;
+        });
+    }
+    else if (type === 'files') {
+        thead.innerHTML = `<tr><th>م</th><th>صاحب الملف</th><th>اسم الملف</th><th>تاريخ الرفع</th><th>إجراء</th></tr>`;
+        if (adminGlobalData.files.length === 0) html = `<tr><td colspan="5">لا توجد ملفات.</td></tr>`;
+        adminGlobalData.files.forEach((f, i) => {
+            html += `<tr>
+                <td>${i+1}</td><td style="color:#16a085; font-weight:bold;">${f.teacher_name}</td>
+                <td><a href="${f.file_url}" target="_blank" style="text-decoration:none;">📄 ${f.file_name}</a></td><td dir="ltr">${f.date}</td>
+                <td><button onclick="adminDeleteEntity('file', ${f.id}, '${f.file_name}')" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">🗑️ حذف</button></td>
+            </tr>`;
+        });
+    }
+    tbody.innerHTML = html;
+}
+
+function adminDeleteEntity(type, id, name) {
+    let msg = type === 'teacher' 
+        ? `⚠️ تحذير خطير جداً!\nهل أنت متأكد من حذف المعلم (${name})؟\nهذا الإجراء سيقوم تلقائياً بحذف جميع طلابه، درجاته، ملفاته واختباراته بشكل نهائي!`
+        : `هل أنت متأكد من حذف الملف (${name})؟`;
+        
+    if(!confirm(msg)) return;
+
+    let action = type === 'teacher' ? 'admin_delete_teacher' : 'admin_delete_file';
+    
+    fetch(scriptURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action, id: id })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if(d.status === 'success') {
+            alert('✅ تم الحذف بنجاح!');
+            document.getElementById('sideMenu').classList.add('open'); // خدعة لإعادة فتح القائمة
+            openAdminPanel(); // إعادة تحميل البيانات
+        }
     });
 }
     </script>
