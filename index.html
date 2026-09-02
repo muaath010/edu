@@ -406,6 +406,7 @@
         
         <p class="author-name">إعداد: أ. معاذ اليعقوبي</p>
         <div class="controls">
+            <button class="theme-toggle" onclick="openSchemaBuilder()" style="background:#8e44ad; color:white; border-color:#732d91;">⚙️ تخصيص الكشف</button>
             <button class="theme-toggle" onclick="copyGradesToClipboard()" style="background:#27ae60; color:white; border-color:#219653;">📋 نسخ درجات الشعبة</button>
             <select id="gradeSelect" onchange="buildSectionDropdown()"></select>
             <select id="sectionSelect" onchange="updateView()"></select>
@@ -728,11 +729,43 @@
         </div>
     </div>
 
+
+    <!-- نافذة صانع الكشوفات المرن -->
+    <div id="modalSchemaBuilder" class="modal" style="z-index: 2500;">
+        <div class="modal-content modal-large">
+            <span class="close-btn" onclick="closeModal('modalSchemaBuilder')">&times;</span>
+            <div class="modal-header"><h3 style="color:#27ae60;">🛠️ تخصيص وبناء كشف الدرجات</h3></div>
+            <div class="modal-large-body">
+                <p style="text-align:center; font-weight:bold;">اختر الطريقة التي تفضلها لبناء الكشف الخاص بهذه الشعبة:</p>
+                
+                <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:20px;">
+                    <!-- الطريقة الأولى: التعرف الذكي من الإكسل -->
+                    <div style="flex:1; background:var(--category-bg); padding:20px; border-radius:10px; border:2px dashed #27ae60; text-align:center;">
+                        <h4 style="color:#27ae60; margin-top:0;">📊 الطريقة 1: استيراد من إكسل</h4>
+                        <p style="font-size:13px; color:#7f8c8d;">يجب أن يحتوي الصف الأول على "اسم العمود" والصف الثاني على "الدرجة النهائية".</p>
+                        <input type="file" id="excelSchemaInput" accept=".xlsx, .xls" style="display:none;" onchange="handleExcelSchema(this)">
+                        <button onclick="document.getElementById('excelSchemaInput').click()" style="background:#27ae60; color:white; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">📥 رفع ملف الإكسل</button>
+                    </div>
+
+                    <!-- الطريقة الثانية: البناء اليدوي التفاعلي -->
+                    <div style="flex:1; background:var(--category-bg); padding:20px; border-radius:10px; border:2px solid #3498db;">
+                        <h4 style="color:#3498db; margin-top:0;">✍️ الطريقة 2: البناء اليدوي</h4>
+                        <div id="manualSchemaColumns" style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;"></div>
+                        <button onclick="addSchemaColumn()" style="background:#3498db; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; font-weight:bold;">➕ إضافة عمود جديد</button>
+                    </div>
+                </div>
+
+                <button onclick="saveCustomSchema()" style="width:100%; background:#e67e22; color:white; border:none; padding:15px; border-radius:8px; font-size:18px; font-weight:bold; cursor:pointer;">💾 اعتماد وحفظ شكل الكشف لهذه الشعبة</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
        let studentsData = {}; 
         const scriptURL = 'https://darkslateblue-wren-226762.hostingersite.com/api.php'; // تم التعديل لرابط محلي لضمان سرعة الاتصال وعدم الحظر
         
         let currentSheetData = {};
+        let currentSchema = []; // لحفظ هيكلة الكشف الحالية
         let currentAdminPassword = "";
         
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -926,125 +959,14 @@ function copyGradesToClipboard() {
             updateView();
         }
 
-        function updateView() {
-            const g = document.getElementById("gradeSelect").value; 
-            const s = document.getElementById("sectionSelect").value;
-            if(!g || !s) return;
-            
-            if (!document.getElementById("form" + g)) {
-                let newForm = document.createElement("div");
-                newForm.id = "form" + g;
-                newForm.className = "form-section";
-                
-                let isGrade6 = (g === "6");
-                let tableHTML = "";
-                
-                if (isGrade6) {
-                    tableHTML = `
-                        <div class="table-container">
-                            <table id="gradesTable${g}">
-                                <thead>
-                                    <tr>
-                                        <th rowspan="2" class="header-blue" style="width:30px;">م</th><th rowspan="2" class="header-blue" style="width:200px;">إسم الطالب</th>
-                                        <th colspan="2" class="header-blue">الحوار</th><th rowspan="2" class="header-orange">مجموع</th>
-                                        <th colspan="4" class="header-blue">الأسئلة القصيرة</th><th rowspan="2" class="header-orange">مجموع</th>
-                                        <th colspan="2" class="header-blue">الأنشطة</th><th rowspan="2" class="header-orange">مجموع</th>
-                                        <th rowspan="2" class="header-blue">المشروع</th><th rowspan="2" class="header-orange">الكلية</th>
-                                    </tr>
-                                    <tr><th>10</th><th>10</th><th>5</th><th>5</th><th>5</th><th>5</th><th>20</th><th>20</th></tr>
-                                </thead>
-                                <tbody id="tbody${g}"></tbody>
-                            </table>
-                        </div>
-                    `;
-                } else {
-                    tableHTML = `
-                        <div class="table-container">
-                            <table id="gradesTable${g}">
-                                <thead>
-                                    <tr>
-                                        <th rowspan="2" class="header-blue" style="width:30px;">م</th><th rowspan="2" class="header-blue" style="width:200px;">إسم الطالب</th>
-                                        <th colspan="2" class="header-blue">الحوار</th><th rowspan="2" class="header-orange">مجموع</th>
-                                        <th colspan="2" class="header-blue">الأنشطة</th><th rowspan="2" class="header-orange">مجموع</th>
-                                        <th class="header-blue">اختبار</th><th class="header-blue">مشروع</th><th rowspan="2" class="header-orange">الكلية</th>
-                                    </tr>
-                                    <tr><th>10</th><th>10</th><th>20</th><th>20</th><th>20</th><th>20</th></tr>
-                                </thead>
-                                <tbody id="tbody${g}"></tbody>
-                            </table>
-                        </div>
-                    `;
-                }
-                
-                newForm.innerHTML = tableHTML;
-                document.getElementById("tableAreaWrapper").appendChild(newForm);
-            }
-
-            document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active-form'));
-            document.getElementById("form" + g).classList.add("active-form");
-            
-            const tbody = document.getElementById("tbody" + g); 
-            tbody.innerHTML = `<tr><td colspan="15">جاري جلب البيانات... ⏳</td></tr>`;
-            const rGrid = document.getElementById("reinforcementGrid");
-            rGrid.innerHTML = `<div style="text-align:center; width:100%; grid-column: 1 / -1;">جاري جلب بيانات التعزيز... ⏳</div>`;
-            
-            // تم إضافة action=get_grades هنا ليتمكن السيرفر من التعرف عليه
-            fetch(`${scriptURL}?action=get_grades&grade=${g}&section=${s}&teacher_id=${localStorage.getItem('teacher_id')}`)
-            .then(r => r.json()).then(d => { 
-                currentSheetData = (d.status === 'success') ? d.data : {}; 
-                renderTableAndReinforcements(g, s); 
-            })
-            .catch(() => { currentSheetData = {}; renderTableAndReinforcements(g, s); });
-        }
+       
 
         function changeReinfVal(id, amt) { 
             const el = document.getElementById(id); 
             if(el) { el.value = Math.max(0, (parseInt(el.value) || 0) + amt); }
         }
 
-        function renderTableAndReinforcements(g, s) {
-            const tbody = document.getElementById("tbody" + g); tbody.innerHTML = "";
-            const rGrid = document.getElementById("reinforcementGrid"); rGrid.innerHTML = "";
-            const list = studentsData[g] && studentsData[g][s] ? studentsData[g][s] : [];
-            
-            list.forEach((name, i) => {
-                let d = currentSheetData[name] || []; 
-                const val = (idx) => (d[idx] !== undefined && d[idx] !== "" && d[idx] !== null ? d[idx] : ""); 
-                const valZero = (idx) => (d[idx] || 0);
-                let intIdx = (g === '6') ? 14 : 10; let violIdx = (g === '6') ? 15 : 11;
-
-                let shortName = name.split(' ').slice(0, 3).join(' ');
-                let rCard = document.createElement("div"); rCard.className = "reinf-card";
-               rCard.innerHTML = `
-                    <div class="reinf-name" title="${name}">🧑‍🎓 ${i+1}. ${shortName}</div>
-                    <div class="reinf-row">
-                        <span class="reinf-row-title">🌟 تميز/مشاركة</span>
-                        <div class="reinf-btn-group">
-                            <button class="r-btn" style="background:#27ae60" onclick="changeReinfVal('int-${i}', 1); playSound(800, 'sine', 0.1, 0.1);">+</button>
-                            <input type="text" id="int-${i}" class="r-inp excel" value="${valZero(intIdx)}" readonly>
-                            <button class="r-btn" style="background:#7f8c8d" onclick="changeReinfVal('int-${i}', -1)">-</button>
-                        </div>
-                    </div>
-                    <div class="reinf-row">
-                        <span class="reinf-row-title">⚠️ مخالفة/نقص</span>
-                        <div class="reinf-btn-group">
-                            <button class="r-btn" style="background:#e74c3c" onclick="changeReinfVal('viol-${i}', 1); playSound(150, 'sawtooth', 0.2, 0.2);">+</button>
-                            <input type="text" id="viol-${i}" class="r-inp viol" value="${valZero(violIdx)}" readonly>
-                            <button class="r-btn" style="background:#7f8c8d" onclick="changeReinfVal('viol-${i}', -1)">-</button>
-                        </div>
-                    </div>`;
-                rGrid.appendChild(rCard);
-
-                let row = `<td>${i+1}</td><td style="text-align:right;"><span id="name-${i}">${name}</span><br><span id="risk-${i}" class="risk-alert">⚠️ تراجع بالمستوى</span></td>`;
-                if (g === "6") {
-                    row += `<td><input type="number" class="col-calc" value="${val(1)}" oninput="calc(this,'6')"></td> <td><input type="number" class="col-calc" value="${val(2)}" oninput="calc(this,'6')"></td> <td class="t-dialogue header-orange"></td> <td><input type="number" class="col-calc" value="${val(4)}" oninput="calc(this,'6')"></td> <td><input type="number" class="col-calc" value="${val(5)}" oninput="calc(this,'6')"></td> <td><input type="number" class="col-calc" value="${val(6)}" oninput="calc(this,'6')"></td> <td><input type="number" class="col-calc" value="${val(7)}" oninput="calc(this,'6')"></td> <td class="t-quiz header-orange"></td> <td><input type="number" class="col-calc" value="${val(9)}" oninput="calc(this,'6')"></td> <td><input type="number" class="col-calc" value="${val(10)}" oninput="calc(this,'6')"></td> <td class="t-activity header-orange"></td> <td><input type="number" class="col-calc" value="${val(12)}" oninput="calc(this,'6')"></td> <td class="t-grand header-orange"></td>`;
-                } else {
-                    row += `<td><input type="number" class="col-calc" value="${val(1)}" oninput="calc(this,'9')"></td> <td><input type="number" class="col-calc" value="${val(2)}" oninput="calc(this,'9')"></td> <td class="t-dialogue header-orange"></td> <td><input type="number" class="col-calc" value="${val(4)}" oninput="calc(this,'9')"></td> <td><input type="number" class="col-calc" value="${val(5)}" oninput="calc(this,'9')"></td> <td class="t-activity header-orange"></td> <td><input type="number" class="col-calc" value="${val(7)}" oninput="calc(this,'9')"></td> <td><input type="number" class="col-calc" value="${val(8)}" oninput="calc(this,'9')"></td> <td class="t-grand header-orange"></td>`;
-                }
-                let tr = document.createElement("tr"); tr.innerHTML = row; tbody.appendChild(tr);
-            });
-            setTimeout(() => { tbody.querySelectorAll('.col-calc').forEach(inp => calc(inp, g)); }, 500);
-        }
+        
 
         function saveStudentsToCloud() {
             const grade = document.getElementById("mgrGrade").value.trim();
@@ -1950,104 +1872,202 @@ function closeGameAndStop() {
             });
         }
 
-        function calc(inp, gradeType) {
-            let tr = inp.closest('tr');
-            if(!tr) return;
-            let inputs = tr.querySelectorAll('.col-calc');
-            if(inputs.length === 0) return;
+        // --- دوال بناء الكشف الديناميكي ---
 
-            let vals = Array.from(inputs).map(el => parseFloat(el.value) || 0);
+function updateView() {
+    const g = document.getElementById("gradeSelect").value; 
+    const s = document.getElementById("sectionSelect").value;
+    if(!g || !s) return;
+    
+    // إخفاء الجدول القديم وإظهار منطقة تحميل
+    const wrapper = document.getElementById("tableAreaWrapper");
+    wrapper.style.display = "block";
+    wrapper.innerHTML = `<div style="text-align:center; padding:30px; font-size:18px; font-weight:bold; color:#2980b9;">⏳ جاري جلب وتحليل كشف الدرجات...</div>`;
+    
+    const rGrid = document.getElementById("reinforcementGrid");
+    rGrid.innerHTML = `<div style="text-align:center; width:100%;">⏳ جاري جلب بيانات التعزيز...</div>`;
+    
+    const timestamp = new Date().getTime();
+    fetch(`${scriptURL}?action=get_grades&grade=${g}&section=${s}&teacher_id=${localStorage.getItem('teacher_id')}&t=${timestamp}`)
+    .then(r => r.json())
+    .then(d => { 
+        if(d.status === 'success') {
+            currentSheetData = d.data || {};
+            currentSchema = d.schema || [];
             
-            if(gradeType === '6') {
-                let dTotal = vals[0] + vals[1];
-                let qTotal = vals[2] + vals[3] + vals[4] + vals[5];
-                let aTotal = vals[6] + vals[7];
-                let proj = vals[8] || 0;
-                let grand = dTotal + qTotal + aTotal + proj;
-
-                tr.querySelector('.t-dialogue').innerText = dTotal;
-                tr.querySelector('.t-quiz').innerText = qTotal;
-                tr.querySelector('.t-activity').innerText = aTotal;
-                tr.querySelector('.t-grand').innerText = grand;
-            } else {
-                let dTotal = vals[0] + vals[1];
-                let aTotal = vals[2] + vals[3];
-                let test = vals[4] || 0;
-                let proj = vals[5] || 0;
-                let grand = dTotal + aTotal + test + proj;
-
-                tr.querySelector('.t-dialogue').innerText = dTotal;
-                tr.querySelector('.t-activity').innerText = aTotal;
-                tr.querySelector('.t-grand').innerText = grand;
+            // إذا لم يقم المعلم بصناعة كشف، نولد كشفاً افتراضياً لتقنية المعلومات
+            if(currentSchema.length === 0) {
+                if (g === "6") {
+                    currentSchema = [
+                        {id: "col_1", name: "الحوار (1)", max: 10}, {id: "col_2", name: "الحوار (2)", max: 10},
+                        {id: "col_3", name: "س ق (1)", max: 5}, {id: "col_4", name: "س ق (2)", max: 5},
+                        {id: "col_5", name: "س ق (3)", max: 5}, {id: "col_6", name: "س ق (4)", max: 5},
+                        {id: "col_7", name: "نشاط (1)", max: 20}, {id: "col_8", name: "نشاط (2)", max: 20},
+                        {id: "col_9", name: "المشروع", max: 20}
+                    ];
+                } else {
+                    currentSchema = [
+                        {id: "col_1", name: "الحوار (1)", max: 10}, {id: "col_2", name: "الحوار (2)", max: 10},
+                        {id: "col_3", name: "نشاط (1)", max: 20}, {id: "col_4", name: "نشاط (2)", max: 20},
+                        {id: "col_5", name: "اختبار قصير", max: 20}, {id: "col_6", name: "المشروع", max: 20}
+                    ];
+                }
             }
+            renderDynamicTable(g, s); 
+        } else {
+            wrapper.innerHTML = `<div style="text-align:center; color:red; font-weight:bold;">❌ خطأ: ${d.message}</div>`;
         }
+    })
+    .catch(() => { wrapper.innerHTML = `<div style="text-align:center; color:red; font-weight:bold;">❌ خطأ في الاتصال بالخادم.</div>`; });
+}
 
-        // تم إضافة action = save_grades ليتمكن السيرفر من حفظ الدرجات
-        function submitData() {
-            const g = document.getElementById("gradeSelect").value;
-            const s = document.getElementById("sectionSelect").value;
-            if(!g || !s) return alert('الرجاء اختيار الصف والشعبة المحددة أولاً.');
+function renderDynamicTable(g, s) {
+    const list = studentsData[g] && studentsData[g][s] ? studentsData[g][s] : [];
+    const wrapper = document.getElementById("tableAreaWrapper");
+    const rGrid = document.getElementById("reinforcementGrid");
+    
+    // بناء هيكل الجدول (عناوين الأعمدة) ديناميكياً
+    let thHtml = `<th class="header-blue" style="width:30px;">م</th><th class="header-blue" style="width:200px;">إسم الطالب</th>`;
+    let sumMax = 0;
+    currentSchema.forEach(col => {
+        thHtml += `<th class="header-blue">${col.name}<br><span style="font-size:11px; color:#c0392b;">(${col.max})</span></th>`;
+        sumMax += parseFloat(col.max) || 0;
+    });
+    thHtml += `<th class="header-orange">المجموع<br><span style="font-size:11px; color:#c0392b;">(${sumMax})</span></th>`;
 
-            const btn = document.getElementById("btnFloatSave");
-            btn.innerHTML = "⏳ جاري حفظ درجات وسلوكيات الطلاب...";
+    let tableHtml = `
+        <div class="form-section active-form" id="form${g}">
+            <div class="table-container">
+                <table id="gradesTable${g}">
+                    <thead><tr>${thHtml}</tr></thead>
+                    <tbody id="tbody${g}"></tbody>
+                </table>
+            </div>
+        </div>`;
+    wrapper.innerHTML = tableHtml;
+    
+    const tbody = document.getElementById("tbody" + g);
+    rGrid.innerHTML = "";
 
-            let studentsPayload = [];
-            const tbody = document.getElementById("tbody" + g);
-            const rows = tbody.querySelectorAll('tr');
+    list.forEach((name, i) => {
+        let d = currentSheetData[name] || {grades: {}, interaction: 0, violation: 0};
+        let shortName = name.split(' ').slice(0, 3).join(' ');
+        
+        // بناء بطاقة التعزيز
+        let rCard = document.createElement("div"); rCard.className = "reinf-card";
+        rCard.innerHTML = `
+            <div class="reinf-name" title="${name}">🧑‍🎓 ${i+1}. ${shortName}</div>
+            <div class="reinf-row">
+                <span class="reinf-row-title">🌟 تميز/مشاركة</span>
+                <div class="reinf-btn-group">
+                    <button class="r-btn" style="background:#27ae60" onclick="changeReinfVal('int-${i}', 1); playSound(800, 'sine', 0.1, 0.1);">+</button>
+                    <input type="text" id="int-${i}" class="r-inp excel" value="${d.interaction}" readonly>
+                    <button class="r-btn" style="background:#7f8c8d" onclick="changeReinfVal('int-${i}', -1)">-</button>
+                </div>
+            </div>
+            <div class="reinf-row">
+                <span class="reinf-row-title">⚠️ مخالفة/نقص</span>
+                <div class="reinf-btn-group">
+                    <button class="r-btn" style="background:#e74c3c" onclick="changeReinfVal('viol-${i}', 1); playSound(150, 'sawtooth', 0.2, 0.2);">+</button>
+                    <input type="text" id="viol-${i}" class="r-inp viol" value="${d.violation}" readonly>
+                    <button class="r-btn" style="background:#7f8c8d" onclick="changeReinfVal('viol-${i}', -1)">-</button>
+                </div>
+            </div>`;
+        rGrid.appendChild(rCard);
 
-            rows.forEach((tr, index) => {
-                let nameEl = tr.querySelector(`span[id^="name-"]`);
-                if(!nameEl) return;
-                let name = nameEl.innerText;
+        // بناء صف الدرجات
+        let rowHtml = `<td>${i+1}</td><td style="text-align:right;"><span id="name-${i}">${name}</span><br><span id="risk-${i}" class="risk-alert">⚠️ تراجع</span></td>`;
+        
+        currentSchema.forEach(col => {
+            let val = d.grades[col.id] !== undefined ? d.grades[col.id] : "";
+            rowHtml += `<td><input type="number" class="col-calc" data-col="${col.id}" value="${val}" oninput="calcTotal(this)" max="${col.max}"></td>`;
+        });
+        
+        rowHtml += `<td class="t-grand header-orange" style="font-weight:bold;">0</td>`;
+        
+        let tr = document.createElement("tr");
+        tr.innerHTML = rowHtml;
+        tbody.appendChild(tr);
+    });
 
-                let inputs = tr.querySelectorAll('.col-calc');
-                let vals = Array.from(inputs).map(el => el.value === "" ? null : parseFloat(el.value));
-                
-                let intVal = document.getElementById(`int-${index}`) ? parseInt(document.getElementById(`int-${index}`).value) : 0;
-                let violVal = document.getElementById(`viol-${index}`) ? parseInt(document.getElementById(`viol-${index}`).value) : 0;
+    // حساب المجاميع الأولية بعد الرسم
+    setTimeout(() => { tbody.querySelectorAll('tr').forEach(tr => calcTotal(tr.querySelector('.col-calc'))); }, 300);
+}
 
-                if(g === '6') {
-                    studentsPayload.push({
-                        name: name,
-                        d1: vals[0], d2: vals[1],
-                        q1: vals[2], q2: vals[3], q3: vals[4], q4: vals[5],
-                        a1: vals[6], a2: vals[7],
-                        proj: vals[8],
-                        interaction: intVal, violation: violVal
-                    });
-                } else {
-                    studentsPayload.push({
-                        name: name,
-                        d1: vals[0], d2: vals[1],
-                        a1: vals[2], a2: vals[3],
-                        test: vals[4], proj: vals[5],
-                        interaction: intVal, violation: violVal
-                    });
-                }
-            });
+// دالة الحساب الذكية التي تجمع أي عدد من الأعمدة
+function calcTotal(element) {
+    if(!element) return;
+    let tr = element.closest('tr');
+    if(!tr) return;
+    let inputs = tr.querySelectorAll('.col-calc');
+    let total = 0;
+    inputs.forEach(inp => {
+        let val = parseFloat(inp.value) || 0;
+        let max = parseFloat(inp.getAttribute('max')) || 100;
+        if(val > max) { inp.style.backgroundColor = "#ffcccc"; } else { inp.style.backgroundColor = "var(--input-bg)"; } // تنبيه تجاوز الدرجة
+        total += val;
+    });
+    tr.querySelector('.t-grand').innerText = total;
+}
 
-            fetch(scriptURL, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    action: 'save_grades', // هذا الأمر كان مفقوداً
-                    teacher_id: localStorage.getItem('teacher_id'),
-                    grade: g,
-                    section: s,
-                    students: studentsPayload
-                })
-            }).then(r => r.json()).then(d => {
-                if(d.result === 'success' || d.status === 'success') {
-                    btn.innerHTML = "✅ تم الحفظ والمزامنة بنجاح";
-                } else {
-                    btn.innerHTML = "❌ خطأ في الحفظ: " + (d.message || "");
-                }
-                setTimeout(() => btn.innerHTML = "💾 حفظ ومزامنة البيانات", 2500);
-            }).catch(e => {
-                btn.innerHTML = "❌ خطأ في الاتصال بالخادم";
-                setTimeout(() => btn.innerHTML = "💾 حفظ ومزامنة البيانات", 2500);
-            });
+// دالة الحفظ الذكية
+function submitData() {
+    const g = document.getElementById("gradeSelect").value;
+    const s = document.getElementById("sectionSelect").value;
+    if(!g || !s) return alert('الرجاء اختيار الصف والشعبة أولاً.');
+
+    const btn = document.getElementById("btnFloatSave");
+    btn.innerHTML = "⏳ جاري حفظ درجات وسلوكيات الطلاب...";
+
+    let studentsPayload = [];
+    const tbody = document.getElementById("tbody" + g);
+    if(!tbody) return;
+
+    tbody.querySelectorAll('tr').forEach((tr, index) => {
+        let nameEl = tr.querySelector(`span[id^="name-"]`);
+        if(!nameEl) return;
+        
+        let gradesObj = {};
+        tr.querySelectorAll('.col-calc').forEach(inp => {
+            let colId = inp.getAttribute('data-col');
+            gradesObj[colId] = inp.value === "" ? null : parseFloat(inp.value);
+        });
+
+        let intVal = parseInt(document.getElementById(`int-${index}`).value) || 0;
+        let violVal = parseInt(document.getElementById(`viol-${index}`).value) || 0;
+
+        studentsPayload.push({
+            name: nameEl.innerText,
+            grades: gradesObj,
+            interaction: intVal,
+            violation: violVal
+        });
+    });
+
+    fetch(scriptURL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            action: 'save_grades',
+            teacher_id: localStorage.getItem('teacher_id'),
+            grade: g,
+            section: s,
+            students: studentsPayload
+        })
+    }).then(r => r.json()).then(d => {
+        if(d.status === 'success') {
+            btn.innerHTML = "✅ تم الحفظ والمزامنة بنجاح";
+            playSound(600, 'sine', 1, 0.2);
+        } else {
+            btn.innerHTML = "❌ خطأ في الحفظ: " + d.message;
         }
+        setTimeout(() => btn.innerHTML = "💾 حفظ ومزامنة البيانات", 2500);
+    }).catch(e => {
+        btn.innerHTML = "❌ خطأ في الاتصال بالخادم";
+        setTimeout(() => btn.innerHTML = "💾 حفظ ومزامنة البيانات", 2500);
+    });
+}
+        
 
         // --- 4. تصدير الكشف إلى Excel ---
 function exportToExcel() {
@@ -2310,24 +2330,7 @@ function downloadGroupsPDF() {
     if(!el.innerHTML) return alert('قم بتوليد المجموعات أولاً.');
     html2pdf().from(el).save('تقسيم_المجموعات.pdf');
 }
-        function changeSubjectTemplate() {
-    let type = document.getElementById("subjectTemplate").value;
-    let tables = document.querySelectorAll("table thead");
-    
-    tables.forEach(thead => {
-        let textHTML = thead.innerHTML;
-        // إعادة التعيين للافتراضي قبل التعديل
-        textHTML = textHTML.replace(/الواجبات/g, "الحوار").replace(/تلاوة وحفظ/g, "الحوار")
-                           .replace(/اختبارات قصيرة/g, "الأنشطة").replace(/تعبير وقراءة/g, "الأنشطة");
         
-        if (type === "math") {
-            textHTML = textHTML.replace(/الحوار/g, "الواجبات").replace(/الأنشطة/g, "اختبارات قصيرة");
-        } else if (type === "islamic") {
-            textHTML = textHTML.replace(/الحوار/g, "تلاوة وحفظ").replace(/الأنشطة/g, "تعبير وقراءة");
-        }
-        thead.innerHTML = textHTML;
-    });
-}
         // --- وظائف لوحة تحكم المدير ---
 let adminGlobalData = {};
 
