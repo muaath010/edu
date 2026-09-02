@@ -410,11 +410,6 @@
             <button class="theme-toggle" onclick="copyGradesToClipboard()" style="background:#27ae60; color:white; border-color:#219653;">📋 نسخ درجات الشعبة</button>
             <select id="gradeSelect" onchange="buildSectionDropdown()"></select>
             <select id="sectionSelect" onchange="updateView()"></select>
-            <select id="subjectTemplate" onchange="changeSubjectTemplate()" style="background:#eafaf1; color:#27ae60;">
-    <option value="it">💻 كشف التقنية (الافتراضي)</option>
-    <option value="math">📐 كشف الرياضيات/العلوم</option>
-    <option value="islamic">🕌 كشف التربية الإسلامية/العربية</option>
-</select>
             <button class="theme-toggle" onclick="toggleTableVisibility()" id="toggleTableBtn" style="background:#3498db; color:white; border-color:#2980b9;">إظهار الكشف</button>
             <span id="teacherWelcome" style="font-weight:bold; color:#2980b9; margin-left:15px;"></span>
             
@@ -2434,6 +2429,119 @@ document.addEventListener('click', function(event) {
         sideMenu.classList.remove('open');
     }
 });
+        // =========================================================
+// --- دوال صانع الكشوفات المرن (البناء اليدوي + الإكسل) ---
+// =========================================================
+
+function openSchemaBuilder() {
+    openModal('modalSchemaBuilder');
+    const container = document.getElementById('manualSchemaColumns');
+    if(container) {
+        container.innerHTML = '';
+        // إضافة عمودين كبداية
+        addSchemaColumn("الواجبات", 10);
+        addSchemaColumn("الاختبار", 20);
+    }
+}
+
+function addSchemaColumn(defaultName = "", defaultMax = 10) {
+    const container = document.getElementById('manualSchemaColumns');
+    if(!container) return;
+    const colId = 'col_' + new Date().getTime() + Math.floor(Math.random()*1000);
+    const div = document.createElement('div');
+    div.style.display = 'flex'; div.style.gap = '10px'; div.style.alignItems = 'center';
+    div.innerHTML = `
+        <input type="text" class="schema-col-name note-input" value="${defaultName}" placeholder="اسم العمود (مثال: الاختبار)" style="flex:2; margin:0;">
+        <input type="number" class="schema-col-max note-input" value="${defaultMax}" placeholder="الدرجة القصوى" style="flex:1; margin:0;" title="الدرجة القصوى">
+        <button onclick="this.parentElement.remove()" style="background:#e74c3c; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">❌</button>
+    `;
+    div.dataset.id = colId;
+    container.appendChild(div);
+}
+
+function handleExcelSchema(input) {
+    if(!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {type: 'array'});
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1}); 
+        
+        if(jsonData.length < 2) return alert("❌ يجب أن يحتوي ملف الإكسل على صفين على الأقل (الصف الأول للعناوين، والثاني للدرجات القصوى).");
+        
+        const headers = jsonData[0]; 
+        const maxScores = jsonData[1]; 
+        
+        const container = document.getElementById('manualSchemaColumns');
+        container.innerHTML = ''; 
+        
+        let columnsAdded = 0;
+        for(let i=0; i<headers.length; i++) {
+            let hName = headers[i] ? headers[i].toString().trim() : "";
+            // استبعاد الأعمدة التي لا تعتبر درجات
+            if(hName && !hName.includes("اسم") && !hName.includes("مسلسل") && !hName.includes("مجموع")) {
+                let mScore = parseFloat(maxScores[i]) || 10;
+                addSchemaColumn(hName, mScore);
+                columnsAdded++;
+            }
+        }
+        
+        if(columnsAdded > 0) {
+            alert("✅ تم استيراد هيكل الكشف من الإكسل بنجاح! يمكنك مراجعته أو التعديل عليه الآن من قائمة 'البناء اليدوي'.");
+        } else {
+            alert("⚠️ لم يتم العثور على أعمدة صالحة في ملف الإكسل.");
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function saveCustomSchema() {
+    const g = document.getElementById("gradeSelect").value;
+    const s = document.getElementById("sectionSelect").value;
+    if(!g || !s) return alert("اختر الصف والشعبة أولاً من الشاشة الرئيسية.");
+
+    const container = document.getElementById('manualSchemaColumns');
+    const rows = container.children;
+    let newSchema = [];
+    
+    for(let i=0; i<rows.length; i++) {
+        let name = rows[i].querySelector('.schema-col-name').value.trim();
+        let max = parseFloat(rows[i].querySelector('.schema-col-max').value) || 0;
+        let id = rows[i].dataset.id;
+        if(name && max > 0) {
+            newSchema.push({id: id, name: name, max: max});
+        }
+    }
+    
+    if(newSchema.length === 0) return alert("يجب إضافة عمود واحد على الأقل وتحديد درجة له.");
+
+    if(!confirm("⚠️ تأكيد: تغيير شكل الكشف لهذه الشعبة قد يؤدي إلى فقدان توافق الدرجات السابقة إذا تم مسح أعمدة قديمة. هل أنت متأكد؟")) return;
+
+    fetch(scriptURL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            action: 'save_schema',
+            teacher_id: localStorage.getItem('teacher_id'),
+            grade: g,
+            section: s,
+            schema: newSchema
+        })
+    }).then(r => r.json()).then(d => {
+        if(d.status === 'success') {
+            alert("✅ تم حفظ شكل الكشف الجديد بنجاح!");
+            closeModal('modalSchemaBuilder');
+            updateView(); // تحديث الجدول ليتوافق مع الشكل الجديد
+        } else {
+            alert("❌ خطأ من الخادم: " + d.message);
+        }
+    }).catch(e => {
+        alert("❌ فشل الاتصال بالخادم لحفظ الكشف.");
+    });
+}
     </script>
 </body>
 </html>
