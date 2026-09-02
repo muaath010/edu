@@ -297,6 +297,32 @@
 .r-inp { width: 35px; text-align: center; border: 2px solid var(--border-color); background: var(--card-bg); border-radius: 8px; font-weight: bold; font-size: 15px; padding: 4px; color: var(--text-color);}
 .r-inp.viol { color: #e74c3c; border-color: #fadbd8;}
 .r-inp.excel { color: #27ae60; border-color: #d5f5e3;}
+        
+        /* --- تحسينات ساحة التحدي والألعاب --- */
+.modalActiveGame-content {
+    background: radial-gradient(circle, #2c3e50 0%, #1a252f 100%);
+    color: white;
+    border: 4px solid #d35400;
+    box-shadow: 0 0 30px rgba(211, 84, 0, 0.5);
+}
+.arena-question-box {
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #2c3e50 !important;
+    border: 3px solid #f39c12 !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease;
+}
+.arena-question-box:hover {
+    transform: scale(1.02);
+}
+#gameControlsContainer button {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    border: 2px solid rgba(255,255,255,0.2);
+}
+#gameControlsContainer button:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+}
 
     </style>
 </head>
@@ -720,10 +746,24 @@
             osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + duration);
         }
 
-        function toggleDarkMode() { 
-            document.body.classList.toggle("dark-mode"); 
-            localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light"); 
-        }
+        // تبديل المظهر (ليلي / نهاري) مع دعم الكشوفات والقوائم المنسدلة
+function toggleDarkMode() { 
+    document.body.classList.toggle("dark-mode"); 
+    let isDark = document.body.classList.contains("dark-mode");
+    localStorage.setItem("theme", isDark ? "dark" : "light"); 
+    
+    // تحديث ألوان القائمة الجانبية وخلفية المنصة لتتناسب مع الوضع
+    const overlay = document.querySelector('.glass-overlay');
+    if (overlay) {
+        overlay.style.backgroundColor = isDark ? 'rgba(18, 18, 18, 0.85)' : 'rgba(255, 255, 255, 0.45)';
+    }
+    
+    // تغيير أيقونة الزر في القائمة الجانبية
+    const themeMenuBtn = document.querySelector('.menu-item[onclick="toggleDarkMode()"]');
+    if (themeMenuBtn) {
+        themeMenuBtn.innerHTML = isDark ? '☀️ الوضع النهاري' : '🌙 الوضع الليلي';
+    }
+}
         
         window.onload = () => { 
             if (localStorage.getItem("theme") === "dark") toggleDarkMode(); 
@@ -1277,10 +1317,23 @@ function copyGradesToClipboard() {
             nextArenaQuestion(); 
         }
 
-        function closeGameAndStop() {
-            closeModal('modalActiveGame');
-            clearInterval(bombTimerInterval);
-        }
+       // إغلاق ساحة التحدي وتنظيف الذاكرة المؤقتة للألعاب
+function closeGameAndStop() {
+    closeModal('modalActiveGame');
+    if (typeof bombTimerInterval !== 'undefined') clearInterval(bombTimerInterval);
+    if (typeof radarInterval !== 'undefined') clearInterval(radarInterval); // إيقاف الرادار إذا كان يعمل
+    
+    // إعادة تعيين بيانات اللعبة
+    document.getElementById('arenaCurrentQ').innerText = "جاري تجهيز السؤال...";
+    document.getElementById('arenaCurrentA').style.display = "none";
+    gameData = {};
+    currentQIndex = 0;
+    
+    // إيقاف أي أصوات عالقة
+    if(audioCtx && audioCtx.state === 'running') {
+        audioCtx.suspend().then(() => audioCtx.resume());
+    }
+}
 
 
         function setupGameUI(type) {
@@ -2363,6 +2416,18 @@ function adminDeleteEntity(type, id, name) {
         }
     });
 }
+        // إغلاق القائمة الجانبية عند النقر خارجها
+document.addEventListener('click', function(event) {
+    const sideMenu = document.getElementById('sideMenu');
+    const hamburgerBtn = document.getElementById('btnMenuToggle');
+    
+    // التحقق مما إذا كانت القائمة مفتوحة والنقر تم خارجها وخارج زر الفتح
+    if (sideMenu && sideMenu.classList.contains('open') && 
+        !sideMenu.contains(event.target) && 
+        event.target !== hamburgerBtn) {
+        sideMenu.classList.remove('open');
+    }
+});
     </script>
 </body>
 </html>
