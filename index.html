@@ -7,8 +7,8 @@
     <link rel="icon" type="image/png" href="logo.png">
     <!--<link rel="manifest" href="manifest.json">-->
     <meta name="theme-color" content="#2980b9">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
@@ -30,17 +30,19 @@
             --category-bg: #252525; 
         }
 
-        body { 
+       body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; 
             padding: 20px 80px 60px 80px; 
             color: var(--text-color); 
             transition: 0.3s; 
             min-height: 100vh;
-            background-image: url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=2000&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
             background-attachment: fixed;
+        }
+        /* دعم الوضع الليلي ليكون متناسقاً */
+        .dark-mode body {
+            background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
         }
 
         .glass-overlay {
@@ -765,7 +767,8 @@ function toggleDarkMode() {
     }
 }
         
-        window.onload = () => { 
+        // استخدام DOMContentLoaded يجعل المنصة تفتح فوراً دون انتظار الصور والمكتبات
+        document.addEventListener('DOMContentLoaded', () => { 
             if (localStorage.getItem("theme") === "dark") toggleDarkMode(); 
             if(!navigator.onLine) document.getElementById('offline-banner').style.display = 'block'; 
             
@@ -775,7 +778,7 @@ function toggleDarkMode() {
                 document.getElementById('teacherWelcome').innerText = "أهلاً بك، " + localStorage.getItem('teacher_name');
                 loadInitialData();
             }
-        };
+        });
 
         function toggleAuth(type) {
             document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
