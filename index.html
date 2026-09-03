@@ -2140,7 +2140,7 @@ function toggleHonorRoll() {
 }
 
 // --- 6. الشهادات والتقارير الفردية ---
-// --- الشهادات والتقارير الوصفية (النسخة المتطورة) ---
+// --- الشهادات والتقارير الوصفية (نسخة حجب الشهادة لغير المتفوقين) ---
 function generateDetailedReports() {
     const g = document.getElementById("gradeSelect").value;
     let tbody = document.getElementById("tbody" + g);
@@ -2165,7 +2165,7 @@ function generateDetailedReports() {
             sumMax += max;
             let input = tr.querySelector(`input[data-col="${col.id}"]`);
             let val = input && input.value !== "" ? parseFloat(input.value) : 0;
-            let color = val < (max * 0.5) ? "#c0392b" : "#27ae60"; // أحمر إذا كانت أقل من النصف
+            let color = val < (max * 0.5) ? "#c0392b" : "#27ae60"; 
             
             schemaDetailsHTML += `
             <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
@@ -2181,10 +2181,45 @@ function generateDetailedReports() {
         
         let dateStr = new Date().toLocaleDateString('ar-OM');
         
+        // ---------- شرط إظهار الشهادة ----------
+        let certificateHTML = "";
+        let certificateButtonHTML = "";
+        
+        if (pct >= 90) { 
+            // الطالب ممتاز: إظهار الشهادة وزر التحميل
+            certificateHTML = `
+            <div id="cert-${idx}" class="classic-certificate">
+                <div style="font-size:20px; color:#7f8c8d; margin-bottom:15px;">سلطنة عُمان - وزارة التربية والتعليم</div>
+                <div class="cert-title">شَهَادَةُ شُكْرٍ وَتَقْدِير</div>
+                <div style="font-size:22px; line-height:2; color:#34495e; margin:25px 0;">
+                    يسرنا أن يتقدم بخالص الشكر والتقدير للطالب المتميز:<br>
+                    <span style="font-size:32px; font-weight:bold; color:#c0392b;">${name}</span><br>
+                    نظير تميزه وتفوقه وحصوله على تقدير (${status})<br>
+                    بمجموع <span style="font-weight:bold; color:#27ae60; font-family:monospace; font-size:28px;">${total}</span> درجة.<br>
+                    متمنين له دوام التوفيق والنجاح.
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:50px; font-size:18px; font-weight:bold; color:#2c3e50;">
+                    <div>التاريخ: <span style="font-family:monospace;">${dateStr}</span></div>
+                    <div>توقيع المعلم: .....................</div>
+                </div>
+            </div>`;
+            
+            certificateButtonHTML = `
+            <div style="padding:15px; background:#ecf0f1; text-align:center; border-top:1px solid #ccc;">
+                <button onclick="html2pdf().set({margin: 10, filename: 'شهادة_${name}.pdf', html2canvas: {scale: 2}, jsPDF: {orientation: 'landscape'}}).from(document.getElementById('cert-${idx}')).save()" style="background:#d4af37; color:#fff; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; font-size:16px; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);">📥 تحميل الشهادة (PDF)</button>
+            </div>`;
+        } else {
+            // الطالب لم يحصل على ممتاز: إخفاء الشهادة وإظهار رسالة تحفيزية
+            certificateHTML = `
+            <div style="padding:20px; text-align:center; background:#f9ebea; color:#c0392b; border-top:2px dashed #fadbd8; font-weight:bold; font-size:16px;">
+                🔒 الشهادة مقفلة! تُمنح فقط للحاصلين على تقدير (ممتاز). شد حيلك المرة القادمة لتنالها.
+            </div>`;
+        }
+        
         html += `
         <div style="background:#fff; border-radius:12px; margin-bottom:30px; box-shadow:0 5px 15px rgba(0,0,0,0.1); overflow:hidden; border:1px solid #ccc;">
             
-            <!-- 1. التقرير الوصفي الأكاديمي -->
+            <!-- 1. التقرير الوصفي الأكاديمي (يظهر للجميع) -->
             <div style="padding:20px; background:#f8f9fa;">
                 <h4 style="color:#2980b9; margin-top:0; border-bottom:2px solid #2980b9; padding-bottom:10px;">📊 التقرير الوصفي والأكاديمي</h4>
                 <div style="font-size:16px; margin-bottom:15px; color:#2c3e50;"><strong>اسم الطالب:</strong> ${name}</div>
@@ -2203,28 +2238,9 @@ function generateDetailedReports() {
                 </div>
             </div>
 
-            <!-- 2. شهادة التقدير الكلاسيكية (مصممة للطباعة الأفقية) -->
-            <div id="cert-${idx}" class="classic-certificate">
-                <div style="font-size:20px; color:#7f8c8d; margin-bottom:15px;">سلطنة عُمان - وزارة التربية والتعليم</div>
-                <div class="cert-title">شَهَادَةُ شُكْرٍ وَتَقْدِير</div>
-                <div style="font-size:22px; line-height:2; color:#34495e; margin:25px 0;">
-                    يُسعد معلم المادة أن يتقدم بخالص الشكر والتقدير للطالب النجم:<br>
-                    <span style="font-size:32px; font-weight:bold; color:#c0392b;">${name}</span><br>
-                    نظير تميزه وتفوقه وحصوله على تقدير (${status})<br>
-                    بمجموع <span style="font-weight:bold; color:#27ae60; font-family:monospace; font-size:28px;">${total}</span> درجة.<br>
-                    متمنين له دوام التوفيق والنجاح.
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-top:50px; font-size:18px; font-weight:bold; color:#2c3e50;">
-                    <div>التاريخ: <span style="font-family:monospace;">${dateStr}</span></div>
-                    <div>توقيع المعلم: .....................</div>
-                </div>
-            </div>
-
-            <!-- زر التصدير للشهادة -->
-            <div style="padding:15px; background:#ecf0f1; text-align:center; border-top:1px solid #ccc;">
-                <!-- تم إضافة إعدادات Orientation: landscape لتظهر الشهادة بالعرض -->
-                <button onclick="html2pdf().set({margin: 10, filename: 'شهادة_${name}.pdf', html2canvas: {scale: 2}, jsPDF: {orientation: 'landscape'}}).from(document.getElementById('cert-${idx}')).save()" style="background:#d4af37; color:#fff; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; font-size:16px; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);">📥 تحميل الشهادة (PDF)</button>
-            </div>
+            <!-- 2. الشهادة أو الرسالة البديلة -->
+            ${certificateHTML}
+            ${certificateButtonHTML}
         </div>`;
     });
     
