@@ -326,6 +326,16 @@
     transform: translateY(-2px);
 }
 
+        /* --- متجر المكافآت --- */
+.store-item { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); padding: 15px; border-radius: 12px; color: #fff; text-align: center; cursor: pointer; transition: 0.3s; border: 2px solid transparent; box-shadow: 0 4px 10px rgba(0,0,0,0.1);}
+.store-item:hover { transform: translateY(-5px); border-color: #e67e22; box-shadow: 0 8px 20px rgba(230, 126, 34, 0.3); }
+.store-price { font-size: 22px; font-weight: bold; margin: 10px 0; font-family: monospace; background: rgba(255,255,255,0.2); padding: 5px; border-radius: 8px;}
+
+/* --- شهادة التقدير الكلاسيكية --- */
+.classic-certificate { border: 15px solid #d4af37; padding: 40px; text-align: center; background: #fffaf0; position: relative; margin: 20px 0; font-family: 'Amiri', serif;}
+.classic-certificate::after { content: ''; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; border: 2px dashed #d4af37; pointer-events: none; }
+.cert-title { font-size: 45px; color: #2c3e50; font-weight: bold; margin-bottom: 25px; text-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
+
     </style>
 </head>
 <body>
@@ -384,6 +394,7 @@
         <button class="side-icon bg-repo" data-title="المستودع السحابي" onclick="openRepoModal()">📂</button>
         <button class="side-icon bg-reports" data-title="تقارير وشهادات" onclick="generateDetailedReports()">📜</button>
         <button class="side-icon bg-honor" data-title="إطلاق لوحة الشرف" onclick="toggleHonorRoll()">🏆</button>
+        <button class="side-icon" style="background: #e67e22;" data-title="متجر المكافآت" onclick="openRewardsStore()">🛍️</button>
     </div>
 
     <div class="sidebar-left">
@@ -754,7 +765,28 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- نافذة متجر المكافآت -->
+    <div id="modalRewardsStore" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close-btn" onclick="closeModal('modalRewardsStore')">&times;</span>
+            <div class="modal-header"><h3 style="color:#e67e22;">🛍️ متجر المكافآت المصغر</h3></div>
+            <div class="modal-large-body">
+                <div style="background:var(--category-bg); padding:15px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="flex:2;">
+                        <label style="font-weight:bold; display:block; margin-bottom:5px;">اختر الطالب المشتري:</label>
+                        <select id="rewardStudentSelect" class="note-input" style="margin:0;" onchange="updateStudentPointsView()"></select>
+                    </div>
+                    <div style="flex:1; text-align:center;">
+                        <div style="font-size:14px; color:#7f8c8d;">رصيد التميز المتاح</div>
+                        <div id="currentStudentPoints" style="font-size:28px; font-weight:bold; color:#27ae60; font-family:monospace;">0 🌟</div>
+                    </div>
+                </div>
+                <h4 style="text-align:center; margin-top:0;">اختر المكافأة لخصم قيمتها من رصيد الطالب:</h4>
+                <div class="repo-grid" id="rewardsGrid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));"></div>
+            </div>
+        </div>
+    </div>
     <script>
        let studentsData = {}; 
         const scriptURL = 'https://darkslateblue-wren-226762.hostingersite.com/api.php'; // تم التعديل لرابط محلي لضمان سرعة الاتصال وعدم الحظر
@@ -2108,6 +2140,7 @@ function toggleHonorRoll() {
 }
 
 // --- 6. الشهادات والتقارير الفردية ---
+// --- الشهادات والتقارير الوصفية (النسخة المتطورة) ---
 function generateDetailedReports() {
     const g = document.getElementById("gradeSelect").value;
     let tbody = document.getElementById("tbody" + g);
@@ -2122,22 +2155,79 @@ function generateDetailedReports() {
         let nameEl = tr.querySelector(`span[id^="name-"]`);
         if(!nameEl) return;
         let name = nameEl.innerText;
-        let total = tr.querySelector('.t-grand').innerText;
-        let status = (total >= 90) ? "ممتاز 🌟" : (total >= 70) ? "جيد جداً 👍" : "يحتاج متابعة ⚠️";
+        let total = parseFloat(tr.querySelector('.t-grand').innerText) || 0;
+        
+        // حساب المجموع الأقصى من الكشف الديناميكي وتجهيز التقرير الوصفي
+        let sumMax = 0;
+        let schemaDetailsHTML = "";
+        currentSchema.forEach(col => {
+            let max = parseFloat(col.max) || 0;
+            sumMax += max;
+            let input = tr.querySelector(`input[data-col="${col.id}"]`);
+            let val = input && input.value !== "" ? parseFloat(input.value) : 0;
+            let color = val < (max * 0.5) ? "#c0392b" : "#27ae60"; // أحمر إذا كانت أقل من النصف
+            
+            schemaDetailsHTML += `
+            <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
+                <span>${col.name}:</span>
+                <span style="color:${color}; font-weight:bold; font-family:monospace;">${val} / ${max}</span>
+            </div>`;
+        });
+        
+        // حساب النسبة المئوية للمادة لاستخراج التقدير
+        let pct = sumMax > 0 ? (total / sumMax) * 100 : 0;
+        let status = (pct >= 90) ? "ممتاز 🌟" : (pct >= 80) ? "جيد جداً 👍" : (pct >= 65) ? "جيد 🙂" : "يحتاج متابعة ⚠️";
+        let advice = (pct >= 90) ? "طالب متميز جداً، واصل إبداعك وتفوقك." : (pct >= 65) ? "مستوى طيب، وبقليل من الجهد الإضافي ستصل للقمة." : "يرجى مضاعفة الجهد ومتابعة الدروس بانتظام لرفع المستوى.";
+        
+        let dateStr = new Date().toLocaleDateString('ar-OM');
         
         html += `
-        <div class="report-img-card" id="rep-${idx}" style="margin:20px; border:2px solid #3498db;">
-            <div class="report-img-header" style="text-align:center; font-size:22px;">📜 شهادة تقييم أداء</div>
-            <div class="report-img-body" style="font-size:18px; text-align:center; padding: 30px; background:#fff;">
-                يشهد معلم المادة بأن الطالب: <strong style="color:#2980b9; font-size:24px;">${name}</strong><br><br>
-                قد حصل على مجموع: <strong style="color:#e74c3c; font-size:28px;">${total}</strong> / 100<br>
-                التقدير العام: <strong>${status}</strong>
+        <div style="background:#fff; border-radius:12px; margin-bottom:30px; box-shadow:0 5px 15px rgba(0,0,0,0.1); overflow:hidden; border:1px solid #ccc;">
+            
+            <!-- 1. التقرير الوصفي الأكاديمي -->
+            <div style="padding:20px; background:#f8f9fa;">
+                <h4 style="color:#2980b9; margin-top:0; border-bottom:2px solid #2980b9; padding-bottom:10px;">📊 التقرير الوصفي والأكاديمي</h4>
+                <div style="font-size:16px; margin-bottom:15px; color:#2c3e50;"><strong>اسم الطالب:</strong> ${name}</div>
+                
+                <div style="background:#fff; border:1px solid #ddd; border-radius:8px; padding:10px; margin-bottom:15px; font-size:14px; color:#34495e;">
+                    ${schemaDetailsHTML}
+                    <div style="display:flex; justify-content:space-between; padding:10px; background:#eafaf1; font-weight:bold; margin-top:5px; border-radius:5px; color:#27ae60;">
+                        <span>المجموع النهائي:</span>
+                        <span style="font-family:monospace;">${total} / ${sumMax}</span>
+                    </div>
+                </div>
+                
+                <div style="background:#eaf2f8; padding:15px; border-radius:8px; border-right:4px solid #3498db; color:#2c3e50; font-size:14px; line-height:1.6;">
+                    <div style="margin-bottom:5px;"><strong>التقدير العام:</strong> ${status}</div>
+                    <div><strong>ملاحظات المعلم:</strong> ${advice}</div>
+                </div>
             </div>
-            <div class="report-img-actionbar" style="justify-content:center;">
-                <button class="cert-btn" onclick="html2pdf().from(document.getElementById('rep-${idx}')).save('شهادة_${name}.pdf')">📥 تحميل كشهادة PDF</button>
+
+            <!-- 2. شهادة التقدير الكلاسيكية (مصممة للطباعة الأفقية) -->
+            <div id="cert-${idx}" class="classic-certificate">
+                <div style="font-size:20px; color:#7f8c8d; margin-bottom:15px;">سلطنة عُمان - وزارة التربية والتعليم</div>
+                <div class="cert-title">شَهَادَةُ شُكْرٍ وَتَقْدِير</div>
+                <div style="font-size:22px; line-height:2; color:#34495e; margin:25px 0;">
+                    يُسعد معلم المادة أن يتقدم بخالص الشكر والتقدير للطالب النجم:<br>
+                    <span style="font-size:32px; font-weight:bold; color:#c0392b;">${name}</span><br>
+                    نظير تميزه وتفوقه وحصوله على تقدير (${status})<br>
+                    بمجموع <span style="font-weight:bold; color:#27ae60; font-family:monospace; font-size:28px;">${total}</span> درجة.<br>
+                    متمنين له دوام التوفيق والنجاح.
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:50px; font-size:18px; font-weight:bold; color:#2c3e50;">
+                    <div>التاريخ: <span style="font-family:monospace;">${dateStr}</span></div>
+                    <div>توقيع المعلم: .....................</div>
+                </div>
+            </div>
+
+            <!-- زر التصدير للشهادة -->
+            <div style="padding:15px; background:#ecf0f1; text-align:center; border-top:1px solid #ccc;">
+                <!-- تم إضافة إعدادات Orientation: landscape لتظهر الشهادة بالعرض -->
+                <button onclick="html2pdf().set({margin: 10, filename: 'شهادة_${name}.pdf', html2canvas: {scale: 2}, jsPDF: {orientation: 'landscape'}}).from(document.getElementById('cert-${idx}')).save()" style="background:#d4af37; color:#fff; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; font-size:16px; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);">📥 تحميل الشهادة (PDF)</button>
             </div>
         </div>`;
     });
+    
     container.innerHTML = html;
 }
         function openSeatingChart() { openModal('seatingModal'); }
@@ -2541,6 +2631,79 @@ function saveCustomSchema() {
     }).catch(e => {
         alert("❌ فشل الاتصال بالخادم لحفظ الكشف.");
     });
+}
+        // --- وظائف متجر المكافآت ---
+const storeItems = [
+    { name: "مساعد المعلم", cost: 10, icon: "👨‍🏫" },
+    { name: "قائد المجموعة", cost: 15, icon: "👑" },
+    { name: "اختيار المقعد", cost: 20, icon: "🪑" },
+    { name: "إعفاء من واجب", cost: 30, icon: "🛡️" },
+    { name: "هدية", cost: 50, icon: "🎁" }
+];
+
+function openRewardsStore() {
+    const g = document.getElementById("gradeSelect").value;
+    const s = document.getElementById("sectionSelect").value;
+    const tbody = document.getElementById("tbody" + g);
+    
+    if (!tbody || tbody.innerHTML.includes("جاري جلب")) return alert("يجب إظهار كشف الدرجات أولاً لجلب أرصدة الطلاب.");
+
+    let select = document.getElementById("rewardStudentSelect");
+    select.innerHTML = '<option value="">-- اضغط هنا لاختيار طالب --</option>';
+
+    tbody.querySelectorAll('tr').forEach((tr, idx) => {
+        let nameEl = tr.querySelector(`span[id^="name-"]`);
+        if(nameEl) {
+            let pts = parseInt(document.getElementById(`int-${idx}`).value) || 0;
+            select.innerHTML += `<option value="${idx}">${nameEl.innerText}</option>`;
+        }
+    });
+
+    updateStudentPointsView();
+    renderRewardsGrid();
+    openModal('modalRewardsStore');
+}
+
+function updateStudentPointsView() {
+    const idx = document.getElementById("rewardStudentSelect").value;
+    if(idx === "") {
+        document.getElementById("currentStudentPoints").innerText = "0 🌟";
+        return;
+    }
+    let pts = parseInt(document.getElementById(`int-${idx}`).value) || 0;
+    document.getElementById("currentStudentPoints").innerText = `${pts} 🌟`;
+}
+
+function renderRewardsGrid() {
+    const grid = document.getElementById("rewardsGrid");
+    grid.innerHTML = "";
+    storeItems.forEach(item => {
+        grid.innerHTML += `
+        <div class="store-item" onclick="buyReward('${item.name}', ${item.cost})">
+            <div style="font-size:45px; margin-bottom:5px;">${item.icon}</div>
+            <div style="font-size:16px; font-weight:bold;">${item.name}</div>
+            <div class="store-price">${item.cost} 🌟</div>
+        </div>`;
+    });
+}
+
+function buyReward(itemName, cost) {
+    const idx = document.getElementById("rewardStudentSelect").value;
+    if(idx === "") return alert("الرجاء اختيار الطالب أولاً من القائمة العلوية!");
+
+    let currentPts = parseInt(document.getElementById(`int-${idx}`).value) || 0;
+
+    if(currentPts < cost) {
+        playSound(150, 'sawtooth', 0.2, 0.2);
+        return alert(`❌ عذراً! رصيد الطالب (${currentPts}) لا يكفي لشراء مكافأة (${itemName}) التي تكلف (${cost}).`);
+    }
+
+    if(confirm(`هل أنت متأكد من شراء (${itemName}) للطالب؟\nسيتم خصم ${cost} نقطة تميز من رصيده.`)) {
+        changeReinfVal(`int-${idx}`, -cost); // خصم النقاط من شاشة التعزيزات
+        updateStudentPointsView(); // تحديث العرض
+        playSound(800, 'sine', 0.3, 0.2);
+        alert(`✅ تم الشراء بنجاح! تم خصم النقاط من رصيد التميز والمشاركة.\n(لا تنسَ الضغط على زر "حفظ ومزامنة" الرئيسي لحفظ الرصيد الجديد في السحابة).`);
+    }
 }
     </script>
 </body>
