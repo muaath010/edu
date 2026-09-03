@@ -276,9 +276,9 @@
         .space-alien { position: absolute; color: white; font-weight: bold; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 5px; border: 1px solid #444; font-size: 12px; transition: top 0.5s;}
 
         /* --- القائمة الجانبية (Hamburger Menu) --- */
-.hamburger-btn { position: fixed; top: 20px; right: 20px; z-index: 1001; background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 10px; padding: 8px 12px; cursor: pointer; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: var(--text-color); transition: 0.3s;}
+.hamburger-btn { position: fixed; top: 20px; right: 20px; z-index: 9999; background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 10px; padding: 8px 12px; cursor: pointer; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: var(--text-color); transition: 0.3s;}
 .hamburger-btn:hover { transform: scale(1.1); border-color: #3498db; }
-.side-menu { position: fixed; top: 0; right: -320px; width: 280px; height: 100vh; background: var(--card-bg); z-index: 1000; transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: -5px 0 25px rgba(0,0,0,0.2); padding: 80px 20px 20px; display: flex; flex-direction: column; gap: 15px; border-left: 3px solid #3498db;}
+.side-menu { position: fixed; top: 0; right: -320px; width: 280px; height: 100vh; background: var(--card-bg); z-index: 9998; transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: -5px 0 25px rgba(0,0,0,0.2); padding: 80px 20px 20px; display: flex; flex-direction: column; gap: 15px; border-left: 3px solid #3498db;}
 .side-menu.open { right: 0; }
 .menu-item { padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 12px; transition: 0.2s; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color); font-size: 16px;}
 .menu-item:hover { background: #3498db; color: white; border-color: #2980b9; transform: translateX(-5px);}
@@ -334,7 +334,7 @@
 
     <!-- القائمة الجانبية -->
     <div class="side-menu" id="sideMenu">
-        <div style="text-align: center; margin-bottom: 10px;"><img src="logo.png" style="width: 100px;"></div>
+        <div style="text-align: center; margin-bottom: 10px;"><img src="logo.png" style="width: 140px;"></div>
         <div class="menu-item admin" onclick="openAdminPanel()">⚙️ إعدادات النظام (المدير)</div>
         <div class="menu-item" onclick="toggleDarkMode()">🎨 تغيير المظهر</div>
         <div class="menu-item" onclick="toggleTableVisibility()" id="menuToggleTableBtn">👁️ إخفاء/إظهار الكشف</div>
@@ -349,7 +349,7 @@
     
     <div id="loginOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); z-index:99999; justify-content:center; align-items:center;">
         <div style="background:var(--card-bg); width:90%; max-width:400px; padding:30px; border-radius:15px; box-shadow:0 10px 30px rgba(0,0,0,0.5); text-align:center;">
-            <img src="logo.png" style="width:150px; margin-bottom:20px;">
+            <img src="logo.png" style="width:180px; margin-bottom:20px;">
             <h2 style="color:var(--text-color); margin-bottom:20px;">بوابة المعلمين</h2>
             
             <div style="display:flex; margin-bottom:20px; border-bottom:2px solid var(--border-color);">
@@ -400,7 +400,7 @@
 
    <div class="header-container">
        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px;">
-            <img src="logo.png" alt="شعار منصة مِحور" style="width: 200px; height: auto; object-fit: contain;">
+            <img src="logo.png" alt="شعار منصة مِحور" style="width: 280px; height: auto; object-fit: contain;">
             <h2 style="margin: 0;">منصة مِحور - إدارة وتقييم الطلاب <span style="font-size:14px; color:#27ae60;">(3.6)</span></h2>
         </div>
         
