@@ -787,6 +787,22 @@
             </div>
         </div>
     </div>
+    
+    <div id="modalBehaviorLog" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('modalBehaviorLog')">&times;</span>
+        <h3>📝 سجل السلوكيات: <span id="logStudentName" style="color:#2980b9;"></span></h3>
+        
+        <textarea id="behaviorNote" class="note-input" placeholder="اكتب الملاحظة هنا..."></textarea>
+        
+        <div style="display:flex; gap:10px; margin-bottom:20px;">
+            <button onclick="saveBehavior('positive')" style="flex:1; background:#27ae60; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer;">🌟 إضافة إيجابية</button>
+            <button onclick="saveBehavior('negative')" style="flex:1; background:#e74c3c; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer;">⚠️ تسجيل مخالفة</button>
+        </div>
+
+        <div id="behaviorHistory" style="max-height:250px; overflow-y:auto; border-top:1px solid #ccc; padding-top:10px;"></div>
+    </div>
+</div>
     <script>
        let studentsData = {}; 
         const scriptURL = 'https://darkslateblue-wren-226762.hostingersite.com/api.php'; // تم التعديل لرابط محلي لضمان سرعة الاتصال وعدم الحظر
@@ -1999,7 +2015,8 @@ function renderDynamicTable(g, s) {
                     <input type="text" id="viol-${i}" class="r-inp viol" value="${d.violation}" readonly>
                     <button class="r-btn" style="background:#7f8c8d" onclick="changeReinfVal('viol-${i}', -1)">-</button>
                 </div>
-            </div>`;
+            </div>
+            <button class="action-btn" onclick="openBehaviorLog(${i}, '${name}')" style="background:#8e44ad; color:white; margin-top:8px; width:100%; border:none; border-radius:6px; padding:6px; font-weight:bold; cursor:pointer;">📝 سجل السلوكيات</button>            `;
         rGrid.appendChild(rCard);
 
         // بناء صف الدرجات
@@ -2720,6 +2737,73 @@ function buyReward(itemName, cost) {
         playSound(800, 'sine', 0.3, 0.2);
         alert(`✅ تم الشراء بنجاح! تم خصم النقاط من رصيد التميز والمشاركة.\n(لا تنسَ الضغط على زر "حفظ ومزامنة" الرئيسي لحفظ الرصيد الجديد في السحابة).`);
     }
+}
+        let logStudentId = null;
+let logStudentName = "";
+
+function openBehaviorLog(id, name) {
+    logStudentId = id;
+    logStudentName = name;
+    document.getElementById("logStudentName").innerText = name;
+    document.getElementById("behaviorHistory").innerHTML = "جاري جلب السجل...";
+    openModal('modalBehaviorLog');
+    
+    // جلب البيانات من الخادم
+    let fd = new FormData();
+    fd.append('action', 'get_behaviors');
+    fd.append('student_id', id);
+    
+    fetch(scriptURL, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+        let historyDiv = document.getElementById("behaviorHistory");
+        historyDiv.innerHTML = "";
+        if(d.data.length === 0) {
+            historyDiv.innerHTML = "<p style='text-align:center; color:#7f8c8d;'>لا توجد ملاحظات سابقة.</p>";
+            return;
+        }
+        d.data.forEach(log => {
+            let icon = log.type === 'positive' ? '🌟' : '⚠️';
+            let color = log.type === 'positive' ? '#eafaf1' : '#fdedec';
+            historyDiv.innerHTML += `
+            <div style="background:${color}; padding:10px; border-radius:8px; margin-bottom:10px; font-size:14px; position:relative;">
+                <strong>${icon} ${log.created_at}</strong><br>
+                ${log.note}
+                <button onclick="sendToWhatsApp('${log.type}', '${log.note}', '${log.created_at}')" style="position:absolute; left:10px; top:10px; background:#25D366; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📲 إرسال لولي الأمر</button>
+            </div>`;
+        });
+    });
+}
+
+function saveBehavior(type) {
+    let note = document.getElementById("behaviorNote").value;
+    if(!note) return alert("الرجاء كتابة الملاحظة أولاً.");
+    
+    let fd = new FormData();
+    fd.append('action', 'add_behavior');
+    fd.append('teacher_id', localStorage.getItem('teacher_id'));
+    fd.append('student_id', logStudentId);
+    fd.append('student_name', logStudentName);
+    fd.append('type', type);
+    fd.append('note', note);
+    
+    fetch(scriptURL, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+        if(d.status === 'success') {
+            document.getElementById("behaviorNote").value = "";
+            openBehaviorLog(logStudentId, logStudentName); // تحديث القائمة
+        }
+    });
+}
+
+function sendToWhatsApp(type, note, date) {
+    let msgType = type === 'positive' ? 'ملاحظة إيجابية 🌟' : 'تنبيه سلوكي ⚠️';
+    let text = `مرحباً،\nنود إشعاركم بخصوص الطالب/ة: ${logStudentName}\nنوع الإشعار: ${msgType}\nالتفاصيل: ${note}\nالتاريخ: ${date}\n\nمع تحيات معلم المادة.`;
+    
+    // يفتح الواتساب ويطلب منك اختيار جهة الاتصال (أو يفتح المحادثة مباشرة إذا أضفت رقم الهاتف في الرابط)
+    let whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
 }
     </script>
 </body>
