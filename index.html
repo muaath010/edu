@@ -9,6 +9,7 @@
     <meta name="theme-color" content="#2980b9">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
@@ -434,6 +435,53 @@
 
     <div id="tableAreaWrapper" style="display: none;">
         </div> 
+
+    <!-- بطاقة الطالب التحليلية الذكية -->
+    <div id="modalStudentAnalytics" class="modal" style="z-index: 3000;">
+        <div class="modal-content" style="max-width: 650px; padding: 25px; background: var(--card-bg);">
+            <span class="close-btn" onclick="closeModal('modalStudentAnalytics')">&times;</span>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px dashed #bdc3c7; padding-bottom:15px; margin-bottom:15px;">
+                <div>
+                    <h2 id="analyticsStudentName" style="color:#2980b9; margin:0; font-size:24px;">اسم الطالب</h2>
+                    <div id="analyticsRankName" style="font-weight:bold; font-size:18px; margin-top:5px;">جاري التحليل...</div>
+                </div>
+                <div id="analyticsRankBadge" style="font-size:55px; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));">🏆</div>
+            </div>
+
+            <!-- شريط الصحة الأكاديمية والسلوكية -->
+            <div style="margin: 15px 0;">
+                <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; margin-bottom: 8px; color:var(--text-color);">
+                    <span>🔋 مؤشر الصحة الأكاديمية والسلوكية</span>
+                    <span id="analyticsHealthPct" style="font-family:monospace; font-size:16px;">100%</span>
+                </div>
+                <div style="width: 100%; height: 16px; background: var(--category-bg); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                    <div id="analyticsHealthBar" style="height: 100%; width: 0%; transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                <!-- مخطط الرادار -->
+                <div style="flex: 1; min-width: 250px; position: relative; height: 250px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--border-color); padding: 10px;">
+                    <canvas id="skillsRadarChart"></canvas>
+                </div>
+
+                <!-- الملخص الذكي -->
+                <div style="flex: 1; min-width: 250px; display:flex; flex-direction:column; gap:10px;">
+                    <div id="analyticsInsights" style="flex:1; background: #eaf2f8; padding: 15px; border-radius: 12px; border-right: 4px solid #3498db; font-size: 15px; font-weight: bold; color: #2c3e50; line-height: 1.7; display:flex; flex-direction:column; justify-content:center;">
+                        جاري معالجة البيانات...
+                    </div>
+                </div>
+            </div>
+
+            <!-- الإجراءات السريعة -->
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                <button onclick="sendAnalyticsWhatsApp()" style="flex: 1; background: #25D366; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size:15px; cursor: pointer; transition:0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📲 إرسال للأهل</button>
+                <button id="btnAnalyticsBehavior" style="flex: 1; background: #8e44ad; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size:15px; cursor: pointer; transition:0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📝 إضافة سلوك</button>
+                <button id="btnAnalyticsReward" style="flex: 1; background: #e67e22; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size:15px; cursor: pointer; transition:0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🎁 منح مكافأة</button>
+            </div>
+        </div>
+    </div>
     
     <div id="modalStudentManager" class="modal">
         <div class="modal-content">
@@ -2009,7 +2057,7 @@ function renderDynamicTable(g, s) {
         // بناء بطاقة التعزيز
         let rCard = document.createElement("div"); rCard.className = "reinf-card";
         rCard.innerHTML = `
-            <div class="reinf-name" title="${name}">🧑‍🎓 ${i+1}. ${shortName}</div>
+            <div class="reinf-name" title="انقر لفتح البطاقة التحليلية" onclick="openStudentAnalytics('${name}', ${i})" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.color='#3498db'" onmouseout="this.style.color='var(--text-color)'">📊 ${i+1}. ${shortName}</div>
             <div class="reinf-row">
                 <span class="reinf-row-title">🌟 تميز/مشاركة</span>
                 <div class="reinf-btn-group">
@@ -2821,6 +2869,138 @@ function sendToWhatsApp(type, note, date) {
     // يفتح الواتساب ويطلب منك اختيار جهة الاتصال (أو يفتح المحادثة مباشرة إذا أضفت رقم الهاتف في الرابط)
     let whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
+}
+        let studentRadarChart = null;
+let currentAnalyticsStudent = "";
+let currentAnalyticsIndex = -1;
+
+function openStudentAnalytics(name, index) {
+    currentAnalyticsStudent = name;
+    currentAnalyticsIndex = index;
+    let d = currentSheetData[name] || {grades: {}, interaction: 0, violation: 0};
+    
+    // 1. حساب درجات التحصيل مقسمة
+    let totalScore = 0, maxScore = 0;
+    let examScore = 0, examMax = 0;
+    let activityScore = 0, activityMax = 0;
+
+    currentSchema.forEach(col => {
+        let m = parseFloat(col.max) || 0;
+        let v = d.grades[col.id] !== undefined ? parseFloat(d.grades[col.id]) : 0;
+        totalScore += v; maxScore += m;
+        
+        if(col.name.includes('اختبار') || col.name.includes('س ق')) {
+            examScore += v; examMax += m;
+        } else {
+            activityScore += v; activityMax += m;
+        }
+    });
+
+    let academicPct = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
+    let examPct = examMax > 0 ? (examScore / examMax) * 100 : academicPct;
+    let activityPct = activityMax > 0 ? (activityScore / activityMax) * 100 : academicPct;
+    
+    let intVal = d.interaction || 0;
+    let violVal = d.violation || 0;
+    
+    // 2. حساب مؤشر الصحة (Health Bar)
+    let health = (academicPct * 0.7) + (Math.min(intVal * 3, 20)) - (violVal * 10);
+    health = Math.max(0, Math.min(100, health)); 
+    
+    // 3. تحديد الألقاب والأوسمة
+    let badge = "🥉"; let rankName = "مبادر"; let rankColor = "#7f8c8d";
+    if (academicPct >= 90 && violVal === 0 && intVal >= 5) { badge = "💎"; rankName = "أسطورة مِحور"; rankColor = "#9b59b6"; }
+    else if (academicPct >= 85 && violVal <= 2) { badge = "🥇"; rankName = "نجم الصف"; rankColor = "#f1c40f"; }
+    else if (academicPct >= 70) { badge = "🥈"; rankName = "متميز"; rankColor = "#3498db"; }
+
+    // 4. تحديث الواجهة البصرية
+    document.getElementById('analyticsStudentName').innerText = name.split(' ').slice(0,3).join(' ');
+    document.getElementById('analyticsRankBadge').innerText = badge;
+    document.getElementById('analyticsRankName').innerText = rankName;
+    document.getElementById('analyticsRankName').style.color = rankColor;
+    
+    let healthBar = document.getElementById('analyticsHealthBar');
+    setTimeout(() => { healthBar.style.width = health + "%"; }, 100);
+    document.getElementById('analyticsHealthPct').innerText = Math.round(health) + "%";
+    
+    if(health >= 80) healthBar.style.background = "linear-gradient(90deg, #27ae60, #2ecc71)";
+    else if(health >= 50) healthBar.style.background = "linear-gradient(90deg, #d35400, #f39c12)";
+    else healthBar.style.background = "linear-gradient(90deg, #c0392b, #e74c3c)";
+
+    // 5. توليد الملخص الذكي (Smart Insights)
+    let insights = "";
+    if(academicPct >= 90) insights += "🌟 أداء أكاديمي متفوق، يحافظ على مستوى رائع في المادة.<br>";
+    else if(academicPct >= 65) insights += "📈 مستواه جيد ومستقر، وبقليل من التحفيز سيصل للقمة.<br>";
+    else insights += "⚠️ يحتاج لمتابعة في التحصيل الدراسي ورفع مستواه في التقييمات.<br>";
+
+    if(intVal >= 3) insights += "💡 مشاركته فعّالة جداً داخل الصف (لديه "+intVal+" نقطة تميز).<br>";
+    
+    if(violVal > 0) {
+        if(violVal >= 3) insights += "<span style='color:#c0392b;'>🚨 سجل المخالفات مقلق ("+violVal+" مخالفات) ويحتاج تنبيهاً فورياً!</span>";
+        else insights += "<span style='color:#d35400;'>⚠️ توجد ملاحظات سلوكية بسيطة يجب تلافيها.</span>";
+    } else if(intVal > 0) {
+        insights += "<span style='color:#27ae60;'>🛡️ انضباط سلوكي مثالي، لا توجد أي مخالفات مسجلة!</span>";
+    }
+
+    document.getElementById('analyticsInsights').innerHTML = insights;
+
+    // 6. رسم مخطط الرادار السداسي
+    let ctx = document.getElementById('skillsRadarChart').getContext('2d');
+    if(studentRadarChart) studentRadarChart.destroy();
+
+    let disciplineScore = Math.max(0, 100 - (violVal * 15));
+    let participationScore = Math.min(100, 50 + (intVal * 10));
+
+    studentRadarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['التحصيل', 'الاختبارات', 'المشاريع', 'الانضباط', 'التفاعل'],
+            datasets: [{
+                label: 'مؤشرات الأداء',
+                data: [academicPct, examPct, activityPct, disciplineScore, participationScore],
+                backgroundColor: 'rgba(52, 152, 219, 0.4)',
+                borderColor: '#2980b9',
+                pointBackgroundColor: '#f39c12',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#e74c3c',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(0,0,0,0.1)' },
+                    grid: { color: 'rgba(0,0,0,0.1)' },
+                    pointLabels: { font: { family: 'Amiri, Tahoma', size: 13, weight: 'bold' } },
+                    ticks: { display: false, min: 0, max: 100 }
+                }
+            },
+            plugins: { legend: { display: false } },
+            maintainAspectRatio: false
+        }
+    });
+
+    // 7. تهيئة أزرار الإجراءات السريعة
+    document.getElementById('btnAnalyticsBehavior').onclick = function() {
+        closeModal('modalStudentAnalytics');
+        openBehaviorLog(index, name);
+    };
+    document.getElementById('btnAnalyticsReward').onclick = function() {
+        closeModal('modalStudentAnalytics');
+        openRewardsStore();
+        setTimeout(() => { document.getElementById("rewardStudentSelect").value = index; updateStudentPointsView(); }, 100);
+    };
+
+    openModal('modalStudentAnalytics');
+    playSound(600, 'triangle', 0.1, 0.1);
+}
+
+function sendAnalyticsWhatsApp() {
+    let insights = document.getElementById('analyticsInsights').innerText;
+    let pct = document.getElementById('analyticsHealthPct').innerText;
+    let text = `مرحباً ولي أمر الطالب: ${currentAnalyticsStudent}\n📊 ملخص الأداء الشامل من منصة مِحور:\n\nمؤشر الصحة الأكاديمية: ${pct}\n\n💡 ملاحظات المعلم:\n${insights}\n\nشاكرين لكم حسن تعاونكم.`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
 }
     </script>
 </body>
