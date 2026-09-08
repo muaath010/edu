@@ -345,7 +345,7 @@
     <!-- القائمة الجانبية -->
     <div class="side-menu" id="sideMenu">
         <div style="text-align: center; margin-bottom: 10px;"><img src="logo.png" style="width: 140px;"></div>
-        <div class="menu-item admin" onclick="openAdminPanel()">⚙️ إعدادات النظام (المدير)</div>
+        <div class="menu-item admin" id="adminMenuBtn" onclick="openAdminPanel()" style="display: none;">⚙️ إعدادات النظام (المدير)</div>
         <div class="menu-item" onclick="toggleDarkMode()">🎨 تغيير المظهر</div>
         <div class="menu-item" onclick="toggleTableVisibility()" id="menuToggleTableBtn">👁️ إخفاء/إظهار الكشف</div>
         <div class="menu-item" onclick="alert('منصة مِحور الإصدار 4.0\nتطوير: أ. معاذ اليعقوبي')">ℹ️ نبذة عن المنصة</div>
@@ -851,7 +851,14 @@ function toggleDarkMode() {
             if (!localStorage.getItem('teacher_id')) {
                 document.getElementById('loginOverlay').style.display = 'flex';
             } else {
-                document.getElementById('teacherWelcome').innerText = "أهلاً بك، " + localStorage.getItem('teacher_name');
+                let currentName = localStorage.getItem('teacher_name');
+                document.getElementById('teacherWelcome').innerText = "أهلاً بك، " + currentName;
+                
+                // إظهار زر المدير فقط إذا كان الحساب باسمك
+                if (currentName === "أ. معاذ" || currentName === "معاذ اليعقوبي" || currentName === "أ. معاذ اليعقوبي") {
+                    document.getElementById('adminMenuBtn').style.display = 'flex';
+                }
+                
                 loadInitialData();
             }
         });
