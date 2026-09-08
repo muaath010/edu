@@ -2459,32 +2459,39 @@ function downloadGroupsPDF() {
         // --- وظائف لوحة تحكم المدير ---
 let adminGlobalData = {};
 
+// دالة فتح لوحة المدير بشكل آمن تماماً
+// دالة فتح لوحة المدير بشكل آمن تماماً (بدون كلمات مرور في الكود)
 function openAdminPanel() {
-    // التحقق من كلمة مرور المدير (كما في الإعدادات الأصلية)
+    let teacherId = localStorage.getItem('teacher_id');
+    
+    // نطلب كلمة المرور من المستخدم
     let pass = prompt("الرجاء إدخال كلمة مرور مدير النظام:");
-    if (pass !== "Muath2026") {
-        return alert("❌ كلمة المرور غير صحيحة. تم رفض الوصول.");
-    }
+    if (!pass) return; // إذا ضغط إلغاء، نتوقف
     
-    // إغلاق القائمة الجانبية وفتح نافذة الإدارة
     document.getElementById('sideMenu').classList.remove('open');
-    openModal('modalAdminPanel');
+    document.getElementById('adminTbody').innerHTML = `<tr><td colspan="5">⏳ جاري التحقق من الصلاحيات وجلب البيانات...</td></tr>`;
     
-    document.getElementById('adminTbody').innerHTML = `<tr><td colspan="5">⏳ جاري جلب بيانات النظام...</td></tr>`;
-    
-    // جلب البيانات من السيرفر
-    const timestamp = new Date().getTime();
-    fetch(`${scriptURL}?action=admin_get_all&t=${timestamp}`)
-    .then(r => r.json())
-    .then(d => {
-        if(d.status === 'success') {
-            adminGlobalData = d;
-            renderAdminData('teachers'); // عرض المعلمين كشاشة افتراضية
+    // نرسل رقم المعلم وكلمة المرور للسيرفر ليتأكد منها
+    fetch(scriptURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            action: 'admin_get_all', 
+            teacher_id: teacherId, 
+            admin_pass: pass 
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'success') {
+            openModal('modalAdminPanel');
+            adminGlobalData = data;
+            renderAdminData('teachers'); // عرض المعلمين
         } else {
-            document.getElementById('adminTbody').innerHTML = `<tr><td colspan="5">❌ خطأ: ${d.message}</td></tr>`;
+            alert("❌ " + data.message);
         }
     }).catch(e => {
-        document.getElementById('adminTbody').innerHTML = `<tr><td colspan="5">❌ فشل الاتصال بالسيرفر.</td></tr>`;
+        alert("❌ فشل الاتصال بالسيرفر.");
     });
 }
 
