@@ -2768,13 +2768,62 @@ function saveCustomSchema() {
     });
 }
         // --- وظائف متجر المكافآت ---
-const storeItems = [
+// 1. تحويل المتجر إلى نظام ديناميكي يحفظ الإضافات في المتصفح
+let storeItems = JSON.parse(localStorage.getItem('my_store_items')) || [
     { name: "مساعد المعلم", cost: 10, icon: "👨‍🏫" },
     { name: "قائد المجموعة", cost: 15, icon: "👑" },
     { name: "اختيار المقعد", cost: 20, icon: "🪑" },
     { name: "إعفاء من واجب", cost: 30, icon: "🛡️" },
     { name: "هدية", cost: 50, icon: "🎁" }
 ];
+
+// 2. تحديث دالة رسم المتجر لإضافة زر الحذف وزر الإضافة
+function renderRewardsGrid() {
+    const grid = document.getElementById("rewardsGrid");
+    grid.innerHTML = "";
+    storeItems.forEach((item, index) => {
+        grid.innerHTML += `
+        <div class="store-item" style="position:relative;">
+            <span onclick="deleteReward(${index})" style="position:absolute; top:-8px; right:-8px; background:#e74c3c; color:white; border-radius:50%; width:25px; height:25px; font-size:14px; display:flex; justify-content:center; align-items:center; cursor:pointer; z-index:10; border:2px solid #fff; box-shadow:0 2px 5px rgba(0,0,0,0.2);" title="حذف المكافأة">✖</span>
+            <div onclick="buyReward('${item.name}', ${item.cost})">
+                <div style="font-size:45px; margin-bottom:5px;">${item.icon}</div>
+                <div style="font-size:16px; font-weight:bold;">${item.name}</div>
+                <div class="store-price">${item.cost} 🌟</div>
+            </div>
+        </div>`;
+    });
+
+    // إضافة زر "إضافة مكافأة جديدة" في نهاية الشبكة
+    grid.innerHTML += `
+    <div class="store-item" style="background: linear-gradient(135deg, #e0e0e0 0%, #bdc3c7 100%); color:#2c3e50; border:2px dashed #7f8c8d;" onclick="addNewReward()">
+        <div style="font-size:45px; margin-bottom:5px;">➕</div>
+        <div style="font-size:16px; font-weight:bold;">إضافة مكافأة</div>
+        <div class="store-price">جديدة</div>
+    </div>`;
+}
+
+// 3. دوال الإضافة والحذف الديناميكية
+function addNewReward() {
+    let name = prompt("📝 اكتب اسم المكافأة الجديدة (مثال: قلم إضافي، خمس دقائق راحة):");
+    if(!name) return;
+    
+    let cost = prompt("🌟 كم تكلفة هذه المكافأة من نقاط التميز؟ (مثال: 15):");
+    if(!cost || isNaN(cost)) return alert("❌ الرجاء إدخال رقم صحيح للتكلفة.");
+    
+    let icon = prompt("🎨 ضع رمزاً تعبيرياً (Emoji) من لوحة المفاتيح للمكافأة:") || "🎁";
+
+    storeItems.push({ name: name, cost: parseInt(cost), icon: icon });
+    localStorage.setItem('my_store_items', JSON.stringify(storeItems));
+    renderRewardsGrid();
+}
+
+function deleteReward(index) {
+    if(confirm("⚠️ هل أنت متأكد من حذف هذه المكافأة من المتجر؟")) {
+        storeItems.splice(index, 1);
+        localStorage.setItem('my_store_items', JSON.stringify(storeItems));
+        renderRewardsGrid();
+    }
+}
 
 function openRewardsStore() {
     const g = document.getElementById("gradeSelect").value;
