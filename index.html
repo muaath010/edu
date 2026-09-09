@@ -881,31 +881,30 @@
     </div>
 
     <!-- نافذة متجر المكافآت -->
-    <div id="modalRewardsStore" class="modal" style="z-index: 2600;">
-        <!-- تم زيادة العرض الأقصى هنا إلى 850px -->
-        <div class="modal-content modal-large" style="max-width: 850px;">
+    <!-- نافذة متجر المكافآت -->
+    <div id="modalRewardsStore" class="modal">
+        <div class="modal-content modal-large">
             <span class="close-btn" onclick="closeModal('modalRewardsStore')">&times;</span>
-            <div class="modal-header" style="border-bottom: 2px dashed #e67e22; padding-bottom: 15px; margin-bottom: 20px;">
-                <h3 style="color:#e67e22; font-size: 28px; margin: 0;">🛍️ متجر المكافآت المصغر</h3>
+            
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #e67e22; padding-bottom: 15px; margin-bottom: 20px;">
+                <h3 style="color:#e67e22; margin: 0;">🛍️ متجر المكافآت المصغر</h3>
+                <!-- هذا هو الزر المستقل والواضح الذي طلبته -->
+                <button onclick="addNewReward()" style="background:#27ae60; color:white; border:none; padding:10px 15px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">➕ إضافة مكافأة جديدة</button>
             </div>
             
             <div class="modal-large-body">
-                <!-- قسم اختيار الطالب والرصيد (تم تكبيره وتوضيحه) -->
-                <div style="background:var(--category-bg); padding:20px; border-radius:12px; border:2px solid var(--border-color); margin-bottom:30px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                <div style="background:var(--category-bg); padding:15px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
                     <div style="flex:2;">
-                        <label style="font-weight:bold; display:block; margin-bottom:8px; font-size: 16px; color:var(--text-color);">👤 اختر الطالب المشتري:</label>
-                        <select id="rewardStudentSelect" class="note-input" style="margin:0; font-size: 18px; padding: 12px; font-weight: bold;" onchange="updateStudentPointsView()"></select>
+                        <label style="font-weight:bold; display:block; margin-bottom:5px;">اختر الطالب المشتري:</label>
+                        <select id="rewardStudentSelect" class="note-input" style="margin:0;" onchange="updateStudentPointsView()"></select>
                     </div>
-                    <div style="flex:1; text-align:center; border-right: 2px dashed #bdc3c7; padding-right: 15px; margin-right: 15px;">
-                        <div style="font-size:16px; color:#7f8c8d; font-weight: bold; margin-bottom: 5px;">رصيد التميز المتاح</div>
-                        <div id="currentStudentPoints" style="font-size:38px; font-weight:bold; color:#27ae60; font-family:monospace; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">0 🌟</div>
+                    <div style="flex:1; text-align:center;">
+                        <div style="font-size:14px; color:#7f8c8d;">رصيد التميز المتاح</div>
+                        <div id="currentStudentPoints" style="font-size:28px; font-weight:bold; color:#27ae60; font-family:monospace;">0 🌟</div>
                     </div>
                 </div>
-                
-                <h4 style="text-align:center; margin-top:0; color:var(--text-color); font-size: 18px; margin-bottom: 20px;">🎁 اختر المكافأة لخصم قيمتها من رصيد الطالب:</h4>
-                
-                <!-- شبكة المكافآت (تم تكبير مساحة كل بطاقة لتصبح minmax(220px)) -->
-                <div class="repo-grid" id="rewardsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;"></div>
+                <h4 style="text-align:center; margin-top:0;">اختر المكافأة لخصم قيمتها من رصيد الطالب:</h4>
+                <div class="repo-grid" id="rewardsGrid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));"></div>
             </div>
         </div>
     </div>
@@ -2806,7 +2805,7 @@ function saveCustomSchema() {
 }
         // --- وظائف متجر المكافآت ---
 // 1. تحويل المتجر إلى نظام ديناميكي يحفظ الإضافات في المتصفح
-// 1. تحويل المتجر إلى نظام ديناميكي يحفظ الإضافات في المتصفح
+// --- وظائف متجر المكافآت ---
 let storeItems = JSON.parse(localStorage.getItem('my_store_items')) || [
     { name: "مساعد المعلم", cost: 10, icon: "👨‍🏫" },
     { name: "قائد المجموعة", cost: 15, icon: "👑" },
@@ -2814,56 +2813,6 @@ let storeItems = JSON.parse(localStorage.getItem('my_store_items')) || [
     { name: "إعفاء من واجب", cost: 30, icon: "🛡️" },
     { name: "هدية", cost: 50, icon: "🎁" }
 ];
-
-// 2. تحديث دالة رسم المتجر لإضافة زر الحذف وزر الإضافة
-function renderRewardsGrid() {
-    const grid = document.getElementById("rewardsGrid");
-    grid.innerHTML = "";
-    
-    // رسم المكافآت الموجودة مع زر الحذف الصغير
-    storeItems.forEach((item, index) => {
-        grid.innerHTML += `
-        <div class="store-item" style="position:relative;">
-            <span onclick="deleteReward(${index})" style="position:absolute; top:-8px; right:-8px; background:#e74c3c; color:white; border-radius:50%; width:25px; height:25px; font-size:14px; display:flex; justify-content:center; align-items:center; cursor:pointer; z-index:10; border:2px solid #fff; box-shadow:0 2px 5px rgba(0,0,0,0.2);" title="حذف المكافأة">✖</span>
-            <div onclick="buyReward('${item.name}', ${item.cost})">
-                <div style="font-size:45px; margin-bottom:5px;">${item.icon}</div>
-                <div style="font-size:16px; font-weight:bold;">${item.name}</div>
-                <div class="store-price">${item.cost} 🌟</div>
-            </div>
-        </div>`;
-    });
-
-    // رسم زر "إضافة مكافأة جديدة" في نهاية الشبكة
-    grid.innerHTML += `
-    <div class="store-item" style="background: linear-gradient(135deg, #e0e0e0 0%, #bdc3c7 100%); color:#2c3e50; border:2px dashed #7f8c8d;" onclick="addNewReward()">
-        <div style="font-size:45px; margin-bottom:5px;">➕</div>
-        <div style="font-size:16px; font-weight:bold;">إضافة مكافأة</div>
-        <div class="store-price">جديدة</div>
-    </div>`;
-}
-
-// 3. دوال الإضافة والحذف الديناميكية
-function addNewReward() {
-    let name = prompt("📝 اكتب اسم المكافأة الجديدة (مثال: قلم إضافي، خمس دقائق راحة):");
-    if(!name) return;
-    
-    let cost = prompt("🌟 كم تكلفة هذه المكافأة من نقاط التميز؟ (مثال: 15):");
-    if(!cost || isNaN(cost)) return alert("❌ الرجاء إدخال رقم صحيح للتكلفة.");
-    
-    let icon = prompt("🎨 ضع رمزاً تعبيرياً (Emoji) من لوحة المفاتيح للمكافأة:") || "🎁";
-
-    storeItems.push({ name: name, cost: parseInt(cost), icon: icon });
-    localStorage.setItem('my_store_items', JSON.stringify(storeItems));
-    renderRewardsGrid();
-}
-
-function deleteReward(index) {
-    if(confirm("⚠️ هل أنت متأكد من حذف هذه المكافأة من المتجر؟")) {
-        storeItems.splice(index, 1);
-        localStorage.setItem('my_store_items', JSON.stringify(storeItems));
-        renderRewardsGrid();
-    }
-}
 
 function openRewardsStore() {
     const g = document.getElementById("gradeSelect").value;
@@ -2901,14 +2850,39 @@ function updateStudentPointsView() {
 function renderRewardsGrid() {
     const grid = document.getElementById("rewardsGrid");
     grid.innerHTML = "";
-    storeItems.forEach(item => {
+    storeItems.forEach((item, index) => {
         grid.innerHTML += `
-        <div class="store-item" onclick="buyReward('${item.name}', ${item.cost})">
-            <div style="font-size:45px; margin-bottom:5px;">${item.icon}</div>
-            <div style="font-size:16px; font-weight:bold;">${item.name}</div>
-            <div class="store-price">${item.cost} 🌟</div>
+        <div class="store-item" style="position:relative;">
+            <span onclick="deleteReward(${index})" style="position:absolute; top:-8px; right:-8px; background:#e74c3c; color:white; border-radius:50%; width:25px; height:25px; font-size:14px; display:flex; justify-content:center; align-items:center; cursor:pointer; z-index:10; border:2px solid #fff;" title="حذف المكافأة">✖</span>
+            <div onclick="buyReward('${item.name}', ${item.cost})">
+                <div style="font-size:45px; margin-bottom:5px;">${item.icon}</div>
+                <div style="font-size:16px; font-weight:bold;">${item.name}</div>
+                <div class="store-price">${item.cost} 🌟</div>
+            </div>
         </div>`;
     });
+}
+
+function addNewReward() {
+    let name = prompt("📝 اكتب اسم المكافأة الجديدة:");
+    if(!name) return;
+    
+    let cost = prompt("🌟 كم تكلفة هذه المكافأة من نقاط التميز؟");
+    if(!cost || isNaN(cost)) return alert("❌ الرجاء إدخال رقم صحيح للتكلفة.");
+    
+    let icon = prompt("🎨 ضع رمزاً تعبيرياً (Emoji) للمكافأة:") || "🎁";
+
+    storeItems.push({ name: name, cost: parseInt(cost), icon: icon });
+    localStorage.setItem('my_store_items', JSON.stringify(storeItems));
+    renderRewardsGrid();
+}
+
+function deleteReward(index) {
+    if(confirm("⚠️ هل أنت متأكد من حذف هذه المكافأة؟")) {
+        storeItems.splice(index, 1);
+        localStorage.setItem('my_store_items', JSON.stringify(storeItems));
+        renderRewardsGrid();
+    }
 }
 
 function buyReward(itemName, cost) {
@@ -2923,10 +2897,10 @@ function buyReward(itemName, cost) {
     }
 
     if(confirm(`هل أنت متأكد من شراء (${itemName}) للطالب؟\nسيتم خصم ${cost} نقطة تميز من رصيده.`)) {
-        changeReinfVal(`int-${idx}`, -cost); // خصم النقاط من شاشة التعزيزات
-        updateStudentPointsView(); // تحديث العرض
+        changeReinfVal(`int-${idx}`, -cost); 
+        updateStudentPointsView(); 
         playSound(800, 'sine', 0.3, 0.2);
-        alert(`✅ تم الشراء بنجاح! تم خصم النقاط من رصيد التميز والمشاركة.\n(لا تنسَ الضغط على زر "حفظ ومزامنة" الرئيسي لحفظ الرصيد الجديد في السحابة).`);
+        alert(`✅ تم الشراء بنجاح! تم خصم النقاط من رصيد التميز والمشاركة.\n(لا تنسَ الضغط على زر "حفظ ومزامنة" الرئيسي).`);
     }
 }
         let logStudentId = null;
