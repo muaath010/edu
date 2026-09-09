@@ -825,30 +825,38 @@
     </div>
 
     <!-- نافذة إعدادات النظام (المدير) -->
-    <div id="modalAdminPanel" class="modal" style="z-index: 3000;">
-        <div class="modal-content modal-large">
-            <span class="close-btn" onclick="closeModal('modalAdminPanel')">&times;</span>
-            <div class="modal-header"><h3 style="color:#8e44ad;">⚙️ لوحة تحكم النظام المركزية</h3></div>
+    <!-- نافذة متجر المكافآت -->
+    <div id="modalRewardsStore" class="modal" style="z-index: 2600;">
+        <!-- تم زيادة العرض الأقصى هنا إلى 850px -->
+        <div class="modal-content modal-large" style="max-width: 850px;">
+            <span class="close-btn" onclick="closeModal('modalRewardsStore')">&times;</span>
+            
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #e67e22; padding-bottom: 15px; margin-bottom: 20px;">
+                <h3 style="color:#e67e22; margin: 0; font-size: 26px;">🛍️ متجر المكافآت المصغر</h3>
+                <!-- زر إضافة مكافأة الذي طلبته مسبقاً -->
+                <button onclick="addNewReward()" style="background:#27ae60; color:white; border:none; padding:10px 15px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;">➕ إضافة مكافأة جديدة</button>
+            </div>
+            
             <div class="modal-large-body">
-                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap: wrap;">
-                    <button class="btn-save-note" style="flex:1; background:#34495e;" onclick="renderAdminData('teachers')">👨‍🏫 إدارة المعلمين</button>
-                    <button class="btn-save-note" style="flex:1; background:#2980b9;" onclick="renderAdminData('classes')">🏫 الصفوف والشعب</button>
-                    <button class="btn-save-note" style="flex:1; background:#16a085;" onclick="renderAdminData('files')">📂 الملفات المرفوعة</button>
+                <!-- تحسين وتوسيع قسم اختيار الطالب والرصيد -->
+                <div style="background:var(--category-bg); padding:20px; border-radius:12px; border:2px solid var(--border-color); margin-bottom:30px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                    <div style="flex:2;">
+                        <label style="font-weight:bold; display:block; margin-bottom:8px; font-size: 16px; color:var(--text-color);">👤 اختر الطالب المشتري:</label>
+                        <select id="rewardStudentSelect" class="note-input" style="margin:0; font-size: 18px; padding: 12px; font-weight: bold;" onchange="updateStudentPointsView()"></select>
+                    </div>
+                    <div style="flex:1; text-align:center; border-right: 2px dashed #bdc3c7; padding-right: 15px; margin-right: 15px;">
+                        <div style="font-size:16px; color:#7f8c8d; font-weight: bold; margin-bottom: 5px;">رصيد التميز المتاح</div>
+                        <div id="currentStudentPoints" style="font-size:38px; font-weight:bold; color:#27ae60; font-family:monospace; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">0 🌟</div>
+                    </div>
                 </div>
                 
-                <div style="background:var(--input-bg); padding:15px; border-radius:8px; border:1px solid var(--border-color); overflow-x: auto;">
-                    <table style="width:100%; border-collapse: collapse; text-align:center; font-size:14px;" id="adminTable">
-                        <thead class="header-blue" id="adminThead">
-                            <tr><th>يرجى اختيار قسم لعرض البيانات</th></tr>
-                        </thead>
-                        <tbody id="adminTbody">
-                        </tbody>
-                    </table>
-                </div>
+                <h4 style="text-align:center; margin-top:0; color:var(--text-color); font-size: 18px; margin-bottom: 20px;">🎁 اختر المكافأة لخصم قيمتها من رصيد الطالب:</h4>
+                
+                <!-- توسيع مساحة البطاقات إلى 220px بدلاً من 180px لملء الشاشة بشكل أجمل -->
+                <div class="repo-grid" id="rewardsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;"></div>
             </div>
         </div>
     </div>
-
 
     <!-- نافذة صانع الكشوفات المرن -->
     <div id="modalSchemaBuilder" class="modal" style="z-index: 2500;">
