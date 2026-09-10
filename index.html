@@ -1028,7 +1028,8 @@ function toggleDarkMode() {
             
             document.getElementById('authMsg').innerText = '⏳ جاري التحقق...';
             fetch(scriptURL, { method: 'POST', body: JSON.stringify({action: 'login', email: email, password: pass}) })
-           .then(d => {
+            .then(r => r.json()) // 👈 هذا هو السطر الذي كان مفقوداً
+            .then(d => {
                 if(d.status === 'success') {
                     localStorage.setItem('teacher_id', d.teacher_id);
                     localStorage.setItem('teacher_name', d.name);
@@ -1039,6 +1040,9 @@ function toggleDarkMode() {
                 } else {
                     document.getElementById('authMsg').innerText = d.message; 
                 }
+            })
+            .catch(e => {
+                document.getElementById('authMsg').innerText = "❌ حدث خطأ في الاتصال بالخادم";
             });
         }
 
