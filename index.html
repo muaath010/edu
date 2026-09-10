@@ -1119,7 +1119,8 @@ function copyGradesToClipboard() {
                 } else {
                     alert("ملاحظة: " + d.message);
                 }
-            })
+            });
+            
             .catch(err => {
                 headerTitle.innerHTML = originalTitle;
                 console.log(err);
