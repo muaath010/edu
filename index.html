@@ -2640,36 +2640,38 @@ function downloadGroupsPDF() {
 let adminGlobalData = {};
 
 // دالة فتح لوحة المدير بشكل آمن تماماً
-// دالة فتح لوحة المدير بشكل آمن تماماً (بدون كلمات مرور في الكود)
-function openAdminPanel(silent = false) {
+/ دالة فتح لوحة المدير بشكل آمن تماماً (بدون كلمات مرور في الكود)
+function openAdminPanel() {
     let teacherId = localStorage.getItem('teacher_id');
     
-    // إذا لم تكن عملية تحديث صامتة، نطلب الباسوورد
-    if (!silent) {
-        let pass = prompt("الرجاء إدخال كلمة مرور مدير النظام:");
-        if (!pass) return; 
-        currentAdminPassword = pass; // حفظها في المتغير العام
-    }
+    // نطلب كلمة المرور من المستخدم
+    let pass = prompt("الرجاء إدخال كلمة مرور مدير النظام:");
+    if (!pass) return; // إذا ضغط إلغاء، نتوقف
     
     document.getElementById('sideMenu').classList.remove('open');
-    if (!silent) document.getElementById('adminTbody').innerHTML = `<tr><td colspan="5">⏳ جاري التحقق من الصلاحيات وجلب البيانات...</td></tr>`;
+    document.getElementById('adminTbody').innerHTML = `<tr><td colspan="5">⏳ جاري التحقق من الصلاحيات وجلب البيانات...</td></tr>`;
     
+    // نرسل رقم المعلم وكلمة المرور للسيرفر ليتأكد منها
     fetch(scriptURL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'admin_get_all', teacher_id: teacherId, admin_pass: currentAdminPassword })
+        body: JSON.stringify({ 
+            action: 'admin_get_all', 
+            teacher_id: teacherId, 
+            admin_pass: pass 
+        })
     })
     .then(res => res.json())
     .then(data => {
         if(data.status === 'success') {
-            if(!silent) openModal('modalAdminPanel');
+            openModal('modalAdminPanel');
             adminGlobalData = data;
-            renderAdminData('teachers'); 
+            renderAdminData('teachers'); // عرض المعلمين
         } else {
-            if(!silent) alert("❌ " + data.message);
+            alert("❌ " + data.message);
         }
     }).catch(e => {
-        if(!silent) alert("❌ فشل الاتصال بالسيرفر.");
+        alert("❌ فشل الاتصال بالسيرفر.");
     });
 }
 
