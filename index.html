@@ -1028,13 +1028,17 @@ function toggleDarkMode() {
             
             document.getElementById('authMsg').innerText = '⏳ جاري التحقق...';
             fetch(scriptURL, { method: 'POST', body: JSON.stringify({action: 'login', email: email, password: pass}) })
-            .then(r=>r.json()).then(d => {
+           .then(d => {
                 if(d.status === 'success') {
                     localStorage.setItem('teacher_id', d.teacher_id);
                     localStorage.setItem('teacher_name', d.name);
-                    localStorage.setItem('teacher_role', d.role); // 👈 السطر الجديد
+                    localStorage.setItem('teacher_role', d.role);
                     location.reload();
-                } else { document.getElementById('authMsg').innerText = d.message; }
+                } else if (d.status === 'expired') {
+                    document.getElementById('authMsg').innerHTML = `<span style="color:#e74c3c;">${d.message}</span>`;
+                } else {
+                    document.getElementById('authMsg').innerText = d.message; 
+                }
             });
         }
 
@@ -1104,21 +1108,18 @@ function copyGradesToClipboard() {
 
             fetch(`${scriptURL}?action=getStudentDirectory&teacher_id=${localStorage.getItem('teacher_id')}`)
             .then(r => r.json())
-            .then(d => {
+           .then(d => {
                 headerTitle.innerHTML = originalTitle;
                 if(d.status === "success") {
                     studentsData = d.students;
                     buildGradeDropdown(); 
+                } else if (d.status === "expired") {
+                    // إظهار شاشة التجميد الإجبارية
+                    document.getElementById('subscriptionExpiredOverlay').style.display = 'flex';
                 } else {
                     alert("ملاحظة: " + d.message);
                 }
             })
-            
-            .catch(err => {
-                headerTitle.innerHTML = originalTitle;
-                console.log(err);
-                alert("خطأ في الاتصال بالملف البرمجي api.php. يرجى التحقق من وجوده بالقرب من الملف.");
-            });
         }
 
         window.addEventListener('online', () => { document.getElementById('offline-banner').style.display = 'none'; });
