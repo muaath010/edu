@@ -1109,9 +1109,6 @@ function copyGradesToClipboard() {
                 if(d.status === "success") {
                     studentsData = d.students;
                     buildGradeDropdown(); 
-                } else if (d.status === "expired") {
-                    // إظهار شاشة التجميد الإجبارية
-                    document.getElementById('subscriptionExpiredOverlay').style.display = 'flex';
                 } else {
                     alert("ملاحظة: " + d.message);
                 }
