@@ -403,6 +403,13 @@
     box-shadow: 0 10px 20px rgba(0,0,0,0.25);
 }
 
+        /* توسيع النوافذ الكبيرة (التقارير، الاختبارات، والمستودع) لتصبح أعرض وأوضح */
+.modal-content.modal-large {
+    max-width: 950px !important;
+    width: 95% !important;
+    padding: 30px !important;
+}
+
     </style>
 </head>
 <body>
@@ -1891,13 +1898,11 @@ function closeGameAndStop() {
             loadRepoFiles();
         }
 
-        function loadRepoFiles() {
+       function loadRepoFiles() {
             const container = document.getElementById("repoGrid");
             if (!container) return;
 
             container.innerHTML = "⏳ جاري تحميل الملفات...";
-            
-            // إضافة ختم زمني (t=...) لمنع المتصفح من تخزين النتيجة مؤقتاً
             const timestamp = new Date().getTime();
             
             fetch(`${scriptURL}?action=get_repo_files&teacher_id=${localStorage.getItem('teacher_id')}&t=${timestamp}`)
@@ -1906,15 +1911,20 @@ function closeGameAndStop() {
                 if(d.status === 'success') {
                     container.innerHTML = '';
                     if(d.files.length === 0) {
-                        container.innerHTML = "📂 لا توجد ملفات في المستودع.";
+                        container.innerHTML = "📂 لا توجد ملفات مرفوعة في المستودع حالياً.";
                         return;
                     }
                     
                     d.files.forEach(file => {
                         let fileUrl = file.url; 
+                        // تصميم جديد للملف مع زر الحذف الدائري الأحمر
                         container.innerHTML += `
-                            <div style="border:1px solid #ccc; padding:10px; margin:5px; border-radius:5px; text-align:center; background:var(--category-bg);">
-                                <a href="${fileUrl}" target="_blank" style="text-decoration:none; color:var(--text-color); font-weight:bold;">📄<br>${file.name}</a>
+                            <div style="border: 2px solid var(--border-color); padding: 15px; margin: 5px; border-radius: 12px; text-align: center; background: var(--input-bg); position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='#3498db';" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-color)';">
+                                <span onclick="deleteTeacherFile(${file.id}, '${file.name}')" style="position: absolute; top: -10px; right: -10px; background: #e74c3c; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10;" title="حذف الملف نهائياً">✖</span>
+                                <a href="${fileUrl}" target="_blank" style="text-decoration: none; color: var(--text-color); font-weight: bold; display: block;">
+                                    <div style="font-size: 45px; margin-bottom: 10px;">📄</div>
+                                    <div style="word-break: break-word; font-size: 14px; line-height: 1.4;">${file.name}</div>
+                                </a>
                             </div>
                         `;
                     });
@@ -1927,6 +1937,27 @@ function closeGameAndStop() {
             });
         }
 
+        // دالة إرسال طلب الحذف للسيرفر
+        function deleteTeacherFile(fileId, fileName) {
+            if(!confirm(`⚠️ هل أنت متأكد من حذف الملف (${fileName}) من المستودع السحابي؟\nلا يمكن التراجع عن هذا الإجراء.`)) return;
+            
+            let fd = new FormData();
+            fd.append('action', 'delete_repo_file');
+            fd.append('teacher_id', localStorage.getItem('teacher_id'));
+            fd.append('file_id', fileId);
+            
+            fetch(scriptURL, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(d => {
+                if(d.status === 'success') {
+                    alert('✅ تم حذف الملف بنجاح!');
+                    loadRepoFiles(); // تحديث المستودع فوراً بعد الحذف
+                } else {
+                    alert('❌ حدث خطأ: ' + d.message);
+                }
+            }).catch(e => alert("❌ فشل الاتصال بالخادم."));
+        }
+        
         function handleFileUpload(input) {
             if(input.files && input.files[0]) {
                 let file = input.files[0];
