@@ -974,28 +974,26 @@
         </div>
     </div>
 
-    <!-- نافذة صانع الأنشطة الذكي -->
+    <!-- صانع الأنشطة التفاعلية (الإدخال اليدوي السريع) -->
     <div id="modalAiActivity" class="modal" style="z-index: 2500;">
         <div class="modal-content modal-large">
             <span class="close-btn" onclick="closeModal('modalAiActivity')">&times;</span>
-            <div class="modal-header"><h3 style="color:#8e44ad;">🤖 صانع الأنشطة التفاعلية بالذكاء الاصطناعي</h3></div>
+            <div class="modal-header"><h3 style="color:#8e44ad;">🧩 صانع الأنشطة التفاعلية (لعبة المطابقة)</h3></div>
             
             <div class="modal-large-body">
-                <div style="background:var(--category-bg); padding:20px; border-radius:12px; border:2px dashed #8e44ad; margin-bottom:20px;">
-                    <label style="font-weight:bold; display:block; margin-bottom:10px; color:var(--text-color);">1. انسخ والصق نص الدرس أو الفقرة هنا:</label>
-                    <textarea id="aiSourceText" class="note-input" style="min-height: 150px; font-size:16px;" placeholder="مثال: وحدة المعالجة المركزية هي العقل المدبر للحاسوب، وتتكون من وحدة الحساب والمنطق ووحدة التحكم..."></textarea>
-                    
-                    <button id="btnGenerateAi" onclick="generateAiActivity()" style="width:100%; background:#8e44ad; color:white; border:none; padding:15px; border-radius:8px; font-size:18px; font-weight:bold; cursor:pointer; margin-top:10px; transition:0.3s; box-shadow:0 4px 10px rgba(142, 68, 173, 0.3);">✨ توليد نشاط المطابقة (مصطلح وتعريف)</button>
-                </div>
-
-                <div id="aiResultArea" style="display:none;">
-                    <h4 style="color:#2c3e50; border-bottom:2px solid #ccc; padding-bottom:10px;">👀 معاينة المصطلحات المستخرجة:</h4>
-                    <div id="aiPairsList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;"></div>
-                    
-                    <div style="background:#eafaf1; border:1px solid #27ae60; padding:15px; border-radius:8px; text-align:center;">
-                        <input type="text" id="aiGameTitle" class="note-input" placeholder="اسم اللعبة (مثال: تحدي مكونات الحاسب)" style="font-size:16px; font-weight:bold; text-align:center; margin-bottom:15px;">
-                        <button onclick="saveAiGame()" style="background:#27ae60; color:white; border:none; padding:12px 25px; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer;">💾 حفظ اللعبة وتوليد الكود للطلاب</button>
+                <p style="text-align:center; font-weight:bold; color:var(--text-color); margin-top:0;">أدخل المصطلحات وتعريفاتها لإنشاء اللعبة فوراً (أسرع وأدق من الذكاء الاصطناعي).</p>
+                
+                <div style="background:var(--category-bg); padding:20px; border-radius:12px; border:2px solid #8e44ad; margin-bottom:20px;">
+                    <div id="manualActivityRows" style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
+                        <!-- سيتم إضافة حقول الإدخال هنا برمجياً -->
                     </div>
+                    
+                    <button onclick="addManualActivityRow()" style="background:#3498db; color:white; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; transition:0.3s;">➕ إضافة مصطلح جديد</button>
+                </div>
+                
+                <div style="background:#eafaf1; border:1px solid #27ae60; padding:15px; border-radius:8px; text-align:center;">
+                    <input type="text" id="manualGameTitle" class="note-input" placeholder="اسم اللعبة (مثال: تحدي مكونات الحاسب)" style="font-size:16px; font-weight:bold; text-align:center; margin-bottom:15px;">
+                    <button onclick="saveManualGame()" style="background:#27ae60; color:white; border:none; padding:15px; border-radius:8px; font-weight:bold; font-size:18px; cursor:pointer; width:100%; box-shadow:0 4px 10px rgba(39, 174, 96, 0.3);">💾 إنشاء اللعبة وتوليد الكود</button>
                 </div>
             </div>
         </div>
@@ -3387,55 +3385,54 @@ function sendAnalyticsWhatsApp() {
 }
         let currentAiItems = [];
 
-        // دالة إرسال النص للذكاء الاصطناعي
-        function generateAiActivity() {
-            const text = document.getElementById('aiSourceText').value.trim();
-            if(!text || text.length < 50) return alert("الرجاء إدخال نص كافٍ (50 حرف على الأقل) ليستخرج منه الذكاء الاصطناعي المفاهيم.");
-
-            const btn = document.getElementById('btnGenerateAi');
-            btn.innerHTML = "⏳ جاري القراءة والتحليل... (قد يستغرق 5 ثوانٍ)";
-            btn.disabled = true;
-
-            fetch(scriptURL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'generate_activity', text: text })
-            })
-            .then(r => r.json())
-            .then(d => {
-                if(d.status === 'success' && d.items && d.items.length > 0) {
-                    currentAiItems = d.items;
-                    let listHtml = "";
-                    d.items.forEach((item, i) => {
-                        listHtml += `
-                        <div style="display:flex; gap:10px; background:var(--input-bg); padding:10px; border-radius:6px; border:1px solid var(--border-color);">
-                            <div style="flex:1; font-weight:bold; color:#2980b9;">🏷️ ${item.word}</div>
-                            <div style="flex:2; color:var(--text-color);">📝 ${item.def}</div>
-                        </div>`;
-                    });
-                    
-                    document.getElementById('aiPairsList').innerHTML = listHtml;
-                    document.getElementById('aiResultArea').style.display = 'block';
-                    playSound(600, 'triangle', 0.1, 0.1);
-                } else {
-                    alert("❌ عذراً: " + (d.message || "لم يتمكن الذكاء الاصطناعي من استخراج مصطلحات واضحة من هذا النص. حاول تعديل النص."));
-                }
-            })
-            .catch(e => alert("❌ فشل الاتصال بالخادم."))
-            .finally(() => {
-                btn.innerHTML = "✨ توليد نشاط المطابقة (مصطلح وتعريف)";
-                btn.disabled = false;
-            });
-        }
-
-        // لفتح نافذة الصانع، يمكنك ربطها بزر في القائمة الجانبية أو تشغيلها عبر الكونسول مؤقتاً
-        function openAiGenerator() {
+        // دالة لفتح النافذة وإضافة 3 حقول فارغة كبداية
+        function openAiGenerator() { 
+            const container = document.getElementById('manualActivityRows');
+            if(container.children.length === 0) {
+                addManualActivityRow();
+                addManualActivityRow();
+                addManualActivityRow();
+            }
             openModal('modalAiActivity');
         }
-        
-        function saveAiGame() {
-            // سنقوم ببرمجة حفظ اللعبة في قاعدة البيانات في الخطوة القادمة
-            alert("✅ المصطلحات جاهزة! في الخطوة القادمة سنبرمج شاشة الطالب وكيف سيلعب لعبة المطابقة بهذه البيانات.");
+
+        // دالة لإضافة صف جديد للمصطلحات
+        function addManualActivityRow() {
+            const container = document.getElementById('manualActivityRows');
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.gap = '10px';
+            row.style.alignItems = 'center';
+            row.className = 'activity-row';
+            
+            row.innerHTML = `
+                <input type="text" class="act-word note-input" placeholder="المصطلح (مثال: الفأرة)" style="flex:1; margin:0; font-weight:bold; color:#2980b9;">
+                <input type="text" class="act-def note-input" placeholder="التعريف (مثال: وحدة إدخال تستخدم للتحكم بالمؤشر)" style="flex:2; margin:0;">
+                <button onclick="this.parentElement.remove()" style="background:#e74c3c; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:bold;" title="حذف">✖</button>
+            `;
+            container.appendChild(row);
+        }
+
+        // دالة جمع البيانات للتحضير للحفظ
+        function saveManualGame() {
+            const title = document.getElementById('manualGameTitle').value.trim();
+            if(!title) {
+                alert("⚠️ الرجاء كتابة اسم اللعبة أولاً.");
+                return document.getElementById('manualGameTitle').focus();
+            }
+            
+            let items = [];
+            const rows = document.querySelectorAll('.activity-row');
+            rows.forEach(row => {
+                let w = row.querySelector('.act-word').value.trim();
+                let d = row.querySelector('.act-def').value.trim();
+                if(w && d) items.push({word: w, def: d});
+            });
+
+            if(items.length < 2) return alert("⚠️ الرجاء إدخال مصطلحين وتعريفين على الأقل لصنع اللعبة.");
+
+            // تم التجهيز بنجاح!
+            alert("✅ تم تجهيز المصطلحات بنجاح!\nالعدد: " + items.length + " مصطلحات.\n\nفي الخطوة القادمة سنقوم بربطها بالسيرفر لتوليد الكود ليتمكن الطلاب من لعبها.");
         }
     </script>
 </body>
