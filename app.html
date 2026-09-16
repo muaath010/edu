@@ -3413,7 +3413,7 @@ function sendAnalyticsWhatsApp() {
             container.appendChild(row);
         }
 
-        // دالة جمع البيانات للتحضير للحفظ
+        // دالة حفظ اللعبة وتوليد الكود بربطها مع السيرفر
         function saveManualGame() {
             const title = document.getElementById('manualGameTitle').value.trim();
             if(!title) {
@@ -3426,13 +3426,55 @@ function sendAnalyticsWhatsApp() {
             rows.forEach(row => {
                 let w = row.querySelector('.act-word').value.trim();
                 let d = row.querySelector('.act-def').value.trim();
-                if(w && d) items.push({word: w, def: d});
+                // أضفنا نوع اللعبة (matching) ليتعرف عليها نظام الطالب لاحقاً
+                if(w && d) items.push({word: w, def: d, type: 'matching'}); 
             });
 
             if(items.length < 2) return alert("⚠️ الرجاء إدخال مصطلحين وتعريفين على الأقل لصنع اللعبة.");
 
-            // تم التجهيز بنجاح!
-            alert("✅ تم تجهيز المصطلحات بنجاح!\nالعدد: " + items.length + " مصطلحات.\n\nفي الخطوة القادمة سنقوم بربطها بالسيرفر لتوليد الكود ليتمكن الطلاب من لعبها.");
+            // تغيير شكل الزر أثناء التحميل
+            const btn = document.querySelector('button[onclick="saveManualGame()"]');
+            btn.innerHTML = "⏳ جاري الحفظ وتوليد الكود...";
+            btn.disabled = true;
+
+            // توليد كود مميز يبدأ بحرف G (يعني Game)
+            const gameCode = "G-" + Math.random().toString(36).substring(2, 6).toUpperCase();
+            const gameName = "🎮 " + title; // إيموجي لتمييزها في السجل كنشاط تفاعلي
+
+            // نستخدم نفس نظام حفظ الاختبارات لاختصار الوقت والجهد
+            const payload = { 
+                action: "save_quiz", 
+                quizId: gameCode, 
+                quizName: gameName, 
+                questions: items,
+                teacher_id: localStorage.getItem('teacher_id')
+            };
+            
+            fetch(scriptURL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(payload) 
+            })
+            .then(r => r.json())
+            .then(d => {
+                if(d.status === 'success') {
+                    alert(`✅ تم حفظ اللعبة بنجاح!\n\n🔑 كود اللعبة للطلاب هو: ${gameCode}\n\nستجدها محفوظة أيضاً في سجل الأكواد الخاص بك.`);
+                    closeModal('modalAiActivity');
+                    document.getElementById('manualGameTitle').value = ""; // تفريغ الحقل
+                    
+                    // تحديث السجل برمجياً إذا كان مفتوحاً لترى اللعبة فوراً
+                    if(typeof loadQuizHistory === "function") {
+                        loadQuizHistory();
+                    }
+                } else {
+                    alert("❌ حدث خطأ أثناء الحفظ: " + d.message);
+                }
+            })
+            .catch(e => alert("❌ فشل الاتصال بالخادم."))
+            .finally(() => {
+                btn.innerHTML = "💾 إنشاء اللعبة وتوليد الكود";
+                btn.disabled = false;
+            });
         }
     </script>
 </body>
