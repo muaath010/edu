@@ -975,13 +975,14 @@
     </div>
 
     <!-- صانع الأنشطة التفاعلية (الإدخال اليدوي السريع) -->
+   <!-- صانع الأنشطة التفاعلية (الشامل لجميع الألعاب) -->
     <div id="modalAiActivity" class="modal" style="z-index: 2500;">
         <div class="modal-content modal-large">
             <span class="close-btn" onclick="closeModal('modalAiActivity')">&times;</span>
-            <div class="modal-header"><h3 style="color:#8e44ad;">🧩 صانع الأنشطة التفاعلية (لعبة المطابقة)</h3></div>
+            <div class="modal-header"><h3 style="color:#8e44ad;">🧩 صانع الأنشطة التفاعلية</h3></div>
             
             <div class="modal-large-body">
-                <p style="text-align:center; font-weight:bold; color:var(--text-color); margin-top:0;">أدخل المصطلحات وتعريفاتها لإنشاء اللعبة فوراً (أسرع وأدق من الذكاء الاصطناعي).</p>
+                <p style="text-align:center; font-weight:bold; color:var(--text-color); margin-top:0;">أدخل المصطلحات وتعريفاتها، ثم اختر قالب اللعبة المناسب.</p>
                 
                 <div style="background:var(--category-bg); padding:20px; border-radius:12px; border:2px solid #8e44ad; margin-bottom:20px;">
                     <div id="manualActivityRows" style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
@@ -993,6 +994,21 @@
                 
                 <div style="background:#eafaf1; border:1px solid #27ae60; padding:15px; border-radius:8px; text-align:center;">
                     <input type="text" id="manualGameTitle" class="note-input" placeholder="اسم اللعبة (مثال: تحدي مكونات الحاسب)" style="font-size:16px; font-weight:bold; text-align:center; margin-bottom:15px;">
+                    
+                    <!-- 🌟 القائمة الجديدة لاختيار قالب اللعبة -->
+                    <select id="gameTemplateType" class="note-input" style="font-size:16px; font-weight:bold; text-align:center; margin-bottom:15px; background:#fff; cursor:pointer;">
+                        <option value="matching">🧩 لعبة المطابقة (مكتملة)</option>
+                        <option value="sorting">🗂️ فرز المجموعات (التصنيف)</option>
+                        <option value="sequence">🔢 الترتيب المنطقي</option>
+                        <option value="spaceman">👨‍🚀 إنقاذ رائد الفضاء (الجلاد)</option>
+                        <option value="wordsearch">🔠 شبكة الكلمات المتقاطعة</option>
+                        <option value="spinwheel">🎡 عجلة الحظ التفاعلية</option>
+                        <option value="whackamole">🔨 صيد الكائنات</option>
+                        <option value="balloon">🎈 قطار البالونات</option>
+                        <option value="openbox">🎁 الصناديق الغامضة</option>
+                        <option value="maze">🏃‍♂️ المتاهة</option>
+                    </select>
+
                     <button onclick="saveManualGame()" style="background:#27ae60; color:white; border:none; padding:15px; border-radius:8px; font-weight:bold; font-size:18px; cursor:pointer; width:100%; box-shadow:0 4px 10px rgba(39, 174, 96, 0.3);">💾 إنشاء اللعبة وتوليد الكود</button>
                 </div>
             </div>
@@ -3427,7 +3443,8 @@ function sendAnalyticsWhatsApp() {
                 let w = row.querySelector('.act-word').value.trim();
                 let d = row.querySelector('.act-def').value.trim();
                 // أضفنا نوع اللعبة (matching) ليتعرف عليها نظام الطالب لاحقاً
-                if(w && d) items.push({word: w, def: d, type: 'matching'}); 
+                let selectedGameType = document.getElementById('gameTemplateType').value;
+                if(w && d) items.push({word: w, def: d, type: selectedGameType}); 
             });
 
             if(items.length < 2) return alert("⚠️ الرجاء إدخال مصطلحين وتعريفين على الأقل لصنع اللعبة.");
