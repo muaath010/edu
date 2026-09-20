@@ -1113,25 +1113,39 @@ function toggleDarkMode() {
             });
         }
 
-        function doRegister() {
+       function doRegister() {
             let name = document.getElementById('regName').value;
             let email = document.getElementById('regEmail').value;
             let pass = document.getElementById('regPass').value;
             if(!name || !email || !pass) return alert("يرجى تعبئة جميع الحقول");
             
             document.getElementById('authMsg').innerText = '⏳ جاري إنشاء الحساب...';
-            fetch(scriptURL, { method: 'POST', body: JSON.stringify({action: 'register', name: name, email: email, password: pass}) })
-            .then(r=>r.json()).then(d => {
-                if(d.status === 'pending_approval') {
-                    // نجاح إنشاء الحساب ولكن بانتظار الموافقة (لن يتم إدخاله للمنصة)
-                    document.getElementById('authMsg').innerHTML = `<span style="color:#27ae60; font-size:14px;">${d.message}</span>`;
-                    // إفراغ الحقول
+            
+            fetch(scriptURL, { 
+                method: 'POST', 
+                body: JSON.stringify({action: 'register', name: name, email: email, password: pass}) 
+            })
+            .then(r => r.json())
+            .then(d => {
+                // الفلتر الذكي: نقبل حالة "الانتظار" أو حالة "النجاح" القديمة لضمان عمل الكود دائماً
+                if(d.status === 'pending_approval' || d.status === 'success') {
+                    
+                    document.getElementById('authMsg').innerHTML = `<span style="color:#27ae60; font-size:15px; font-weight:bold;">✅ تم إنشاء حسابك بنجاح!<br>يرجى انتظار موافقة الإدارة لتفعيله.</span>`;
+                    
+                    // إفراغ الحقول تلقائياً بعد النجاح
                     document.getElementById('regName').value = "";
                     document.getElementById('regEmail').value = "";
                     document.getElementById('regPass').value = "";
+                    
                 } else { 
-                    document.getElementById('authMsg').innerHTML = `<span style="color:#e74c3c;">${d.message}</span>`; 
+                    // في حالة وجود خطأ (مثل الإيميل مكرر) نظهره، وإذا لم يكن موجوداً نظهر رسالة عامة
+                    let errorMsg = d.message || d.error || "حدث خطأ غير معروف أثناء التسجيل";
+                    document.getElementById('authMsg').innerHTML = `<span style="color:#e74c3c; font-weight:bold;">❌ ${errorMsg}</span>`; 
                 }
+            })
+            .catch(e => {
+                // حماية الكود من الانهيار إذا انقطع الإنترنت
+                document.getElementById('authMsg').innerHTML = `<span style="color:#e74c3c; font-weight:bold;">❌ حدث خطأ في الاتصال بالخادم، يرجى المحاولة لاحقاً.</span>`;
             });
         }
 
