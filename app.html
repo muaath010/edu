@@ -2387,28 +2387,33 @@ function renderDynamicTable(g, s) {
         let shortName = name.split(' ').slice(0, 3).join(' ');
         
         // بناء بطاقة التعزيز
+        // بناء بطاقة التعزيز بأيقونات احترافية
         let rCard = document.createElement("div"); rCard.className = "reinf-card";
         rCard.innerHTML = `
-            <div class="reinf-name" title="انقر لفتح البطاقة التحليلية" onclick="openStudentAnalytics('${name}', ${i})" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.color='#3498db'" onmouseout="this.style.color='var(--text-color)'">📊 ${i+1}. ${shortName}</div>
+            <div class="reinf-name" title="انقر لفتح البطاقة التحليلية" onclick="openStudentAnalytics('${name}', ${i})" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.color='#3498db'" onmouseout="this.style.color='var(--text-color)'">
+                <i class="fa-solid fa-chart-pie" style="color:#3498db; margin-left:5px;"></i> ${i+1}. ${shortName}
+            </div>
             <div class="reinf-row">
-                <span class="reinf-row-title">🌟 تميز/مشاركة</span>
+                <span class="reinf-row-title"><i class="fa-solid fa-star" style="color:#f1c40f; margin-left:5px;"></i> تميز/مشاركة</span>
                 <div class="reinf-btn-group">
-                    <button class="r-btn" style="background:#27ae60" onclick="changeReinfVal('int-${i}', 1); playSound(800, 'sine', 0.1, 0.1);">+</button>
+                    <button class="r-btn" style="background:#27ae60" onclick="changeReinfVal('int-${i}', 1); playSound(800, 'sine', 0.1, 0.1);"><i class="fa-solid fa-plus"></i></button>
                     <input type="text" id="int-${i}" class="r-inp excel" value="${d.interaction}" readonly>
-                    <button class="r-btn" style="background:#7f8c8d" onclick="changeReinfVal('int-${i}', -1)">-</button>
+                    <button class="r-btn" style="background:#7f8c8d" onclick="changeReinfVal('int-${i}', -1)"><i class="fa-solid fa-minus"></i></button>
                 </div>
             </div>
             <div class="reinf-row">
-                <span class="reinf-row-title">⚠️ مخالفة/نقص</span>
+                <span class="reinf-row-title"><i class="fa-solid fa-triangle-exclamation" style="color:#e74c3c; margin-left:5px;"></i> مخالفة/نقص</span>
                 <div class="reinf-btn-group">
-                    <button class="r-btn" style="background:#e74c3c" onclick="changeReinfVal('viol-${i}', 1); playSound(150, 'sawtooth', 0.2, 0.2);">+</button>
+                    <button class="r-btn" style="background:#e74c3c" onclick="changeReinfVal('viol-${i}', 1); playSound(150, 'sawtooth', 0.2, 0.2);"><i class="fa-solid fa-plus"></i></button>
                     <input type="text" id="viol-${i}" class="r-inp viol" value="${d.violation}" readonly>
-                    <button class="r-btn" style="background:#7f8c8d" onclick="changeReinfVal('viol-${i}', -1)">-</button>
+                    <button class="r-btn" style="background:#7f8c8d" onclick="changeReinfVal('viol-${i}', -1)"><i class="fa-solid fa-minus"></i></button>
                 </div>
             </div>
-            <button class="action-btn" onclick="openBehaviorLog(${i}, '${name}')" style="background:#8e44ad; color:white; margin-top:8px; width:100%; border:none; border-radius:6px; padding:6px; font-weight:bold; cursor:pointer;">📝 سجل السلوكيات</button>            `;
+            <button class="action-btn" onclick="openBehaviorLog(${i}, '${name}')" style="background:#8e44ad; color:white; margin-top:8px; width:100%; border:none; border-radius:6px; padding:8px; font-weight:bold; cursor:pointer; font-size:14px; transition:0.3s;">
+                <i class="fa-solid fa-clipboard-list" style="margin-left:5px;"></i> سجل السلوكيات
+            </button>
+        `;
         rGrid.appendChild(rCard);
-
         // بناء صف الدرجات
         let rowHtml = `<td>${i+1}</td><td style="text-align:right;"><span id="name-${i}">${name}</span><br><span id="risk-${i}" class="risk-alert">⚠️ تراجع</span></td>`;
         
