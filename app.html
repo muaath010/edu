@@ -11,6 +11,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <!-- مكتبة الأيقونات الاحترافية FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root { 
@@ -462,26 +464,26 @@
     </button>
 
     <div class="sidebar-right">
-        <button class="side-icon" style="background: #1abc9c;" data-title="إدارة الطلاب والشعب" onclick="openModal('modalStudentManager')">🧑‍🎓</button>
-        <button class="side-icon" style="background: #c0392b;" id="voiceBtn" onclick="toggleVoice()" data-title="التحكم الصوتي">🎤</button>
-        <button class="side-icon bg-export" data-title="تصدير إكسل" onclick="exportToExcel()">📊</button>
-        <button class="side-icon bg-repo" data-title="المستودع السحابي" onclick="openRepoModal()">📂</button>
-        <button class="side-icon bg-reports" data-title="تقارير وشهادات" onclick="generateDetailedReports()">📜</button>
-        <button class="side-icon bg-honor" data-title="إطلاق لوحة الشرف" onclick="toggleHonorRoll()">🏆</button>
-        <button class="side-icon" style="background: #e67e22;" data-title="متجر المكافآت" onclick="openRewardsStore()">🛍️</button>
-        <button class="side-icon" style="background: #8e44ad;" data-title="إنشاء العاب تفاعلية" onclick="openAiGenerator()">🤖</button>
+        <button class="side-icon" style="background: #1abc9c;" data-title="إدارة الطلاب والشعب" onclick="openModal('modalStudentManager')"><i class="fa-solid fa-user-graduate"></i></button>
+        <button class="side-icon" style="background: #c0392b;" id="voiceBtn" onclick="toggleVoice()" data-title="التحكم الصوتي"><i class="fa-solid fa-microphone"></i></button>
+        <button class="side-icon bg-export" data-title="تصدير إكسل" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i></button>
+        <button class="side-icon bg-repo" data-title="المستودع السحابي" onclick="openRepoModal()"><i class="fa-solid fa-cloud-arrow-up"></i></button>
+        <button class="side-icon bg-reports" data-title="تقارير وشهادات" onclick="generateDetailedReports()"><i class="fa-solid fa-certificate"></i></button>
+        <button class="side-icon bg-honor" data-title="إطلاق لوحة الشرف" onclick="toggleHonorRoll()"><i class="fa-solid fa-trophy" style="color:#000;"></i></button>
+        <button class="side-icon" style="background: #e67e22;" data-title="متجر المكافآت" onclick="openRewardsStore()"><i class="fa-solid fa-gift"></i></button>
+        <button class="side-icon" style="background: #8e44ad;" data-title="صانع الأنشطة التفاعلية" onclick="openAiGenerator()"><i class="fa-solid fa-robot"></i></button>
     </div>
 
     <div class="sidebar-left">
-        <button class="side-icon bg-arena" data-title="ساحة التحدي والألعاب" onclick="openModal('modalArenaSetup')">⚔️</button>
-        <button class="side-icon" style="background: #2c3e50;" data-title="تجهيز الاختبارات" onclick="openModal('modalQuizForm'); loadQuizHistory();">📝</button>
-        <button class="side-icon" style="background: #e74c3c;" data-title="استلام الإجابات" onclick="openQuizResultsModal()">📑</button>
-        <button class="side-icon" style="background: #8e44ad;" data-title="دفتر التحضير" onclick="openNotesModal()">📓</button>
-        <button class="side-icon bg-wheel" data-title="عجلة الاختيار" onclick="openModal('modalRandom')">🎲</button>
-        <button class="side-icon bg-timer" data-title="المؤقت الذكي" onclick="openModal('modalTimer')">⏱️</button>
-        <button class="side-icon bg-radar" data-title="إدارة الصف والرادار" onclick="openModal('modalRadar')">🚦</button>
-        <button class="side-icon bg-groups" data-title="مقسم المجموعات" onclick="openModal('modalGroups')">👥</button>
-        <button class="side-icon bg-seating" data-title="خريطة المقاعد" onclick="openSeatingChart()">🗺️</button>
+        <button class="side-icon bg-arena" data-title="ساحة التحدي والألعاب" onclick="openModal('modalArenaSetup')"><i class="fa-solid fa-gamepad"></i></button>
+        <button class="side-icon" style="background: #2c3e50;" data-title="تجهيز الاختبارات" onclick="openModal('modalQuizForm'); loadQuizHistory();"><i class="fa-solid fa-file-pen"></i></button>
+        <button class="side-icon" style="background: #e74c3c;" data-title="استلام الإجابات" onclick="openQuizResultsModal()"><i class="fa-solid fa-inbox"></i></button>
+        <button class="side-icon" style="background: #8e44ad;" data-title="دفتر التحضير" onclick="openNotesModal()"><i class="fa-solid fa-book-open-reader"></i></button>
+        <button class="side-icon bg-wheel" data-title="عجلة الاختيار" onclick="openModal('modalRandom')"><i class="fa-solid fa-dharmachakra"></i></button>
+        <button class="side-icon bg-timer" data-title="المؤقت الذكي" onclick="openModal('modalTimer')"><i class="fa-solid fa-stopwatch"></i></button>
+        <button class="side-icon bg-radar" data-title="إدارة الصف والرادار" onclick="openModal('modalRadar')"><i class="fa-solid fa-traffic-light"></i></button>
+        <button class="side-icon bg-groups" data-title="مقسم المجموعات" onclick="openModal('modalGroups')"><i class="fa-solid fa-people-group"></i></button>
+        <button class="side-icon bg-seating" data-title="خريطة المقاعد" onclick="openSeatingChart()"><i class="fa-solid fa-chair"></i></button>
     </div>
 
    <div class="header-container">
@@ -1092,14 +1094,15 @@ function toggleDarkMode() {
             
             document.getElementById('authMsg').innerText = '⏳ جاري التحقق...';
             fetch(scriptURL, { method: 'POST', body: JSON.stringify({action: 'login', email: email, password: pass}) })
-            .then(r => r.json()) // 👈 هذا هو السطر الذي كان مفقوداً
+            .then(r => r.json())
             .then(d => {
                 if(d.status === 'success') {
                     localStorage.setItem('teacher_id', d.teacher_id);
                     localStorage.setItem('teacher_name', d.name);
                     localStorage.setItem('teacher_role', d.role);
                     location.reload();
-                } else if (d.status === 'expired') {
+                } else if (d.status === 'expired' || d.status === 'pending') {
+                    // إظهار رسالة انتهاء الاشتراك أو قيد المراجعة
                     document.getElementById('authMsg').innerHTML = `<span style="color:#e74c3c;">${d.message}</span>`;
                 } else {
                     document.getElementById('authMsg').innerText = d.message; 
@@ -1119,12 +1122,16 @@ function toggleDarkMode() {
             document.getElementById('authMsg').innerText = '⏳ جاري إنشاء الحساب...';
             fetch(scriptURL, { method: 'POST', body: JSON.stringify({action: 'register', name: name, email: email, password: pass}) })
             .then(r=>r.json()).then(d => {
-                if(d.status === 'success') {
-                    localStorage.setItem('teacher_id', d.teacher_id);
-                    localStorage.setItem('teacher_name', d.name);
-                    localStorage.setItem('teacher_role', 'teacher'); // 👈 هذا هو السطر الإضافي
-                    location.reload();
-                } else { document.getElementById('authMsg').innerText = d.message; }
+                if(d.status === 'pending_approval') {
+                    // نجاح إنشاء الحساب ولكن بانتظار الموافقة (لن يتم إدخاله للمنصة)
+                    document.getElementById('authMsg').innerHTML = `<span style="color:#27ae60; font-size:14px;">${d.message}</span>`;
+                    // إفراغ الحقول
+                    document.getElementById('regName').value = "";
+                    document.getElementById('regEmail').value = "";
+                    document.getElementById('regPass').value = "";
+                } else { 
+                    document.getElementById('authMsg').innerHTML = `<span style="color:#e74c3c;">${d.message}</span>`; 
+                }
             });
         }
 
@@ -2719,7 +2726,8 @@ function generateDetailedReports() {
             isListening = true;
             const btn = document.getElementById('voiceBtn');
             btn.classList.add('listening');
-            btn.innerText = '🔴';
+            // تغيير الأيقونة إلى شكل التسجيل النشط
+            btn.innerHTML = '<i class="fa-solid fa-record-vinyl"></i>';
             playSound(440, 'sine', 0.1, 0.1);
         }
 
@@ -2728,7 +2736,8 @@ function generateDetailedReports() {
             isListening = false;
             const btn = document.getElementById('voiceBtn');
             btn.classList.remove('listening');
-            btn.innerText = '🎤';
+            // إعادة أيقونة الميكروفون
+            btn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
         }
         // --- 1. المؤقت الذكي ---
 let countdownTimer;
@@ -2886,14 +2895,21 @@ function renderAdminData(type) {
             let subEnd = t.subscription_end ? new Date(t.subscription_end) : null;
             let statusBadge = '';
             let remainingText = '';
+            let btnText = "🔄 تجديد شهر";
+            let btnColor = "#2980b9";
 
             if (!subEnd) {
-                statusBadge = `<span style="background:#7f8c8d; color:white; padding:4px 8px; border-radius:4px; font-size:12px;">غير محدد</span>`;
-                remainingText = "-";
+                // حالة: حساب جديد يحتاج موافقة
+                statusBadge = `<span style="background:#f39c12; color:white; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:bold;">⏳ بانتظار التفعيل</span>`;
+                remainingText = `<span style="color:#f39c12; font-weight:bold;">الاشتراك لم يبدأ بعد</span>`;
+                btnText = "✅ موافقة وتفعيل (30 يوم)";
+                btnColor = "#27ae60";
             } else if (subEnd < now) {
+                // حالة: اشتراك منتهي
                 statusBadge = `<span style="background:#c0392b; color:white; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:bold;">⚠️ منتهي</span>`;
                 remainingText = `<span style="color:#c0392b; font-weight:bold;">انتهى منذ ${Math.ceil(Math.abs(now - subEnd) / (1000 * 60 * 60 * 24))} يوم</span>`;
             } else {
+                // حالة: اشتراك نشط
                 let diffDays = Math.ceil(Math.abs(subEnd - now) / (1000 * 60 * 60 * 24));
                 statusBadge = `<span style="background:#27ae60; color:white; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:bold;">✅ نشط</span>`;
                 remainingText = `<span style="color:#27ae60; font-weight:bold;">متبقي ${diffDays} يوم</span>`;
@@ -2906,7 +2922,7 @@ function renderAdminData(type) {
                 <td>${statusBadge}<br><div style="font-size:12px; margin-top:5px;">${remainingText}</div></td>
                 <td>
                     <div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
-                        <button onclick="adminRenewTeacher(${t.id}, '${t.name}')" style="background:#2980b9; color:white; border:none; padding:6px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px; width:100%; transition:0.3s;">🔄 تجديد شهر</button>
+                        <button onclick="adminRenewTeacher(${t.id}, '${t.name}')" style="background:${btnColor}; color:white; border:none; padding:6px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px; width:100%; transition:0.3s;">${btnText}</button>
                         <button onclick="adminDeleteEntity('teacher', ${t.id}, '${t.name}')" style="background:#e74c3c; color:white; border:none; padding:4px; border-radius:4px; cursor:pointer; font-size:12px; width:100%; transition:0.3s;">🗑️ حذف شامل</button>
                     </div>
                 </td>
