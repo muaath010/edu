@@ -671,6 +671,16 @@ input:focus, select:focus, textarea:focus {
 
 /* توحيد أيقونات FontAwesome للون محايد */
 i.fa-solid { color: inherit !important; }
+        /* إصلاح نصوص وأرقام متجر المكافآت */
+.store-item {
+    color: var(--text-main) !important; /* جعل اسم المكافأة بلون داكن مقروء */
+}
+
+.store-price {
+    color: var(--primary-crimson) !important; /* جعل رقم النقاط باللون الأحمر */
+    background: var(--bg-light-gray) !important; /* خلفية رمادية فاتحة تبرز الرقم */
+    border: 1px solid var(--primary-crimson) !important; /* إطار أحمر خفيف حول الرقم */
+}
 
     </style>
 </head>
