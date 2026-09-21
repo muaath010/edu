@@ -411,6 +411,266 @@
     width: 95% !important;
     padding: 30px !important;
 }
+        /* ==========================================================================
+   🎯 PREMIUM VISUAL REDESIGN (Crimson & Gold Theme)
+   ========================================================================== */
+
+:root {
+    /* لوحة الألوان الجديدة */
+    --primary-crimson: #900C3F;      /* أحمر عميق فاخر */
+    --primary-hover: #700930;        /* أحمر داكن لحالة Hover */
+    --premium-gold: #D4AF37;         /* ذهبي راقٍ */
+    --gold-hover: #B5952F;           /* ذهبي داكن لحالة Hover */
+    --bg-white: #FFFFFF;             /* أبيض ناصع للبطاقات */
+    --bg-light-gray: #F8FAFC;        /* رمادي محايد جداً للخلفيات */
+    --border-light: #E2E8F0;         /* حدود ناعمة */
+    
+    /* النصوص */
+    --text-main: #1E293B;            /* لون نصوص أساسي مريح للعين */
+    --text-muted: #64748B;           /* نصوص ثانوية */
+    
+    /* المقاسات والحواف */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    
+    /* الظلال */
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.04);
+    --shadow-card-hover: 0 12px 30px rgba(144, 12, 63, 0.08);
+    --shadow-btn: 0 4px 12px rgba(144, 12, 63, 0.2);
+}
+
+/* 1. الخلفية العامة والخطوط (Clean Workspace) */
+body {
+    background: var(--bg-light-gray) !important;
+    color: var(--text-main) !important;
+    font-family: 'Tajawal', sans-serif !important;
+    line-height: 1.6;
+}
+.glass-overlay { display: none !important; } /* إزالة التشويش الخلفي القديم */
+
+/* 2. تحسين القوائم الجانبية (Navigation) */
+.sidebar-right, .sidebar-left {
+    background: var(--bg-white) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: var(--radius-xl) !important;
+    box-shadow: var(--shadow-soft) !important;
+    padding: 20px 12px !important;
+}
+
+/* توحيد ألوان الأيقونات الجانبية وإلغاء الألوان المشتتة */
+.side-icon, button[class*="bg-"], button.side-icon[style] {
+    background: var(--bg-light-gray) !important;
+    color: var(--text-muted) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: none !important;
+    border: 1px solid transparent !important;
+    width: 48px !important;
+    height: 48px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.side-icon:hover, button.side-icon[style]:hover {
+    background: var(--bg-white) !important;
+    color: var(--primary-crimson) !important;
+    border-color: var(--primary-crimson) !important;
+    transform: translateY(-4px) !important;
+    box-shadow: var(--shadow-soft) !important;
+}
+
+/* 3. الهيدر العلوي (Header & Controls) */
+.header-container {
+    background: var(--bg-white) !important;
+    border-radius: var(--radius-xl) !important;
+    box-shadow: var(--shadow-soft) !important;
+    border: 1px solid var(--border-light) !important;
+    padding: 24px !important;
+}
+.header-container h2 {
+    color: var(--text-main) !important;
+    font-weight: 800;
+}
+.header-container img { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); }
+
+/* 4. البطاقات (Cards) */
+.reinf-card, .repo-card, .desk-card, .report-img-card, .store-item, div[style*="background:var(--category-bg)"] {
+    background: var(--bg-white) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-soft) !important;
+    transition: all 0.3s ease !important;
+}
+.reinf-card:hover, .repo-card:hover, .store-item:hover {
+    border-color: var(--premium-gold) !important;
+    box-shadow: var(--shadow-card-hover) !important;
+    transform: translateY(-4px) !important;
+}
+
+/* 5. الأزرار (Buttons - Micro-interactions) */
+/* توحيد الأزرار الأساسية للون الـ Crimson */
+button[style*="background:#27ae60"], 
+button[style*="background:#3498db"], 
+button[style*="background:#8e44ad"],
+button[style*="background:#d35400"],
+.btn-save-note {
+    background: var(--primary-crimson) !important;
+    color: var(--bg-white) !important;
+    border-radius: var(--radius-md) !important;
+    font-weight: 700 !important;
+    border: none !important;
+    box-shadow: var(--shadow-btn) !important;
+    transition: all 0.3s ease !important;
+}
+button[style*="background:#27ae60"]:hover, 
+button[style*="background:#3498db"]:hover,
+button[style*="background:#8e44ad"]:hover,
+.btn-save-note:hover {
+    background: var(--primary-hover) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(144, 12, 63, 0.3) !important;
+}
+
+/* زر الحفظ العائم (الذهبي الفاخر) */
+.btn-floating-save {
+    background: var(--premium-gold) !important;
+    color: #000000 !important;
+    border-radius: 50px !important;
+    font-weight: 800 !important;
+    padding: 14px 28px !important;
+    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4) !important;
+}
+.btn-floating-save:hover {
+    background: var(--gold-hover) !important;
+    transform: translateX(-50%) translateY(-4px) !important;
+}
+
+/* أزرار الحذف/الإلغاء (رمادي محايد بدلاً من الأحمر المزعج) */
+button[style*="background:#c0392b"], button[style*="background:#e74c3c"] {
+    background: var(--bg-light-gray) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-light) !important;
+    box-shadow: none !important;
+}
+button[style*="background:#c0392b"]:hover, button[style*="background:#e74c3c"]:hover {
+    background: #e2e8f0 !important;
+    color: #94a3b8 !important;
+}
+
+/* 6. الجداول (Tables) */
+.table-container {
+    background: var(--bg-white) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-soft) !important;
+    border: 1px solid var(--border-light) !important;
+}
+table { border-collapse: collapse !important; width: 100%; }
+th, td { 
+    border: none !important; 
+    border-bottom: 1px solid var(--border-light) !important; 
+    padding: 16px 12px !important; 
+    color: var(--text-main) !important;
+}
+.header-blue, .header-orange, th[style*="background-color"] {
+    background: var(--bg-light-gray) !important;
+    color: var(--text-muted) !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    text-transform: uppercase;
+}
+td.t-grand { color: var(--primary-crimson) !important; font-size: 16px !important; }
+
+/* 7. الحقول والنماذج (Forms & Inputs) */
+input.note-input, select, textarea, .r-inp, input.col-calc, input[type="text"], input[type="number"] {
+    background: var(--bg-light-gray) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: var(--radius-md) !important;
+    color: var(--text-main) !important;
+    padding: 12px 16px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none !important;
+    border-color: var(--primary-crimson) !important;
+    box-shadow: 0 0 0 3px rgba(144, 12, 63, 0.1) !important;
+    background: var(--bg-white) !important;
+}
+
+/* 8. النوافذ المنبثقة (Modals) */
+.modal {
+    background: rgba(15, 23, 42, 0.6) !important; /* خلفية داكنة راقية */
+    backdrop-filter: blur(8px) !important;
+}
+.modal-content {
+    background: var(--bg-white) !important;
+    border-radius: var(--radius-xl) !important;
+    border: none !important;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.15) !important;
+    padding: 32px !important;
+    transform: scale(0.95);
+    animation: modalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes modalSlideIn {
+    to { transform: scale(1); opacity: 1; }
+}
+.modal-header {
+    border-bottom: 1px solid var(--border-light) !important;
+    padding-bottom: 20px !important;
+    margin-bottom: 24px !important;
+}
+.modal-header h3, .modal-header h2 {
+    color: var(--primary-crimson) !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+}
+.close-btn {
+    color: var(--text-muted) !important;
+    background: var(--bg-light-gray) !important;
+    width: 40px !important; height: 40px !important;
+    display: flex !important; justify-content: center !important; align-items: center !important;
+    border-radius: 50% !important;
+    font-size: 20px !important;
+    top: 24px !important; left: 24px !important;
+    transition: 0.3s ease !important;
+}
+.close-btn:hover { 
+    background: var(--primary-crimson) !important; 
+    color: var(--bg-white) !important; 
+    transform: rotate(90deg);
+}
+
+/* 9. تحسينات لوحة التعزيز (Reinforcements) */
+.reinforcement-header {
+    border-bottom: none !important;
+    color: var(--primary-crimson) !important;
+}
+.reinf-row {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid var(--border-light) !important;
+    border-radius: 0 !important;
+    padding: 12px 0 !important;
+}
+.reinf-row:last-child { border-bottom: none !important; }
+.r-btn {
+    border-radius: var(--radius-sm) !important;
+    background: var(--bg-light-gray) !important;
+    color: var(--text-muted) !important;
+    box-shadow: none !important;
+}
+.r-btn:hover {
+    background: var(--premium-gold) !important;
+    color: #000 !important;
+}
+
+/* 10. إخفاء الزخارف غير الضرورية (Clean up) */
+.honor-ticker-wrap { background: var(--bg-white) !important; border-top: 1px solid var(--border-light) !important; }
+.honor-ticker { color: var(--primary-crimson) !important; }
+.repo-icon, .bomb-icon, .treasure-box { font-family: "Segoe UI Emoji", sans-serif; } /* توحيد خطوط الإيموجي */
+
+/* توحيد أيقونات FontAwesome للون محايد */
+i.fa-solid { color: inherit !important; }
 
     </style>
 </head>
