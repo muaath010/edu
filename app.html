@@ -682,6 +682,112 @@ i.fa-solid { color: inherit !important; }
     border: 1px solid var(--primary-crimson) !important; /* إطار أحمر خفيف حول الرقم */
 }
 
+        /* ==========================================================================
+   🎓 ACADEMIC HEALTH & STUDENT REPORT CARDS (Modern Indicators)
+   ========================================================================== */
+
+/* 1. بطاقة التقرير الأكاديمي (تصميم فاخر) */
+.report-img-card {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 2px solid var(--premium-gold) !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;
+}
+
+/* رأس بطاقة الطالب */
+.report-img-header {
+    background: linear-gradient(135deg, var(--primary-crimson), #60082A) !important;
+    color: var(--premium-gold) !important;
+    padding: 16px 20px !important;
+    font-size: 18px !important;
+    font-weight: 900 !important;
+    letter-spacing: 1px !important;
+    text-align: center !important;
+    border-bottom: 3px solid var(--premium-gold) !important;
+}
+
+/* 2. شريط الحالة الأكاديمية (الرادار/التقدم) - شريط متحرك مضيء */
+.radar-box {
+    background: rgba(255, 255, 255, 0.8) !important;
+    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.02) !important;
+}
+.radar-bar-bg {
+    background: #E2E8F0 !important;
+    border-radius: 10px !important;
+    height: 18px !important;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.1) !important;
+    overflow: hidden !important;
+}
+.radar-bar-fill {
+    /* تدرج لوني من الخمري للذهبي مع حركة استمرار لمعان */
+    background: linear-gradient(90deg, var(--primary-crimson), var(--premium-gold), var(--primary-crimson)) !important;
+    background-size: 200% 100% !important;
+    border-radius: 10px !important;
+    animation: loadingGlow 3s linear infinite !important;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.5) !important;
+}
+@keyframes loadingGlow {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
+/* 3. شارات التقييم والدرجات (تصميم 3D مصغر) */
+.report-grade-badge {
+    background: linear-gradient(135deg, var(--premium-gold), #E6C25A) !important;
+    color: #000 !important;
+    padding: 6px 16px !important;
+    border-radius: 30px !important;
+    font-weight: 900 !important;
+    border: none !important;
+    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.4) !important;
+    font-size: 15px !important;
+    font-family: 'Tajawal', monospace !important;
+}
+
+/* 4. إشارات المرور للتقييم السريع (توهج النيون) */
+.traffic-light-container {
+    background: #1E293B !important; /* خلفية داكنة لتبرز الإضاءة */
+    border: 2px solid var(--primary-crimson) !important;
+    border-radius: 50px !important;
+    padding: 12px 20px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
+}
+.light {
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+/* تأثير النيون القوي عند التفعيل */
+.light.red.active { 
+    background: #FF3B30 !important; 
+    box-shadow: 0 0 25px #FF3B30, inset 0 0 10px rgba(255,255,255,0.5) !important; 
+    transform: scale(1.15) !important; 
+}
+.light.yellow.active { 
+    background: #FFCC00 !important; 
+    box-shadow: 0 0 25px #FFCC00, inset 0 0 10px rgba(255,255,255,0.5) !important; 
+    transform: scale(1.15) !important; 
+}
+.light.green.active { 
+    background: #34C759 !important; 
+    box-shadow: 0 0 25px #34C759, inset 0 0 10px rgba(255,255,255,0.5) !important; 
+    transform: scale(1.15) !important; 
+}
+
+/* 5. الملخص الأكاديمي النهائي في أسفل البطاقة */
+.report-img-summary {
+    background: rgba(212, 175, 55, 0.1) !important;
+    color: var(--primary-crimson) !important;
+    border: 1px dashed var(--primary-crimson) !important;
+    font-size: 15px !important;
+    padding: 10px 18px !important;
+    border-radius: 8px !important;
+    font-weight: 800 !important;
+}
+
     </style>
 </head>
 <body>
