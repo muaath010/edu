@@ -682,11 +682,113 @@ i.fa-solid { color: inherit !important; }
     border: 1px solid var(--primary-crimson) !important; /* إطار أحمر خفيف حول الرقم */
 }
 
-        /* ==========================================================================
-   🎓 ACADEMIC HEALTH & STUDENT REPORT CARDS (Modern Indicators)
+    /* ==========================================================================
+   🌟 UNIFIED VIBRANT PREMIUM REDESIGN (Crimson & Gold + Academic UI)
    ========================================================================== */
 
-/* 1. بطاقة التقرير الأكاديمي (تصميم فاخر) */
+:root {
+    --primary-crimson: #900C3F;
+    --crimson-light: #B81D54;
+    --premium-gold: #D4AF37;
+    --gold-light: #F3E5AB;
+    --bg-white: #FFFFFF;
+    --border-light: rgba(212, 175, 55, 0.3);
+    --text-main: #1E293B;
+}
+
+/* 1. الخلفية العامة المشرقة */
+body {
+    background: linear-gradient(135deg, #fdfbfb 0%, #f4f6f9 100%) !important;
+    color: var(--text-main) !important;
+    font-family: 'Tajawal', sans-serif !important;
+}
+
+/* 2. الأزرار الجانبية (حيوية وارتدادية) */
+.side-icon, button[class*="bg-"], button.side-icon[style] {
+    background: linear-gradient(145deg, #ffffff, #f0f0f0) !important;
+    color: var(--primary-crimson) !important;
+    border: 1px solid var(--border-light) !important;
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.05), -4px -4px 10px rgba(255,255,255,0.8) !important;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+.side-icon:hover, button.side-icon[style]:hover {
+    background: linear-gradient(135deg, var(--primary-crimson), var(--crimson-light)) !important;
+    color: white !important;
+    transform: scale(1.15) translateY(-5px) !important;
+    box-shadow: 0 10px 20px rgba(144, 12, 63, 0.3) !important;
+    border-color: transparent !important;
+}
+
+/* 3. البطاقات الأساسية */
+.reinf-card, .repo-card, .desk-card, div[style*="background:var(--category-bg)"] {
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.03) !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+.reinf-card:hover, .repo-card:hover {
+    transform: translateY(-8px) scale(1.02) !important;
+    border-color: var(--premium-gold) !important;
+    box-shadow: 0 15px 30px rgba(212, 175, 55, 0.2) !important;
+}
+
+/* 4. الأزرار العامة وزر الحفظ العائم */
+button[style*="background:#27ae60"], 
+button[style*="background:#3498db"], 
+button[style*="background:#8e44ad"],
+button[style*="background:#d35400"],
+.btn-save-note {
+    background: linear-gradient(135deg, var(--primary-crimson), var(--crimson-light)) !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(144, 12, 63, 0.2) !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+button[style*="background:#27ae60"]:hover, 
+button[style*="background:#3498db"]:hover,
+button[style*="background:#8e44ad"]:hover,
+.btn-save-note:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 0 8px 25px rgba(144, 12, 63, 0.4) !important;
+}
+
+.btn-floating-save {
+    background: linear-gradient(135deg, var(--premium-gold), #E6C25A) !important;
+    color: #000 !important;
+    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.5) !important;
+    animation: floatingPulse 2s infinite alternate !important;
+}
+@keyframes floatingPulse {
+    0% { transform: translateX(-50%) translateY(0) scale(1); }
+    100% { transform: translateX(-50%) translateY(-4px) scale(1.02); box-shadow: 0 12px 30px rgba(212, 175, 55, 0.7) !important; }
+}
+
+/* 5. متجر المكافآت المتوهج */
+.store-item {
+    background: linear-gradient(135deg, var(--premium-gold) 0%, #F5D76E 100%) !important;
+    color: #1E293B !important;
+    border: none !important;
+    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3) !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+.store-item:hover {
+    transform: translateY(-10px) scale(1.04) !important;
+    box-shadow: 0 15px 35px rgba(212, 175, 55, 0.5) !important;
+}
+.store-price {
+    background: #ffffff !important;
+    color: var(--primary-crimson) !important;
+    border: 2px solid var(--primary-crimson) !important;
+    box-shadow: 0 4px 10px rgba(144, 12, 63, 0.15) !important;
+}
+
+/* ==========================================================
+   🎓 6. المؤشرات الأكاديمية الحديثة (تقارير الطالب)
+   ========================================================== */
+
+/* بطاقة التقرير ورأسها */
 .report-img-card {
     background: rgba(255, 255, 255, 0.95) !important;
     border: 2px solid var(--premium-gold) !important;
@@ -694,20 +796,16 @@ i.fa-solid { color: inherit !important; }
     overflow: hidden !important;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;
 }
-
-/* رأس بطاقة الطالب */
 .report-img-header {
     background: linear-gradient(135deg, var(--primary-crimson), #60082A) !important;
     color: var(--premium-gold) !important;
     padding: 16px 20px !important;
     font-size: 18px !important;
     font-weight: 900 !important;
-    letter-spacing: 1px !important;
-    text-align: center !important;
     border-bottom: 3px solid var(--premium-gold) !important;
 }
 
-/* 2. شريط الحالة الأكاديمية (الرادار/التقدم) - شريط متحرك مضيء */
+/* شريط الرادار/التقدم (تأثير اللمعان المستمر) */
 .radar-box {
     background: rgba(255, 255, 255, 0.8) !important;
     border: 1px solid rgba(212, 175, 55, 0.3) !important;
@@ -719,11 +817,9 @@ i.fa-solid { color: inherit !important; }
     background: #E2E8F0 !important;
     border-radius: 10px !important;
     height: 18px !important;
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.1) !important;
     overflow: hidden !important;
 }
 .radar-bar-fill {
-    /* تدرج لوني من الخمري للذهبي مع حركة استمرار لمعان */
     background: linear-gradient(90deg, var(--primary-crimson), var(--premium-gold), var(--primary-crimson)) !important;
     background-size: 200% 100% !important;
     border-radius: 10px !important;
@@ -735,22 +831,9 @@ i.fa-solid { color: inherit !important; }
     100% { background-position: -100% 0; }
 }
 
-/* 3. شارات التقييم والدرجات (تصميم 3D مصغر) */
-.report-grade-badge {
-    background: linear-gradient(135deg, var(--premium-gold), #E6C25A) !important;
-    color: #000 !important;
-    padding: 6px 16px !important;
-    border-radius: 30px !important;
-    font-weight: 900 !important;
-    border: none !important;
-    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.4) !important;
-    font-size: 15px !important;
-    font-family: 'Tajawal', monospace !important;
-}
-
-/* 4. إشارات المرور للتقييم السريع (توهج النيون) */
+/* إشارات المرور (توهج نيون حقيقي) */
 .traffic-light-container {
-    background: #1E293B !important; /* خلفية داكنة لتبرز الإضاءة */
+    background: #1E293B !important; 
     border: 2px solid var(--primary-crimson) !important;
     border-radius: 50px !important;
     padding: 12px 20px !important;
@@ -760,7 +843,6 @@ i.fa-solid { color: inherit !important; }
     border: 2px solid rgba(255, 255, 255, 0.1) !important;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
-/* تأثير النيون القوي عند التفعيل */
 .light.red.active { 
     background: #FF3B30 !important; 
     box-shadow: 0 0 25px #FF3B30, inset 0 0 10px rgba(255,255,255,0.5) !important; 
@@ -777,17 +859,23 @@ i.fa-solid { color: inherit !important; }
     transform: scale(1.15) !important; 
 }
 
-/* 5. الملخص الأكاديمي النهائي في أسفل البطاقة */
+/* شارات الدرجات والملخص */
+.report-grade-badge {
+    background: linear-gradient(135deg, var(--premium-gold), #E6C25A) !important;
+    color: #000 !important;
+    padding: 6px 16px !important;
+    border-radius: 30px !important;
+    font-weight: 900 !important;
+    border: none !important;
+    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.4) !important;
+}
 .report-img-summary {
     background: rgba(212, 175, 55, 0.1) !important;
     color: var(--primary-crimson) !important;
     border: 1px dashed var(--primary-crimson) !important;
-    font-size: 15px !important;
-    padding: 10px 18px !important;
     border-radius: 8px !important;
     font-weight: 800 !important;
 }
-
     </style>
 </head>
 <body>
