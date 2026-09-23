@@ -511,6 +511,88 @@ input:focus, select:focus, textarea:focus {
     0% { transform: translateX(-50%) translateY(0) scale(1); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
     100% { transform: translateX(-50%) translateY(-5px) scale(1.05); box-shadow: 0 12px 25px rgba(39, 174, 96, 0.6) !important; }
 }
+
+        /* ==========================================================
+   🎓 بطاقة الطالب التحليلية (تصميم عصري 3D وجذاب)
+   ========================================================== */
+
+/* 1. الحاوية الرئيسية (تأثير الزجاج الأنيق) */
+#modalStudentAnalytics .modal-content {
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%) !important;
+    border: 2px solid rgba(52, 152, 219, 0.2) !important;
+    border-radius: 24px !important;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.5) !important;
+}
+
+/* 2. وسام الرتبة (حركة طفو مستمرة 3D) */
+#analyticsRankBadge {
+    font-size: 70px !important;
+    filter: drop-shadow(0 15px 15px rgba(0,0,0,0.15)) !important;
+    animation: floatingBadge 3s ease-in-out infinite !important;
+}
+@keyframes floatingBadge {
+    0%, 100% { transform: translateY(0) rotate(-5deg) scale(1); }
+    50% { transform: translateY(-12px) rotate(5deg) scale(1.1); }
+}
+
+/* 3. شريط الصحة الأكاديمية (لمعان نيون وحركة مستمرة) */
+#analyticsHealthBar {
+    position: relative;
+    border-radius: 10px !important;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2) !important;
+    overflow: hidden !important;
+}
+/* تأثير اللمعان السريع (Shimmer) على شريط الصحة */
+#analyticsHealthBar::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+    animation: shimmerGlow 2s infinite linear;
+}
+@keyframes shimmerGlow {
+    0% { transform: translateX(-100%) skewX(-15deg); }
+    100% { transform: translateX(100%) skewX(-15deg); }
+}
+
+/* 4. صندوق الملخص الذكي (تصميم بطاقة تفاعلية) */
+#analyticsInsights {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(52, 152, 219, 0.3) !important;
+    border-right: 6px solid #3498db !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+#analyticsInsights:hover {
+    transform: translateY(-5px) scale(1.02) !important;
+    box-shadow: 0 15px 35px rgba(52, 152, 219, 0.15) !important;
+}
+
+/* 5. الأزرار السريعة بالأسفل (تفاعل مرن) */
+#modalStudentAnalytics button {
+    border-radius: 12px !important;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+#modalStudentAnalytics button:hover {
+    transform: translateY(-4px) scale(1.03) !important;
+    filter: brightness(1.1) !important;
+    box-shadow: 0 12px 20px rgba(0,0,0,0.15) !important;
+}
+
+/* 6. توافق مثالي مع الوضع الليلي */
+.dark-mode #modalStudentAnalytics .modal-content {
+    background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
+    border-color: rgba(255,255,255,0.1) !important;
+}
+.dark-mode #analyticsInsights {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(255,255,255,0.1) !important;
+}
     </style>
 </head>
 <body>
