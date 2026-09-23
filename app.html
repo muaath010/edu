@@ -2155,39 +2155,92 @@ function closeGameAndStop() {
         }
 
         function loadQuizHistory() {
-            const container = document.getElementById('quizHistoryContainer');
-            if(!container) return; 
+    const container = document.getElementById('quizHistoryContainer');
+    if(!container) return; 
 
-            container.innerHTML = `<div style="text-align:center; color:#7f8c8d; font-size:14px; padding:15px;">جاري جلب الأكواد من السحابة... ⏳</div>`;
+    container.innerHTML = `<div style="text-align:center; color:#7f8c8d; font-size:14px; padding:15px;">جاري جلب الأكواد من السحابة... ⏳</div>`;
 
-            fetch(`${scriptURL}?action=get_quiz_history&teacher_id=${localStorage.getItem('teacher_id')}`)
-            .then(r => r.json())
-            .then(data => {
-                if(data.status === "success" && data.history && data.history.length > 0) {
-                    let html = '';
-                    data.history.forEach((quiz) => {
-                        html += `
-                        <div style="background:var(--input-bg); border:1px solid var(--border-color); padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:8px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div style="font-weight:bold; color:#2980b9; font-size:15px;">📝 ${quiz.name}</div>
-                                <div style="font-size:12px; color:#7f8c8d;" dir="ltr">${quiz.date}</div>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; background:var(--category-bg); padding:8px; border-radius:4px; border: 1px solid #ecf0f1;">
-                                <input type="text" value="${quiz.url}" readonly style="flex:1; border:none; background:transparent; outline:none; font-family:monospace; font-size:18px; font-weight:bold; letter-spacing:2px; color:#34495e; direction:ltr; text-align:center;">
-                                <button onclick="navigator.clipboard.writeText('${quiz.url}'); alert('تم نسخ كود ${quiz.name} بنجاح!');" style="background:#27ae60; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:bold; transition:0.2s;">📋 نسخ</button>
-                                <button onclick="deleteQuizHistory('${quiz.id}')" style="background:#e74c3c; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:bold; transition:0.2s;" title="حذف من السجل السحابي">🗑️</button>
-                            </div>
-                        </div>`;
-                    });
-                    container.innerHTML = html;
-                } else {
-                    container.innerHTML = `<div style="text-align:center; color:#7f8c8d; font-size:14px; padding:15px; background:var(--category-bg); border-radius:8px;">لا توجد أكواد لاختبارات سابقة محفوظة في السحابة حتى الآن.</div>`;
-                }
-            })
-            .catch(err => {
-                container.innerHTML = `<div style="text-align:center; color:#e74c3c; font-size:14px; padding:15px;">❌ حدث خطأ في الاتصال. لا يمكن جلب السجل الآن.</div>`;
+    fetch(`${scriptURL}?action=get_quiz_history&teacher_id=${localStorage.getItem('teacher_id')}`)
+    .then(r => r.json())
+    .then(data => {
+        if(data.status === "success" && data.history && data.history.length > 0) {
+            let html = '';
+            data.history.forEach((quiz) => {
+                // التعرف إذا كان الكود نشاط تفاعلي (لعبة) لإظهار قائمة التبديل
+                let isGame = quiz.url.startsWith('G-');
+                
+                let gameSwitcher = isGame ? `
+                    <select onchange="updateGameTypeInCloud('${quiz.url}', this.value)" style="margin-top:5px; padding:6px; border-radius:6px; border:1px solid #8e44ad; background:#f5eef8; color:#8e44ad; font-weight:bold; font-size:13px; cursor:pointer; width:100%;">
+                        <option value="">🔄 تبديل قالب اللعبة</option>
+                        <option value="matching">🧩 المطابقة (Matching)</option>
+                        <option value="maze">🏃‍♂️ المتاهة (Maze)</option>
+                        <option value="spaceman">👨‍🚀 إنقاذ رائد الفضاء</option>
+                        <option value="spinwheel">🎡 عجلة الحظ</option>
+                        <option value="whackamole">🔨 صيد الكائنات</option>
+                        <option value="openbox">🎁 الصناديق الغامضة</option>
+                    </select>
+                ` : '';
+
+                html += `
+                <div style="background:var(--input-bg); border:1px solid var(--border-color); padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:8px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-weight:bold; color:#2980b9; font-size:15px;">${isGame ? '🎮' : '📝'} ${quiz.name}</div>
+                        <div style="font-size:12px; color:#7f8c8d;" dir="ltr">${quiz.date}</div>
+                    </div>
+                    
+                    <!-- إظهار قائمة التبديل إذا كانت لعبة -->
+                    ${gameSwitcher}
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; background:var(--category-bg); padding:8px; border-radius:4px; border: 1px solid #ecf0f1;">
+                        <input type="text" value="${quiz.url}" readonly style="flex:1; border:none; background:transparent; outline:none; font-family:monospace; font-size:18px; font-weight:bold; letter-spacing:2px; color:#34495e; direction:ltr; text-align:center;">
+                        <button onclick="navigator.clipboard.writeText('${quiz.url}'); alert('تم نسخ الكود بنجاح!');" style="background:#27ae60; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:bold; transition:0.2s;">📋 نسخ</button>
+                        <button onclick="deleteQuizHistory('${quiz.id}')" style="background:#e74c3c; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:bold; transition:0.2s;" title="حذف من السجل السحابي">🗑️</button>
+                    </div>
+                </div>`;
             });
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = `<div style="text-align:center; color:#7f8c8d; font-size:14px; padding:15px; background:var(--category-bg); border-radius:8px;">لا توجد أكواد محفوظة في السحابة حتى الآن.</div>`;
         }
+    })
+    .catch(err => {
+        container.innerHTML = `<div style="text-align:center; color:#e74c3c; font-size:14px; padding:15px;">❌ حدث خطأ في الاتصال. لا يمكن جلب السجل الآن.</div>`;
+    });
+}
+
+// دالة جديدة كلياً لتحديث نوع اللعبة في السحابة
+function updateGameTypeInCloud(gameCode, newType) {
+    if(!newType) return;
+    
+    if(!confirm("هل تريد حقاً تغيير قالب اللعبة؟\nالطلاب الذين سيقومون بإدخال هذا الكود الآن سيرون اللعبة الجديدة!")) {
+        loadQuizHistory(); // لإعادة القائمة لوضعها الطبيعي إذا تراجع المعلم
+        return;
+    }
+
+    fetch(scriptURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'update_game_type',
+            quizId: gameCode,
+            newType: newType,
+            teacher_id: localStorage.getItem('teacher_id')
+        })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if(d.status === 'success') {
+            alert("✅ تم تحديث قالب اللعبة بنجاح في السحابة!");
+        } else {
+            alert("❌ حدث خطأ: " + d.message);
+            loadQuizHistory(); // إعادة التحميل لتحديث الحالة
+        }
+    })
+    .catch(e => {
+        alert("❌ فشل الاتصال بالسيرفر لتحديث اللعبة.");
+        loadQuizHistory();
+    });
+}
 
         function deleteQuizHistory(quizId) {
             if(!confirm("⚠️ هل أنت متأكد من حذف هذا الكود؟\n(سيتم حذفه من جميع أجهزتك نهائياً)")) return;
@@ -2260,34 +2313,60 @@ function closeGameAndStop() {
             });
         }
 
-        function showStudentAnswers(studentName, cheatCount, encodedAns) {
-            const container = document.getElementById("studentAnswersContent");
-            container.innerHTML = "";
-            
-            let html = `<h4 style="color:#2980b9; border-bottom:2px solid #eee; padding-bottom:10px;">الطالب: ${studentName}</h4>`;
-            
-            if(cheatCount > 0) {
-                html += `<div style="background:#fadbd8; color:#c0392b; padding:10px; border-radius:5px; margin-bottom:15px; font-weight:bold; text-align:center;">⚠️ تنبيه: تم رصد خروج الطالب من شاشة الاختبار ${cheatCount} مرة!</div>`;
-            }
+       function showStudentAnswers(studentName, cheatCount, encodedAns) {
+    const container = document.getElementById("studentAnswersContent");
+    container.innerHTML = "";
 
-            try {
-                const answers = JSON.parse(decodeURIComponent(encodedAns));
-                answers.forEach((item, index) => {
-                    html += `
-                        <div style="background:var(--category-bg); border:1px solid var(--border-color); padding:15px; border-radius:8px; margin-bottom:10px;">
-                            <div style="font-weight:bold; color:var(--text-color); margin-bottom:8px;">${index + 1}. ${item.question}</div>
-                            <div style="background:var(--input-bg); padding:10px; border-radius:5px; border:1px solid #bdc3c7; color:#27ae60; font-weight:bold;">📝 الإجابة: ${item.answer}</div>
-                        </div>
-                    `;
-                });
-            } catch(e) {
-                html += `<div style="color:red;">عذراً، حدث خطأ في قراءة بيانات الإجابة.</div>`;
-            }
+    // رأس الورقة مع مكان مخصص للنتيجة النهائية
+    let html = `<h4 style="color:#2980b9; border-bottom:2px solid #eee; padding-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+        <span>👤 الطالب: ${studentName}</span>
+        <span id="studentScoreDisplay" style="background:#27ae60; color:white; padding:6px 12px; border-radius:15px; font-size:16px; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.1);">جاري الحساب...</span>
+    </h4>`;
+
+    if(cheatCount > 0) {
+        html += `<div style="background:#fadbd8; color:#c0392b; padding:10px; border-radius:5px; margin-bottom:15px; font-weight:bold; text-align:center;">⚠️ تنبيه: تم رصد خروج الطالب من شاشة الاختبار ${cheatCount} مرة!</div>`;
+    }
+
+    try {
+        const answers = JSON.parse(decodeURIComponent(encodedAns));
+        let correctAnswersCount = 0;
+        let totalQuestions = answers.length;
+
+        answers.forEach((item, index) => {
+            // التحقق من الإجابة (يدعم القيم المنطقية والنصية القادمة من منصة الطالب)
+            let isCorrect = item.isCorrect === true || item.status === 'صحيح' || item.correct === true;
+            if(isCorrect) correctAnswersCount++;
+
+            let bgColor = isCorrect ? '#eafaf1' : '#fdedec';
+            let borderColor = isCorrect ? '#27ae60' : '#e74c3c';
+            let icon = isCorrect ? '✅ صحيح' : '❌ خاطئ';
             
-            container.innerHTML = html;
-            openModal('modalStudentAnswers');
-        }
-        
+            // إظهار الإجابة الصحيحة إذا كان الطالب قد أخطأ
+            let correctAnsText = (!isCorrect && item.correctAnswer) ? 
+                `<div style="color:#27ae60; font-size:13px; margin-top:8px; border-top:1px dashed #ccc; padding-top:5px;">💡 الإجابة الصحيحة: ${item.correctAnswer}</div>` : '';
+
+            html += `
+                <div style="background:var(--category-bg); border:1px solid var(--border-color); padding:15px; border-radius:8px; margin-bottom:10px;">
+                    <div style="font-weight:bold; color:var(--text-color); margin-bottom:8px;">${index + 1}. ${item.question}</div>
+                    <div style="background:${bgColor}; padding:10px; border-radius:5px; border:1px solid ${borderColor}; color:var(--text-color); font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
+                        <span>📝 إجابة الطالب: ${item.answer}</span>
+                        <span style="color:${borderColor}; font-size:14px; background:#fff; padding:2px 8px; border-radius:12px;">${icon}</span>
+                    </div>
+                    ${correctAnsText}
+                </div>
+            `;
+        });
+
+        // تحديث النص الخاص بالنتيجة النهائية
+        html = html.replace("جاري الحساب...", `النتيجة: ${correctAnswersCount} من ${totalQuestions}`);
+
+    } catch(e) {
+        html += `<div style="color:red; font-weight:bold; text-align:center;">عذراً، لم يتمكن النظام من قراءة بيانات الإجابة، تأكد أن منصة الطالب ترسل الإجابات بالتنسيق الصحيح.</div>`;
+    }
+
+    container.innerHTML = html;
+    openModal('modalStudentAnswers');
+}
         // ----------------------------------------------------
         // الدوال الناقصة والمصححة تماماً (الكشف، الدفتر، المستودع، الحفظ)
         // ----------------------------------------------------
