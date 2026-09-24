@@ -2210,7 +2210,8 @@ function closeGameAndStop() {
 
 // دالة جديدة كلياً لتحديث نوع اللعبة في السحابة
 // دالة تحديث قالب اللعبة الذكية (تعتمد على أوامر السيرفر الموجودة مسبقاً)
-function updateGameTypeInCloud(gameCode, newType) {
+// دالة تحديث قالب اللعبة الذكية (النسخة المحسنة والآمنة)
+async function updateGameTypeInCloud(gameCode, newType) {
     if(!newType) return;
     
     if(!confirm("هل تريد حقاً تغيير قالب اللعبة؟\nالطلاب الذين سيقومون بإدخال هذا الكود الآن سيرون اللعبة الجديدة!")) {
@@ -2218,47 +2219,67 @@ function updateGameTypeInCloud(gameCode, newType) {
         return;
     }
 
-    // 1. جلب اللعبة الحالية من السيرفر
-    fetch(`${scriptURL}?action=get_quiz&quizId=${gameCode}`)
-    .then(r => r.json())
-    .then(data => {
-        if(data.status === "success") {
-            // 2. تحديث قالب اللعبة (type) في جميع الأسئلة
-            let updatedQuestions = data.questions.map(q => {
-                q.type = newType;
-                return q;
-            });
-
-            // 3. إعادة حفظ اللعبة بنفس الكود واسم اللعبة السابق
-            const payload = { 
-                action: "save_quiz", 
-                quizId: gameCode, 
-                quizName: data.quizName, 
-                questions: updatedQuestions,
-                teacher_id: localStorage.getItem('teacher_id')
-            };
-            
-            return fetch(scriptURL, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(payload) 
-            }).then(r => r.json());
-        } else {
-            throw new Error(data.message || "عذراً، لم يتم العثور على بيانات اللعبة.");
+    try {
+        // 1. جلب بيانات اللعبة الحالية
+        let responseGet = await fetch(`${scriptURL}?action=get_quiz&quizId=${gameCode}`);
+        let textGet = await responseGet.text(); 
+        let dataGet;
+        
+        try { 
+            dataGet = JSON.parse(textGet); 
+        } catch(e) { 
+            throw new Error("السيرفر رفض إرسال بيانات اللعبة، قد يكون الكود غير صحيح."); 
         }
-    })
-    .then(d => {
-        if(d.status === 'success') {
+
+        if (dataGet.status !== "success") {
+            alert("❌ لا يمكن جلب بيانات اللعبة: " + (dataGet.message || ""));
+            loadQuizHistory();
+            return;
+        }
+
+        // 2. تحديث قالب اللعبة (type) في جميع الأسئلة
+        let updatedQuestions = dataGet.questions.map(q => {
+            q.type = newType;
+            return q;
+        });
+
+        // 3. إعادة حفظ اللعبة مع إضافة المتغيرات الناقصة (quizLink)
+        const payload = { 
+            action: "save_quiz", 
+            quizId: gameCode, 
+            quizName: dataGet.quizName, 
+            questions: updatedQuestions,
+            quizLink: gameCode, // <-- هذا السطر الذي كان ينقصنا وتسبب في المشكلة
+            teacher_id: localStorage.getItem('teacher_id')
+        };
+
+        let responsePost = await fetch(scriptURL, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(payload) 
+        });
+        
+        let textPost = await responsePost.text();
+        let dataPost;
+        
+        try { 
+            dataPost = JSON.parse(textPost); 
+        } catch(e) { 
+            throw new Error("تم تحديث اللعبة ولكن السيرفر أرسل رداً غير متوقع."); 
+        }
+
+        if (dataPost.status === 'success') {
             alert("✅ تم تحديث قالب اللعبة بنجاح! يمكن للطلاب الدخول الآن وتجربتها.");
         } else {
-            alert("❌ حدث خطأ أثناء الحفظ: " + d.message);
+            alert("❌ حدث خطأ أثناء الحفظ: " + (dataPost.message || "غير معروف"));
         }
-        loadQuizHistory(); // تحديث القائمة لإعادة شكل القائمة المنسدلة
-    })
-    .catch(e => {
-        alert("❌ فشل الاتصال بالسيرفر لتحديث اللعبة.");
-        loadQuizHistory();
-    });
+
+    } catch (e) {
+        alert("❌ تنبيه: " + e.message);
+    }
+    
+    // إعادة ضبط القائمة المنسدلة وتحديث السجل
+    loadQuizHistory();
 }
 
         function deleteQuizHistory(quizId) {
