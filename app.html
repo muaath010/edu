@@ -2172,12 +2172,10 @@ function closeGameAndStop() {
                 let gameSwitcher = isGame ? `
                     <select onchange="updateGameTypeInCloud('${quiz.url}', this.value)" style="margin-top:5px; padding:6px; border-radius:6px; border:1px solid #8e44ad; background:#f5eef8; color:#8e44ad; font-weight:bold; font-size:13px; cursor:pointer; width:100%;">
                         <option value="">🔄 تبديل قالب اللعبة</option>
-                        <option value="matching">🧩 المطابقة (Matching)</option>
-                        <option value="maze">🏃‍♂️ المتاهة (Maze)</option>
+                        <option value="matching">🧩 لعبة المطابقة</option>
+                        <option value="sorting">🗂️ لعبة الفرز والتصنيف</option>
+                        <option value="sequence">🔢 لعبة الترتيب المنطقي</option>
                         <option value="spaceman">👨‍🚀 إنقاذ رائد الفضاء</option>
-                        <option value="spinwheel">🎡 عجلة الحظ</option>
-                        <option value="whackamole">🔨 صيد الكائنات</option>
-                        <option value="openbox">🎁 الصناديق الغامضة</option>
                     </select>
                 ` : '';
 
@@ -2221,7 +2219,7 @@ async function updateGameTypeInCloud(gameCode, newType) {
 
     try {
         // 1. جلب بيانات اللعبة الحالية
-        let responseGet = await fetch(`${scriptURL}?action=get_quiz&quizId=${gameCode}`);
+        let responseGet = await fetch(`${scriptURL}?action=get_quiz&quizId=${gameCode}&t=${new Date().getTime()}`);
         let textGet = await responseGet.text(); 
         let dataGet;
         
