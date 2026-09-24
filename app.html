@@ -2209,32 +2209,51 @@ function closeGameAndStop() {
 }
 
 // دالة جديدة كلياً لتحديث نوع اللعبة في السحابة
+// دالة تحديث قالب اللعبة الذكية (تعتمد على أوامر السيرفر الموجودة مسبقاً)
 function updateGameTypeInCloud(gameCode, newType) {
     if(!newType) return;
     
     if(!confirm("هل تريد حقاً تغيير قالب اللعبة؟\nالطلاب الذين سيقومون بإدخال هذا الكود الآن سيرون اللعبة الجديدة!")) {
-        loadQuizHistory(); // لإعادة القائمة لوضعها الطبيعي إذا تراجع المعلم
+        loadQuizHistory(); 
         return;
     }
 
-    fetch(scriptURL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            action: 'update_game_type',
-            quizId: gameCode,
-            newType: newType,
-            teacher_id: localStorage.getItem('teacher_id')
-        })
-    })
+    // 1. جلب اللعبة الحالية من السيرفر
+    fetch(`${scriptURL}?action=get_quiz&quizId=${gameCode}`)
     .then(r => r.json())
+    .then(data => {
+        if(data.status === "success") {
+            // 2. تحديث قالب اللعبة (type) في جميع الأسئلة
+            let updatedQuestions = data.questions.map(q => {
+                q.type = newType;
+                return q;
+            });
+
+            // 3. إعادة حفظ اللعبة بنفس الكود واسم اللعبة السابق
+            const payload = { 
+                action: "save_quiz", 
+                quizId: gameCode, 
+                quizName: data.quizName, 
+                questions: updatedQuestions,
+                teacher_id: localStorage.getItem('teacher_id')
+            };
+            
+            return fetch(scriptURL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(payload) 
+            }).then(r => r.json());
+        } else {
+            throw new Error(data.message || "عذراً، لم يتم العثور على بيانات اللعبة.");
+        }
+    })
     .then(d => {
         if(d.status === 'success') {
-            alert("✅ تم تحديث قالب اللعبة بنجاح في السحابة!");
+            alert("✅ تم تحديث قالب اللعبة بنجاح! يمكن للطلاب الدخول الآن وتجربتها.");
         } else {
-            alert("❌ حدث خطأ: " + d.message);
-            loadQuizHistory(); // إعادة التحميل لتحديث الحالة
+            alert("❌ حدث خطأ أثناء الحفظ: " + d.message);
         }
+        loadQuizHistory(); // تحديث القائمة لإعادة شكل القائمة المنسدلة
     })
     .catch(e => {
         alert("❌ فشل الاتصال بالسيرفر لتحديث اللعبة.");
