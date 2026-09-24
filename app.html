@@ -2289,14 +2289,26 @@ function updateGameTypeInCloud(gameCode, newType) {
                         const ansJson = row[5];
                         
                         const cheatBadge = cheatCount > 0 
-                            ? `<span class="cheat-alert">⚠️ غادر الصفحة (${cheatCount}) مرة</span>`
+                            ? `<span class="cheat-alert">⚠️ غادر (${cheatCount}) مرة</span>`
                             : `<span class="safe-status">✅ سليم</span>`;
                             
                         const encodedAns = encodeURIComponent(ansJson);
+
+                        // --- حساب الدرجة وعمل شارة النتيجة ---
+                        let scoreBadge = "";
+                        try {
+                            let parsedAns = JSON.parse(ansJson);
+                            let correctAnswers = 0;
+                            parsedAns.forEach(item => {
+                                if(item.isCorrect === true || item.status === 'صحيح' || item.correct === true) correctAnswers++;
+                            });
+                            scoreBadge = `<div style="margin-top:6px;"><span style="background:#27ae60; color:white; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.1);">الدرجة: ${correctAnswers} / ${parsedAns.length}</span></div>`;
+                        } catch(e) {}
+                        // --------------------------------------
                         
                         html += `<tr>
                             <td dir="ltr" style="font-size:12px;">${date}</td>
-                            <td style="font-weight:bold;">${name}</td>
+                            <td style="font-weight:bold;">${name} ${scoreBadge}</td>
                             <td>${grade}</td>
                             <td style="font-family:monospace; font-weight:bold; font-size:15px;">${code}</td>
                             <td>${cheatBadge}</td>
