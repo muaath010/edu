@@ -920,10 +920,27 @@ input:focus, select:focus, textarea:focus {
                     <input type="text" id="quizNameInput" class="note-input" placeholder="مثال: الاختبار القصير الأول - وحدة الشبكات" style="font-weight:bold; font-size:16px; border:2px solid #bdc3c7; margin-bottom:0;">
                 </div>
 
-                <p style="font-size:14px; font-weight:bold; color:var(--text-color); margin-top:0;">انسخ أسئلة الاختبار والصقها في المربع بالأسفل.</p>
-                <p style="font-size:13px; color:#7f8c8d; margin-top:-5px;">💡 اترك سطر فارغ بين كل سؤال. (السطر الواحد = إجابة قصيرة/طويلة، الأسطر المتعددة = اختيار من متعدد).</p>
+               <p style="font-size:14px; font-weight:bold; color:var(--text-color); margin-top:0;">انسخ أسئلة الاختبار والصقها في المربع بالأسفل.</p>
+                <div style="font-size:13px; color:#7f8c8d; background:#fdfefe; border:1px dashed #bdc3c7; padding:10px; border-radius:6px; margin-bottom:10px;">
+                    💡 <b>دليل الذكاء الاصطناعي لفرز الأسئلة:</b><br>
+                    - اترك <b>سطر فارغ</b> بين كل سؤال وآخر.<br>
+                    - <b>الاختياري و الصح/خطأ:</b> اكتب السؤال، وتحته الخيارات، وضع نجمة (*) بجانب الخيار الصحيح.<br>
+                    - <b>الإجابة القصيرة:</b> اكتب السؤال، ثم مسافة، ثم نجمة (*)، ثم الإجابة الصحيحة.<br>
+                    - <b>الإجابة الطويلة:</b> ابدأ السؤال بكلمة (اشرح، علل، قارن، وضح) وسيعتبره مقالياً.
+                </div>
                 
-                <textarea id="quizPasteArea" class="note-input" style="min-height: 180px; font-family:Tahoma;" placeholder="ما هي وحدة قياس سرعة المعالج؟&#10;الجيجاهرتز&#10;البايت&#10;الميجابكسل&#10;&#10;عرف نظام التشغيل؟ (هذا سطر واحد سيعتبر إجابة قصيرة)&#10;&#10;اشرح مكونات الحاسب الآلي؟ (كلمة اشرح ستجعله إجابة طويلة)"></textarea>
+                <textarea id="quizPasteArea" class="note-input" style="min-height: 220px; font-family:Tahoma; line-height:1.6;" placeholder="ما هي عاصمة سلطنة عمان؟
+مسقط *
+صلالة
+صحار
+
+تدور الأرض حول الشمس
+صح *
+خطأ
+
+ما هو ناتج 5 ضرب 5؟ * 25
+
+اشرح أهمية الذكاء الاصطناعي في التعليم؟"></textarea>
                 
                 <button onclick="parseAndPreviewQuiz()" class="btn-save-note" style="background:#3498db; margin-bottom:15px; font-size:16px;">🔍 معاينة وترتيب الاختبار</button>
                 
@@ -2041,38 +2058,69 @@ function closeGameAndStop() {
 
         let currentParsedQuiz = [];
 
-        function parseAndPreviewQuiz() {
+function parseAndPreviewQuiz() {
             const text = document.getElementById('quizPasteArea').value.trim();
             if(!text) return alert("الرجاء لصق الأسئلة أولاً!");
             
             const blocks = text.split(/\n\s*\n/);
             currentParsedQuiz = [];
-            let previewHTML = "<h4 style='text-align:center; margin-top:0; margin-bottom:15px; color:var(--text-color); border-bottom:1px solid #ccc; padding-bottom:10px;'>👀 معاينة شكل الاختبار قبل الاعتماد</h4>";
+            let previewHTML = "<h4 style='text-align:center; margin-top:0; margin-bottom:15px; color:var(--text-color); border-bottom:1px solid #ccc; padding-bottom:10px;'>👀 معاينة شكل الاختبار والإجابات النموذجية</h4>";
             
             blocks.forEach((block, index) => {
                 const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l !== "");
                 
                 if(lines.length > 0) {
-                    const q = lines[0];
+                    let q = lines[0];
                     let type = 'short';
                     let opts = [];
                     let previewItem = '';
+                    let correctAnswer = ''; 
 
+                    // --- 1. أسئلة الاختياري والصح/خطأ (متعدد الأسطر) ---
                     if(lines.length >= 2) {
                         type = 'mcq';
-                        opts = lines.slice(1);
-                        previewItem = opts.map(o => `<div class="quiz-option-item">○ ${o}</div>`).join('');
-                    } else {
-                        if(/اشرح|علل|قارن|لماذا|كيف|تحدث|مقال|وضح/.test(q)) {
+                        opts = lines.slice(1).map(opt => {
+                            if (opt.includes('*')) {
+                                let cleanOpt = opt.replace('*', '').trim();
+                                correctAnswer = cleanOpt;
+                                return cleanOpt;
+                            }
+                            return opt;
+                        });
+
+                        previewItem = opts.map(o => `
+                            <div class="quiz-option-item" style="${o === correctAnswer ? 'background:#eafaf1; border-color:#27ae60; font-weight:bold; color:#27ae60;' : ''}">
+                                ○ ${o} ${o === correctAnswer ? '✅ (إجابة نموذجية)' : ''}
+                            </div>
+                        `).join('');
+                    } 
+                    // --- 2. أسئلة الإجابة القصيرة والطويلة (سطر واحد) ---
+                    else {
+                        if(/اشرح|علل|قارن|لماذا|كيف|تحدث|مقال|وضح/.test(q) && !q.includes('*')) {
                             type = 'long';
                             previewItem = `<textarea disabled placeholder="مربع إجابة طويلة للطالب..." class="note-input" style="background:#eee;"></textarea>`;
                         } else {
                             type = 'short';
-                            previewItem = `<input type="text" disabled placeholder="مربع إجابة قصيرة/إكمال للطالب..." class="note-input" style="background:#eee; margin-bottom:0;">`;
+                            // التحقق إذا كان المعلم قد حدد الإجابة القصيرة باستخدام النجمة
+                            if (q.includes('*')) {
+                                let parts = q.split('*');
+                                q = parts[0].trim();
+                                correctAnswer = parts[1] ? parts[1].trim() : '';
+                                previewItem = `<input type="text" disabled placeholder="مربع إجابة قصيرة للطالب..." class="note-input" style="background:#eee; margin-bottom:0;">
+                                <div style="color:#27ae60; font-size:13px; margin-top:5px; font-weight:bold;">💡 الإجابة النموذجية المعتمدة: ${correctAnswer}</div>`;
+                            } else {
+                                previewItem = `<input type="text" disabled placeholder="مربع إجابة قصيرة للطالب..." class="note-input" style="background:#eee; margin-bottom:0;">`;
+                            }
                         }
                     }
 
-                    currentParsedQuiz.push({ question: q, type: type, options: opts });
+                    // حفظ السؤال مهيأً مع إجابته الصحيحة
+                    currentParsedQuiz.push({ 
+                        question: q, 
+                        type: type, 
+                        options: opts, 
+                        correctAnswer: correctAnswer 
+                    });
                     
                     previewHTML += `<div style="background:var(--input-bg); padding:12px; margin-bottom:10px; border-radius:6px; border:1px solid var(--border-color);">
                         <div style="font-weight:bold; color:#2980b9; margin-bottom:8px; font-size:15px;">${index + 1}. ${q}</div>
@@ -2094,7 +2142,6 @@ function closeGameAndStop() {
             document.getElementById('quizLinkResult').innerHTML = "";
             playSound(600, 'triangle', 0.1, 0.1);
         }
-
         function generateQuizLink() {
             const quizName = document.getElementById('quizNameInput').value.trim();
             if(!quizName) {
