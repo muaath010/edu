@@ -251,6 +251,12 @@ a { color: var(--brand); }
 .btn-soft { background: var(--brand-50); color: var(--brand-600); border-color: transparent; }
 .btn-violet { background: var(--violet); color: #fff; border-color: var(--violet); }
 .btn-wa { background: #25D366; color: #fff; border-color: #25D366; }
+.btn-gold { background: linear-gradient(135deg,#ffc83d,#f5821f); color: #3a2300; border-color: transparent; box-shadow: 0 6px 14px -6px #f5821f; font-weight: 800; }
+.btn-gold:hover { filter: brightness(1.05); }
+.winner-points { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; margin-top: 6px; animation: popIn .35s ease; }
+.winner-points .btn-lg { min-width: 170px; }
+.winner-pts-info { flex-basis: 100%; text-align: center; font-size: 14px; color: var(--ink-2); }
+.winner-pts-info b { color: var(--accent-600); font-size: 17px; }
 .btn-lg { padding: 14px 20px; font-size: 16px; border-radius: 14px; }
 .btn-sm { padding: 7px 11px; font-size: 13px; border-radius: 10px; }
 .btn-block { width: 100%; }
@@ -893,6 +899,12 @@ input.col-calc.over { border-color: var(--bad); background: var(--bad-50); color
         <div id="viewSpace" style="display:none;"><div id="spaceArea" class="space-area"><div id="rocket" class="space-rocket">🚀</div></div></div>
         <button id="btnSpin" onclick="startRandomizer()" class="btn btn-violet btn-lg btn-block" style="margin-top:14px;"><i class="fa-solid fa-play"></i> ابدأ الاختيار</button>
         <div id="winnerNameDisplay" style="font-size:26px; font-weight:900; color:var(--good-ink); margin-top:14px; min-height:40px; text-align:center;"></div>
+        <div id="winnerPoints" class="winner-points" style="display:none;">
+            <button class="btn btn-gold btn-lg" onclick="awardWinner(1)"><i class="fa-solid fa-star"></i> أعطِ نقطة</button>
+            <button class="btn btn-gold" onclick="awardWinner(2)" dir="ltr">+2</button>
+            <button id="btnUndoPoint" class="btn btn-ghost" onclick="awardWinner(-1)" disabled><i class="fa-solid fa-rotate-left"></i> تراجع</button>
+            <div id="winnerPtsInfo" class="winner-pts-info"></div>
+        </div>
         <div class="card-sub center" id="fairInfo"></div>
     </div>
 </div>
@@ -2358,11 +2370,32 @@ function startRandomizer() {
     isSpinning = true;
     document.getElementById('btnSpin').disabled = true;
     document.getElementById('winnerNameDisplay').innerText = '';
+    lastWinner = null; document.getElementById('winnerPoints').style.display = 'none';
     const winner = fairPick();
     const type = document.getElementById('randomizerType').value;
     if (type === 'classic') runClassicRandom(winner); else if (type === 'tornado') runTornadoRandom(winner); else runSpaceRandom(winner);
 }
-function announceWinner(w) { document.getElementById('winnerNameDisplay').innerText = "🎉 " + w + " 🎉"; isSpinning = false; document.getElementById('btnSpin').disabled = false; }
+let lastWinner = null, winnerGiven = 0;
+function announceWinner(w) {
+    document.getElementById('winnerNameDisplay').innerText = "🎉 " + w + " 🎉"; isSpinning = false; document.getElementById('btnSpin').disabled = false;
+    lastWinner = w; winnerGiven = 0; updateWinnerPoints();
+}
+function winnerIdx() { return lastWinner == null ? -1 : currentNameList.indexOf(lastWinner); }
+function updateWinnerPoints() {
+    const box = document.getElementById('winnerPoints'), i = winnerIdx(), el = document.getElementById('int-' + i);
+    if (i < 0 || !el) { box.style.display = 'none'; return; }
+    box.style.display = 'flex';
+    document.getElementById('btnUndoPoint').disabled = winnerGiven <= 0;
+    document.getElementById('winnerPtsInfo').innerHTML = `نقاط التميز: <b>${parseInt(el.value) || 0}</b>` + (winnerGiven > 0 ? ` · أُضيف الآن +${winnerGiven} · <span class="muted">اضغط «حفظ» لاحقاً</span>` : '');
+}
+function awardWinner(n) {
+    const i = winnerIdx(); if (i < 0) return;
+    if (n < 0) n = -Math.min(winnerGiven, 1); if (!n) return;
+    changeReinfVal('int-' + i, n);
+    winnerGiven += n;
+    if (n > 0) { playSound(880, 'sine', .18, .12); setTimeout(() => playSound(1175, 'sine', .22, .1), 110); toast(`⭐ +${n} لـ ${firstLast(lastWinner)}`); }
+    updateWinnerPoints();
+}
 function runClassicRandom(winner) {
     const box = document.getElementById("randomBox");
     let spins = 0, delay = 60;
@@ -2590,7 +2623,7 @@ function parseAndPreviewQuiz() {
     document.getElementById('quizLinkResult').innerHTML = "";
     playSound(600, 'triangle', 0.1, 0.08);
 }
-function studentPortalURL() { try { return new URL('student.html', location.href).href; } catch (e) { return 'student.html'; } }
+function studentPortalURL() { if (location.hostname === 'muaath010.github.io') return 'https://muaath010.github.io/marks/'; try { return new URL('student.html', location.href).href; } catch (e) { return 'student.html'; } }
 function codeCard(code, title) {
     const url = studentPortalURL();
     return `<div class="panel" style="text-align:center; background:var(--good-50); border-color:transparent;">
