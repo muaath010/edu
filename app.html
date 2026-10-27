@@ -647,6 +647,28 @@ input.col-calc.over { border-color: var(--bad); background: var(--bad-50); color
     .topbar, .btn-floating-save, .tools-card, .side-menu, .scrim, .toast-stack { display: none !important; }
     body { background: #fff; }
 }
+
+/* ===== الحفظ التلقائي ===== */
+.btn-floating-save.saved { background: linear-gradient(135deg, var(--good), var(--brand)); box-shadow: 0 12px 26px -10px var(--good); }
+.btn-floating-save.saving { background: linear-gradient(135deg, var(--brand), var(--brand-600)); box-shadow: 0 12px 26px -10px var(--brand); }
+.btn-floating-save.saving i { animation: pulseDot 1s infinite; }
+.btn-floating-save.dirty { background: linear-gradient(135deg, #e5484d, #c2410c); }
+
+/* ===== الإدخال السريع ===== */
+.sheet-hint { font-size: 12.5px; color: var(--ink-3); background: var(--surface-2); border: 1px dashed var(--line); border-radius: 10px; padding: 7px 12px; margin-bottom: 10px; line-height: 1.9; }
+.sheet-hint b { color: var(--ink-2); font-family: inherit; background: var(--surface-3); padding: 1px 6px; border-radius: 6px; }
+#gradesBody tr:focus-within td { background: var(--brand-50); }
+#gradesBody tr:focus-within td.name-cell { background: var(--brand-50); box-shadow: inset -3px 0 0 var(--brand); }
+#gradesBody input.col-calc:focus { outline: 2px solid var(--brand); outline-offset: 1px; background: var(--surface); }
+thead th:has(.col-tool) { padding-left: 26px; }
+thead th .col-tool { position: absolute; top: 50%; transform: translateY(-50%); left: 3px; width: 20px; height: 26px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--brand-600); cursor: pointer; font-size: 11px; display: grid; place-items: center; padding: 0; transition: background .2s, color .2s, border-color .2s; }
+thead th .col-tool:hover, thead th .col-tool:focus-visible { background: var(--brand); border-color: var(--brand); color: #fff; }
+.col-pop { position: fixed; z-index: 3000; width: 270px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 44px -12px rgba(15,23,42,.35); padding: 12px; display: flex; flex-direction: column; gap: 8px; animation: popIn .2s ease; }
+.col-pop-t { font-weight: 900; font-size: 14px; }
+.col-pop-t .muted { display: block; font-weight: 700; font-size: 12px; margin-top: 2px; }
+.col-pop-row { display: flex; gap: 6px; }
+.col-pop-row .note-input { margin: 0; flex: 1; min-width: 0; padding: 7px 10px; text-align: center; font-weight: 800; }
+
 </style>
 </head>
 <body>
@@ -810,6 +832,7 @@ input.col-calc.over { border-color: var(--bad); background: var(--bad-50); color
                 <button class="btn btn-sm btn-ghost" onclick="toggleTableVisibility()" id="toggleTableBtn"><i class="fa-regular fa-eye-slash"></i> إخفاء الكشف</button>
             </div>
         </div>
+        <div class="sheet-hint"><i class="fa-solid fa-keyboard"></i> <b>Enter</b> للطالب التالي · الصق عموداً من Excel مباشرة · <i class="fa-solid fa-ellipsis-vertical"></i> في رأس العمود للتعبئة السريعة · يُحفظ تلقائياً</div>
         <div id="tableAreaWrapper"><div class="empty-state"><i class="fa-solid fa-table"></i>اختر الصف والشعبة لعرض الكشف</div></div>
     </section>
 </div>
@@ -1499,9 +1522,11 @@ function doRegister() {
 }
 
 function doLogout() {
-    if (isDirty && !confirm('لديك تعديلات غير محفوظة. هل تريد الخروج دون حفظ؟')) return;
-    isDirty = false;
-    fetch(scriptURL, { method: 'POST', body: JSON.stringify({ action: 'logout' }) })
+    if (isDirty && !flushBeforeLeave() && !confirm('لديك تعديلات غير محفوظة. هل تريد الخروج دون حفظ؟')) return;
+    Promise.resolve(saveInFlight).catch(() => {}).then(() => {
+        isDirty = false;
+        return fetch(scriptURL, { method: 'POST', body: JSON.stringify({ action: 'logout' }) });
+    })
     .catch(() => {})
     .finally(() => { clearSession(); location.reload(); });
 }
@@ -1518,9 +1543,8 @@ window.addEventListener('beforeunload', e => { if (isDirty) { e.preventDefault()
 // ---------- التعديلات غير المحفوظة ----------
 function setDirty(v) {
     isDirty = v;
-    const b = document.getElementById('btnFloatSave');
-    b.classList.toggle('dirty', v);
-    b.querySelector('.lbl').innerText = v ? 'لديك تعديلات — احفظ الآن' : 'حفظ ومزامنة البيانات';
+    if (v) { editVersion++; setSaveState('pending'); scheduleAutosave(); }
+    else { clearTimeout(autosaveTimer); if (saveState !== 'saving') setSaveState('idle'); }
 }
 
 // ---------- تحميل الطلاب والصفوف ----------
@@ -1560,7 +1584,7 @@ function buildGradeDropdown() {
 
 function buildSectionDropdown(preferSection) {
     const g = document.getElementById("gradeSelect").value;
-    if (isDirty && lastClass.g && g !== lastClass.g && !confirm('لديك تعديلات غير محفوظة في هذه الشعبة. هل تريد المتابعة دون حفظ؟')) {
+    if (isDirty && lastClass.g && g !== lastClass.g && !flushBeforeLeave() && !confirm('لديك تعديلات غير محفوظة في هذه الشعبة. هل تريد المتابعة دون حفظ؟')) {
         document.getElementById("gradeSelect").value = lastClass.g; return;
     }
     const sectionSelect = document.getElementById("sectionSelect");
@@ -1702,7 +1726,7 @@ function updateView(skipDirtyCheck) {
     const g = document.getElementById("gradeSelect").value;
     const s = document.getElementById("sectionSelect").value;
     if (!g || !s) return;
-    if (!skipDirtyCheck && isDirty && (g !== lastClass.g || s !== lastClass.s) && !confirm('لديك تعديلات غير محفوظة في هذه الشعبة. هل تريد المتابعة دون حفظ؟')) {
+    if (!skipDirtyCheck && isDirty && (g !== lastClass.g || s !== lastClass.s) && !flushBeforeLeave() && !confirm('لديك تعديلات غير محفوظة في هذه الشعبة. هل تريد المتابعة دون حفظ؟')) {
         document.getElementById("sectionSelect").value = lastClass.s; return;
     }
     setDirty(false);
@@ -1754,7 +1778,7 @@ function renderDynamicTable(g, s) {
     }
 
     let th = `<th style="width:44px;">م</th><th class="name-cell">اسم الطالب</th>`;
-    currentSchema.forEach(col => { th += `<th title="${esc(col.name)}">${esc(col.name)}<span class="mx">من ${fmt(col.max)}</span></th>`; });
+    currentSchema.forEach(col => { th += `<th title="${esc(col.name)}">${esc(col.name)}<span class="mx">من ${fmt(col.max)}</span><button class="col-tool" type="button" data-col="${esc(col.id)}" onclick="openColTools(event, this.dataset.col)" title="أدوات العمود: تعبئة سريعة ومسح" aria-label="أدوات العمود"><i class="fa-solid fa-ellipsis-vertical"></i></button></th>`; });
     th += `<th>المجموع<span class="mx">من ${fmt(sumMax)}</span></th><th>النسبة<span class="mx">من المرصود</span></th><th>التقدير</th>`;
 
     let body = '';
@@ -1829,30 +1853,8 @@ function calcTotal(element) {
 let dashTimer = null;
 function scheduleDashboard() { clearTimeout(dashTimer); dashTimer = setTimeout(refreshDashboard, 350); }
 
-function submitData() {
-    const g = document.getElementById("gradeSelect").value;
-    const s = document.getElementById("sectionSelect").value;
-    if (!g || !s) return alert('⚠️ الرجاء اختيار الصف والشعبة أولاً.');
-    if (!currentNameList.length) return alert('⚠️ لا يوجد طلاب للحفظ.');
-    const invalid = document.querySelectorAll('#gradesBody .col-calc.over');
-    if (invalid.length && !confirm(`⚠️ توجد ${invalid.length} درجة خارج المدى المسموح (أكبر من القصوى أو سالبة).\nسيتم حفظها كما هي. هل تريد المتابعة؟`)) { invalid[0].focus(); return; }
-    const btn = document.getElementById("btnFloatSave");
-    const lbl = btn.querySelector('.lbl');
-    lbl.innerText = 'جاري الحفظ...'; btn.disabled = true;
-    const students = currentNameList.map((_, i) => { const r = readRow(i); return { name: r.name, grades: r.grades, interaction: r.interaction, violation: r.violation }; });
-    fetch(scriptURL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'save_grades', grade: g, section: s, students }) })
-    .then(r => r.json())
-    .then(d => {
-        if (d.status === 'success') {
-            students.forEach(st => currentSheetData[st.name] = { name: st.name, grades: st.grades, interaction: st.interaction, violation: st.violation });
-            setDirty(false);
-            toast(`✅ تم حفظ درجات وسلوكيات ${students.length} طالباً بنجاح.`);
-            playSound(660, 'sine', .25, .12); setTimeout(() => playSound(990, 'sine', .3, .1), 120);
-        } else { setDirty(true); alert("❌ لم يتم الحفظ: " + (d.message || '')); }
-    })
-    .catch(() => { setDirty(true); alert("❌ فشل الاتصال بالخادم. لم يتم الحفظ، حاول مرة أخرى."); })
-    .finally(() => { btn.disabled = false; if (!isDirty) lbl.innerText = 'حفظ ومزامنة البيانات'; });
-}
+// الحفظ اليدوي الفوري (الحفظ التلقائي في app3.js)
+function submitData() { return saveSheet({ manual: true }); }
 
 function toggleTableVisibility() {
     const wrapper = document.getElementById("tableAreaWrapper");
@@ -2386,7 +2388,7 @@ function updateWinnerPoints() {
     if (i < 0 || !el) { box.style.display = 'none'; return; }
     box.style.display = 'flex';
     document.getElementById('btnUndoPoint').disabled = winnerGiven <= 0;
-    document.getElementById('winnerPtsInfo').innerHTML = `نقاط التميز: <b>${parseInt(el.value) || 0}</b>` + (winnerGiven > 0 ? ` · أُضيف الآن +${winnerGiven} · <span class="muted">اضغط «حفظ» لاحقاً</span>` : '');
+    document.getElementById('winnerPtsInfo').innerHTML = `نقاط التميز: <b>${parseInt(el.value) || 0}</b>` + (winnerGiven > 0 ? ` · أُضيف الآن +${winnerGiven} · <span class="muted">تُحفظ تلقائياً</span>` : '');
 }
 function awardWinner(n) {
     const i = winnerIdx(); if (i < 0) return;
@@ -3282,6 +3284,222 @@ function saveManualGame() {
             confetti();
         }
     }).finally(() => { btn.disabled = false; btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> إنشاء اللعبة وتوليد الكود`; });
+}
+
+// =====================================================================
+//  الحفظ التلقائي للكشف (الدرجات + نقاط التميز + المخالفات)
+// =====================================================================
+const AUTOSAVE_MS = 2500, RETRY_MS = 15000;
+let editVersion = 0, saveInFlight = null, autosaveTimer = null, saveState = 'idle', lastSavedAt = null;
+
+function collectSheet() {
+    if (!lastClass.g || !lastClass.s || !currentNameList.length) return null;
+    return {
+        grade: lastClass.g, section: lastClass.s,
+        students: currentNameList.map((_, i) => { const r = readRow(i); return { name: r.name, grades: r.grades, interaction: r.interaction, violation: r.violation }; })
+    };
+}
+function scheduleAutosave(ms) { clearTimeout(autosaveTimer); autosaveTimer = setTimeout(() => saveSheet({ auto: true }), ms || AUTOSAVE_MS); }
+
+function setSaveState(state, extra) {
+    saveState = state;
+    const b = document.getElementById('btnFloatSave'); if (!b) return;
+    const lbl = b.querySelector('.lbl');
+    const t = lastSavedAt ? lastSavedAt.toLocaleTimeString('ar-OM', { hour: '2-digit', minute: '2-digit' }) : '';
+    const text = {
+        idle: 'حفظ ومزامنة البيانات',
+        pending: 'سيُحفظ تلقائياً...',
+        saving: 'جاري الحفظ التلقائي...',
+        saved: `✓ محفوظ تلقائياً ${t}`,
+        error: 'تعذر الحفظ — سأعيد المحاولة',
+        blocked: `الحفظ متوقف: ${extra || ''} درجة خارج المدى`,
+    }[state] || 'حفظ ومزامنة البيانات';
+    lbl.innerText = text;
+    b.classList.toggle('dirty', state === 'error' || state === 'blocked');
+    b.classList.toggle('saved', state === 'saved');
+    b.classList.toggle('saving', state === 'saving' || state === 'pending');
+    b.title = state === 'blocked' ? 'صحّح الخانات الحمراء في الكشف ليُستأنف الحفظ التلقائي' : 'يُحفظ الكشف تلقائياً بعد كل تعديل، ويمكنك الضغط للحفظ فوراً';
+}
+
+// opts.manual: ضغط زر الحفظ — opts.flush: حفظ فوري قبل تغيير الشعبة/الخروج
+function saveSheet(opts = {}) {
+    clearTimeout(autosaveTimer);
+    if (!opts.manual && !isDirty) return Promise.resolve(true);
+    if (saveInFlight && !opts.flush) { if (isDirty) scheduleAutosave(); return saveInFlight; }
+    const invalid = document.querySelectorAll('#gradesBody .col-calc.over');
+    if (invalid.length) {
+        if (!opts.manual) { setSaveState('blocked', invalid.length); return Promise.resolve(false); }
+        if (!confirm(`⚠️ توجد ${invalid.length} درجة خارج المدى المسموح (أكبر من القصوى أو سالبة).\nسيتم حفظها كما هي. هل تريد المتابعة؟`)) { invalid[0].focus(); return Promise.resolve(false); }
+    }
+    const payload = collectSheet();
+    if (!payload) { if (opts.manual) alert('⚠️ لا يوجد طلاب للحفظ.'); return Promise.resolve(false); }
+    const ver = editVersion;
+    setSaveState('saving');
+    const p = fetch(scriptURL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ action: 'save_grades' }, payload)) })
+    .then(r => r.json())
+    .then(d => {
+        if (d.status !== 'success') throw new Error(d.message || 'save failed');
+        if (lastClass.g === payload.grade && lastClass.s === payload.section) {
+            payload.students.forEach(st => currentSheetData[st.name] = { name: st.name, grades: st.grades, interaction: st.interaction, violation: st.violation });
+        }
+        if (editVersion === ver) isDirty = false;
+        lastSavedAt = new Date();
+        setSaveState(isDirty ? 'pending' : 'saved');
+        if (opts.manual) { toast(`✅ تم حفظ درجات وسلوكيات ${payload.students.length} طالباً.`); playSound(660, 'sine', .25, .12); setTimeout(() => playSound(990, 'sine', .3, .1), 120); }
+        return true;
+    })
+    .catch(e => {
+        setSaveState('error');
+        if (opts.manual) alert('❌ لم يتم الحفظ: ' + (e && e.message && e.message !== 'Failed to fetch' ? e.message : 'تعذر الاتصال بالخادم') + '\nسأعيد المحاولة تلقائياً.');
+        return false;
+    })
+    .finally(() => {
+        if (saveInFlight === p) saveInFlight = null;
+        if (isDirty) scheduleAutosave(saveState === 'error' ? RETRY_MS : AUTOSAVE_MS);
+    });
+    saveInFlight = p;
+    return p;
+}
+
+// قبل تغيير الشعبة: يحفظ فوراً. يرجع false إذا تعذر بدء الحفظ (درجات خارج المدى)
+function flushBeforeLeave() {
+    if (!isDirty) return true;
+    if (document.querySelector('#gradesBody .col-calc.over')) return false;
+    saveSheet({ flush: true });
+    return true;
+}
+window.addEventListener('online', () => { if (isDirty) scheduleAutosave(500); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && isDirty) saveSheet({ flush: true }); });
+
+// =====================================================================
+//  الإدخال السريع للدرجات
+// =====================================================================
+const toLatinDigits = s => String(s).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٫,]/g, '.');
+function cellIn(tr, col) { return tr ? tr.querySelector(`.col-calc[data-col="${CSS.escape(col)}"]`) : null; }
+function focusCell(el) { if (!el) return false; el.focus(); try { el.select(); } catch (e) {} el.closest('td').scrollIntoView({ block: 'nearest', inline: 'nearest' }); return true; }
+
+document.addEventListener('keydown', e => {
+    const el = e.target;
+    if (!el.classList || !el.classList.contains('col-calc') || e.altKey || e.ctrlKey || e.metaKey) return;
+    const tr = el.closest('tr'), col = el.dataset.col;
+    let target = null;
+    if (e.key === 'Enter') target = e.shiftKey ? tr.previousElementSibling : tr.nextElementSibling;
+    else if (e.key === 'ArrowDown') target = tr.nextElementSibling;
+    else if (e.key === 'ArrowUp') target = tr.previousElementSibling;
+    else return;
+    e.preventDefault(); // يمنع أسهم حقل الأرقام من تغيير الدرجة بالخطأ
+    if (!focusCell(cellIn(target, col)) && e.key === 'Enter' && !e.shiftKey) {
+        // نهاية العمود: انتقل إلى أول طالب في العمود التالي
+        const inputs = [...tr.querySelectorAll('.col-calc')], next = inputs[inputs.indexOf(el) + 1];
+        const first = document.querySelector('#gradesBody tr');
+        if (next && first && focusCell(cellIn(first, next.dataset.col))) toast('➡️ اكتمل العمود، انتقلت إلى العمود التالي');
+        else { el.blur(); toast('✅ وصلت إلى نهاية الكشف'); }
+    }
+});
+document.addEventListener('focusin', e => { if (e.target.classList && e.target.classList.contains('col-calc')) setTimeout(() => { try { e.target.select(); } catch (x) {} }, 0); });
+
+// لصق عمود أو جدول من Excel مباشرة في الكشف
+document.addEventListener('paste', e => {
+    const el = e.target;
+    if (!el.classList || !el.classList.contains('col-calc')) return;
+    const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+    const trimmed = text.replace(/\r/g, '').replace(/\n+$/, '');
+    if (!/[\t\n]/.test(trimmed)) { // قيمة واحدة: نحوّل الأرقام العربية فقط
+        const v = toLatinDigits(trimmed.trim());
+        if (v !== trimmed.trim() && !isNaN(parseFloat(v))) { e.preventDefault(); el.value = parseFloat(v); calcTotal(el); }
+        return;
+    }
+    e.preventDefault();
+    const rows = trimmed.split('\n').map(r => r.split('\t'));
+    const allRows = [...document.querySelectorAll('#gradesBody tr')];
+    const startR = allRows.indexOf(el.closest('tr'));
+    const startC = [...el.closest('tr').querySelectorAll('.col-calc')].indexOf(el);
+    let filled = 0, skipped = 0, over = 0, cut = 0;
+    const touched = new Set();
+    rows.forEach((cells, r) => {
+        const tr = allRows[startR + r];
+        if (!tr) { cut += cells.length; return; }
+        const inputs = tr.querySelectorAll('.col-calc');
+        cells.forEach((raw, c) => {
+            const inp = inputs[startC + c]; if (!inp) { cut++; return; }
+            const v = toLatinDigits(raw.trim());
+            if (v === '' || v === '-') { inp.value = ''; touched.add(tr); return; }
+            const n = parseFloat(v);
+            if (isNaN(n) || !/^-?\d*\.?\d+$/.test(v)) { skipped++; return; }
+            inp.value = n; filled++; touched.add(tr);
+            if (n > parseFloat(inp.dataset.max) || n < 0) over++;
+        });
+    });
+    touched.forEach(tr => updateRowView(tr));
+    if (touched.size) { setDirty(true); scheduleDashboard(); }
+    let msg = `📋 تم لصق ${filled} درجة`;
+    if (skipped) msg += ` · تجاهلت ${skipped} قيمة غير رقمية`;
+    if (cut) msg += ` · ${cut} قيمة زائدة عن حدود الكشف`;
+    toast(msg, over ? 'warn' : 'good');
+    if (over) toast(`⚠️ ${over} درجة أكبر من القصوى، ظاهرة بالأحمر في الكشف.`);
+});
+
+// أدوات العمود (⋮ في رأس كل تقييم)
+function closeColTools() { const p = document.getElementById('colPop'); if (p) p.remove(); }
+document.addEventListener('click', e => { const p = document.getElementById('colPop'); if (p && !p.contains(e.target) && !e.target.closest('.col-tool')) p.remove(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeColTools(); });
+function placeColPop() {
+    const pop = document.getElementById('colPop'); if (!pop || !pop._anchor) return;
+    const r = pop._anchor.getBoundingClientRect();
+    if (!pop._anchor.isConnected || r.bottom < 0 || r.top > innerHeight) return pop.remove();
+    const w = pop.offsetWidth, h = pop.offsetHeight;
+    pop.style.top = Math.max(8, Math.min(innerHeight - h - 8, r.bottom + 6)) + 'px';
+    pop.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
+}
+window.addEventListener('scroll', placeColPop, true);
+window.addEventListener('resize', placeColPop);
+function openColTools(ev, colId) {
+    ev.stopPropagation();
+    const was = document.getElementById('colPop'); closeColTools();
+    if (was && was.dataset.col === colId) return;
+    const col = currentSchema.find(c => String(c.id) === String(colId)); if (!col) return;
+    const inputs = [...document.querySelectorAll(`#gradesBody .col-calc[data-col="${CSS.escape(colId)}"]`)];
+    const empty = inputs.filter(i => i.value === '').length;
+    const pop = document.createElement('div');
+    pop.id = 'colPop'; pop.className = 'col-pop'; pop.dataset.col = colId;
+    pop.innerHTML = `<div class="col-pop-t">${esc(col.name)} <span class="muted">من ${fmt(col.max)} · ${empty ? `${empty} خانة فارغة` : 'مكتمل الرصد'}</span></div>
+        <div class="col-pop-row"><input type="text" inputmode="decimal" class="note-input" id="colFillVal" placeholder="درجة"><button class="btn btn-sm btn-primary" data-act="empty">للفارغ</button><button class="btn btn-sm" data-act="all">للكل</button></div>
+        <button class="btn btn-sm btn-soft btn-block" data-act="max"><i class="fa-solid fa-arrow-up-wide-short"></i> الدرجة القصوى (${fmt(col.max)}) للخانات الفارغة</button>
+        <button class="btn btn-sm btn-soft btn-block" data-act="start"><i class="fa-solid fa-keyboard"></i> ابدأ الرصد من أول خانة فارغة</button>
+        <button class="btn btn-sm btn-danger btn-block" data-act="clear"><i class="fa-solid fa-eraser"></i> مسح درجات العمود</button>`;
+    document.body.appendChild(pop);
+    pop._anchor = ev.currentTarget;
+    placeColPop();
+    const valInp = pop.querySelector('#colFillVal');
+    valInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); colFill(colId, 'empty'); } });
+    pop.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => colFill(colId, b.dataset.act)));
+    setTimeout(() => valInp.focus(), 30);
+}
+function colFill(colId, mode) {
+    const col = currentSchema.find(c => String(c.id) === String(colId)); if (!col) return;
+    const max = parseFloat(col.max);
+    const inputs = [...document.querySelectorAll(`#gradesBody .col-calc[data-col="${CSS.escape(colId)}"]`)];
+    if (mode === 'start') { closeColTools(); const t = inputs.find(i => i.value === '') || inputs[0]; focusCell(t); return; }
+    let val = '';
+    if (mode === 'max') val = max;
+    else if (mode === 'empty' || mode === 'all') {
+        const raw = toLatinDigits((document.getElementById('colFillVal').value || '').trim());
+        val = parseFloat(raw);
+        if (raw === '' || isNaN(val)) { document.getElementById('colFillVal').focus(); return toast('⚠️ اكتب الدرجة أولاً.'); }
+        if (val < 0 || val > max) return toast(`⚠️ الدرجة يجب أن تكون بين 0 و ${fmt(max)}.`);
+    }
+    const filledCount = inputs.filter(i => i.value !== '').length;
+    if (mode === 'clear' && filledCount && !confirm(`مسح ${filledCount} درجة من عمود «${col.name}»؟`)) return;
+    if (mode === 'all' && filledCount && !confirm(`سيتم استبدال ${filledCount} درجة مرصودة في «${col.name}» بالدرجة ${fmt(val)}. متابعة؟`)) return;
+    let n = 0;
+    inputs.forEach(i => {
+        if (mode === 'clear') { if (i.value !== '') { i.value = ''; n++; } }
+        else if (mode === 'all' || i.value === '') { i.value = val; n++; }
+    });
+    inputs.forEach(i => updateRowView(i.closest('tr')));
+    closeColTools();
+    if (n) { setDirty(true); scheduleDashboard(); }
+    toast(n ? (mode === 'clear' ? `🧹 تم مسح ${n} درجة` : `✅ تم رصد ${fmt(val)} لـ ${n} طالباً في «${col.name}»`) : 'لا توجد خانات مناسبة للتعديل.');
 }
 
 </script>
