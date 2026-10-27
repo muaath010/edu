@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#2980b9">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
     <!-- مكتبة الأيقونات الاحترافية FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1216,7 +1216,71 @@ input:focus, select:focus, textarea:focus {
     </div>
     <script>
        let studentsData = {}; 
-        const scriptURL = 'https://darkslateblue-wren-226762.hostingersite.com/api.php'; // تم التعديل لرابط محلي لضمان سرعة الاتصال وعدم الحظر
+        const scriptURL = 'https://darkslateblue-wren-226762.hostingersite.com/api.php'; // الـ API على Hostinger (الواجهة تعمل من GitHub ومن Hostinger)
+
+        // تحويل أي نص إلى نص آمن قبل وضعه داخل الصفحة (يمنع حقن الأكواد XSS)
+        function esc(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+
+        function clearSession() {
+            ['teacher_token', 'teacher_id', 'teacher_name', 'teacher_role'].forEach(k => localStorage.removeItem(k));
+        }
+
+        // إرفاق رمز الدخول تلقائياً مع كل طلب للـ API، ومعالجة انتهاء الجلسة/الاشتراك
+        const _nativeFetch = window.fetch.bind(window);
+        window.fetch = function(url, opts = {}) {
+            if (typeof url === 'string' && url.startsWith(scriptURL)) {
+                opts = Object.assign({}, opts);
+                const headers = new Headers(opts.headers || {});
+                const token = localStorage.getItem('teacher_token');
+                if (token) headers.set('X-Auth-Token', token);
+                opts.headers = headers;
+                return _nativeFetch(url, opts).then(res => {
+                    if (res.status === 401) {
+                        clearSession();
+                        const lo = document.getElementById('loginOverlay');
+                        if (lo) lo.style.display = 'flex';
+                    } else if (res.status === 403) {
+                        res.clone().json().then(d => {
+                            if (d.status === 'expired') document.getElementById('subscriptionExpiredOverlay').style.display = 'flex';
+                        }).catch(() => {});
+                    }
+                    return res;
+                });
+            }
+            return _nativeFetch(url, opts);
+        };
+
+        // توليد كود عشوائي (6 خانات، بدون الحروف المتشابهة O/0/I/1)
+        function makeQuizCode(prefix) {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            crypto.getRandomValues(new Uint32Array(6)).forEach(n => code += chars[n % chars.length]);
+            return prefix + code;
+        }
+
+        // حفظ الاختبار/اللعبة في الخادم أولاً، ثم إرجاع الكود (مع إعادة المحاولة لو كان الكود مستخدماً)
+        async function saveQuizWithUniqueCode(prefix, name, questions) {
+            for (let attempt = 0; attempt < 5; attempt++) {
+                const code = makeQuizCode(prefix);
+                try {
+                    const r = await fetch(scriptURL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'save_quiz', quizId: code, quizName: name, questions: questions })
+                    });
+                    const d = await r.json();
+                    if (d.status === 'success') return code;
+                    if (d.status !== 'code_taken') { alert('❌ لم يتم الحفظ: ' + (d.message || '')); return null; }
+                } catch (e) {
+                    alert('❌ فشل الاتصال بالخادم، لم يتم الحفظ.');
+                    return null;
+                }
+            }
+            alert('❌ تعذر توليد كود فريد، حاول مرة أخرى.');
+            return null;
+        }
         
         let currentSheetData = {};
         let currentSchema = []; // لحفظ هيكلة الكشف الحالية
@@ -1259,7 +1323,7 @@ function toggleDarkMode() {
             if (localStorage.getItem("theme") === "dark") toggleDarkMode(); 
             if(!navigator.onLine) document.getElementById('offline-banner').style.display = 'block'; 
             
-            if (!localStorage.getItem('teacher_id')) {
+            if (!localStorage.getItem('teacher_token')) {
                 document.getElementById('loginOverlay').style.display = 'flex';
             } else {
                 let currentName = localStorage.getItem('teacher_name');
@@ -1295,6 +1359,7 @@ function toggleDarkMode() {
             .then(r => r.json())
             .then(d => {
                 if(d.status === 'success') {
+                    localStorage.setItem('teacher_token', d.token);
                     localStorage.setItem('teacher_id', d.teacher_id);
                     localStorage.setItem('teacher_name', d.name);
                     localStorage.setItem('teacher_role', d.role);
@@ -1348,9 +1413,9 @@ function toggleDarkMode() {
         }
 
         function doLogout() {
-            localStorage.removeItem('teacher_id');
-            localStorage.removeItem('teacher_name');
-            location.reload();
+            fetch(scriptURL, { method: 'POST', body: JSON.stringify({ action: 'logout' }) })
+            .catch(() => {})
+            .finally(() => { clearSession(); location.reload(); });
         }
         // تشغيل وإغلاق القائمة الجانبية
 function toggleMenu() {
@@ -1407,6 +1472,10 @@ function copyGradesToClipboard() {
                     alert("ملاحظة: " + d.message);
                 }
             })
+            .catch(e => {
+                headerTitle.innerHTML = originalTitle;
+                alert("❌ تعذر جلب سجلات الطلاب من الخادم. حدّث الصفحة، وإن تكررت المشكلة أبلغ الدعم.\n(" + e.message + ")");
+            });
         }
 
         window.addEventListener('online', () => { document.getElementById('offline-banner').style.display = 'none'; });
@@ -2155,7 +2224,8 @@ function parseAndPreviewQuiz() {
             btn.disabled = true;
             btn.innerText = "⏳ جاري تجهيز الكود...";
             
-            const quizId = Math.random().toString(36).substring(2, 6).toUpperCase();
+            saveQuizWithUniqueCode('', quizName, currentParsedQuiz).then(quizId => {
+            if (!quizId) { btn.disabled = false; btn.innerText = "🔑 إنشاء كود اختبار جديد"; return; }
             
             res.innerHTML = `
                 <div style="background:#eafaf1; border:1px solid #27ae60; padding:15px; border-radius:8px; margin-top:15px; text-align: center; width: 100%; box-sizing: border-box;">
@@ -2180,23 +2250,9 @@ function parseAndPreviewQuiz() {
             btn.innerText = "🔑 إنشاء كود اختبار جديد";
 
             saveQuizToHistory(quizName, quizId, quizId);
-
-           const payload = { 
-                action: "save_quiz", 
-                quizId: quizId, 
-                quizName: quizName, 
-                questions: currentParsedQuiz,
-                quizLink: quizId,
-                teacher_id: localStorage.getItem('teacher_id')
-            };
-            
-            fetch(scriptURL, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(payload) 
-            }).catch(e => console.log("Background save error", e));
+            });
         }
-        
+
         function saveQuizToHistory(name, url, id) {
             setTimeout(loadQuizHistory, 2500); 
         }
@@ -2229,7 +2285,7 @@ function parseAndPreviewQuiz() {
                 html += `
                 <div style="background:var(--input-bg); border:1px solid var(--border-color); padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:8px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="font-weight:bold; color:#2980b9; font-size:15px;">${isGame ? '🎮' : '📝'} ${quiz.name}</div>
+                        <div style="font-weight:bold; color:#2980b9; font-size:15px;">${isGame ? '🎮' : '📝'} ${esc(quiz.name)}</div>
                         <div style="font-size:12px; color:#7f8c8d;" dir="ltr">${quiz.date}</div>
                     </div>
                     
@@ -2355,6 +2411,13 @@ async function updateGameTypeInCloud(gameCode, newType) {
             loadQuizResults();
         }
 
+        let quizResultsCache = [];
+        // سؤال مقالي أو إجابة قديمة بدون تصحيح = يحتاج تصحيح يدوي
+        function isReviewItem(item) {
+            return item.needsReview === true || item.isCorrect === null ||
+                   (item.isCorrect === undefined && item.status === undefined && item.correct === undefined);
+        }
+
         function loadQuizResults() {
             const tbody = document.getElementById("quizResultsBody");
             tbody.innerHTML = `<tr><td colspan="6">جاري جلب إجابات الطلاب من السحابة... ⏳</td></tr>`;
@@ -2365,6 +2428,7 @@ async function updateGameTypeInCloud(gameCode, newType) {
                 if(data.status === "success" && data.results && data.results.length > 0) {
                     let html = '';
                     const reversedResults = [...data.results].reverse();
+                    quizResultsCache = reversedResults;
                     reversedResults.forEach((row, i) => {
                         const date = new Date(row[0]).toLocaleString('ar-OM');
                         const name = row[1];
@@ -2383,21 +2447,23 @@ async function updateGameTypeInCloud(gameCode, newType) {
                         let scoreBadge = "";
                         try {
                             let parsedAns = JSON.parse(ansJson);
-                            let correctAnswers = 0;
+                            let correctAnswers = 0, gradable = 0;
                             parsedAns.forEach(item => {
+                                if (isReviewItem(item)) return;
+                                gradable++;
                                 if(item.isCorrect === true || item.status === 'صحيح' || item.correct === true) correctAnswers++;
                             });
-                            scoreBadge = `<div style="margin-top:6px;"><span style="background:#27ae60; color:white; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.1);">الدرجة: ${correctAnswers} / ${parsedAns.length}</span></div>`;
+                            scoreBadge = `<div style="margin-top:6px;"><span style="background:#27ae60; color:white; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.1);">الدرجة: ${correctAnswers} / ${gradable}</span>${gradable < parsedAns.length ? ' <span style="font-size:11px; color:#f39c12; font-weight:bold;">📝 أسئلة تحتاج تصحيح</span>' : ''}</div>`;
                         } catch(e) {}
                         // --------------------------------------
                         
                         html += `<tr>
                             <td dir="ltr" style="font-size:12px;">${date}</td>
-                            <td style="font-weight:bold;">${name} ${scoreBadge}</td>
-                            <td>${grade}</td>
-                            <td style="font-family:monospace; font-weight:bold; font-size:15px;">${code}</td>
+                            <td style="font-weight:bold;">${esc(name)} ${scoreBadge}</td>
+                            <td>${esc(grade)}</td>
+                            <td style="font-family:monospace; font-weight:bold; font-size:15px;">${esc(code)}</td>
                             <td>${cheatBadge}</td>
-                            <td><button class="btn-view-ans" onclick="showStudentAnswers('${name}', ${cheatCount}, '${encodedAns}')">عرض الإجابات 👁️</button></td>
+                            <td><button class="btn-view-ans" onclick="showStudentAnswers(${i})">عرض الإجابات 👁️</button></td>
                         </tr>`;
                     });
                     tbody.innerHTML = html;
@@ -2410,7 +2476,11 @@ async function updateGameTypeInCloud(gameCode, newType) {
             });
         }
 
-       function showStudentAnswers(studentName, cheatCount, encodedAns) {
+       function showStudentAnswers(idx) {
+    const _row = quizResultsCache[idx] || [];
+    const studentName = esc(_row[1]);
+    const cheatCount = parseInt(_row[4]) || 0;
+    const encodedAns = encodeURIComponent(_row[5] || '[]');
     const container = document.getElementById("studentAnswersContent");
     container.innerHTML = "";
 
@@ -2426,21 +2496,22 @@ async function updateGameTypeInCloud(gameCode, newType) {
 
     try {
         const answers = JSON.parse(decodeURIComponent(encodedAns));
-        let correctAnswersCount = 0;
+        let correctAnswersCount = 0, reviewCount = 0;
         let totalQuestions = answers.length;
 
         answers.forEach((item, index) => {
             // التحقق من الإجابة (يدعم القيم المنطقية والنصية القادمة من منصة الطالب)
+            let needsReview = isReviewItem(item);
             let isCorrect = item.isCorrect === true || item.status === 'صحيح' || item.correct === true;
-            if(isCorrect) correctAnswersCount++;
+            if (needsReview) reviewCount++; else if (isCorrect) correctAnswersCount++;
 
-            let bgColor = isCorrect ? '#eafaf1' : '#fdedec';
-            let borderColor = isCorrect ? '#27ae60' : '#e74c3c';
-            let icon = isCorrect ? '✅ صحيح' : '❌ خاطئ';
+            let bgColor = needsReview ? '#fef9e7' : (isCorrect ? '#eafaf1' : '#fdedec');
+            let borderColor = needsReview ? '#f39c12' : (isCorrect ? '#27ae60' : '#e74c3c');
+            let icon = needsReview ? '📝 يحتاج تصحيح' : (isCorrect ? '✅ صحيح' : '❌ خاطئ');
             
             // إظهار الإجابة الصحيحة إذا كان الطالب قد أخطأ
-            let correctAnsText = (!isCorrect && item.correctAnswer) ? 
-                `<div style="color:#27ae60; font-size:13px; margin-top:8px; border-top:1px dashed #ccc; padding-top:5px;">💡 الإجابة الصحيحة: ${item.correctAnswer}</div>` : '';
+            let correctAnsText = (!isCorrect && !needsReview && item.correctAnswer) ? 
+                `<div style="color:#27ae60; font-size:13px; margin-top:8px; border-top:1px dashed #ccc; padding-top:5px;">💡 الإجابة الصحيحة: ${esc(item.correctAnswer)}</div>` : '';
 
             html += `
                 <div style="background:var(--category-bg); border:1px solid var(--border-color); padding:15px; border-radius:8px; margin-bottom:10px;">
@@ -2511,10 +2582,10 @@ async function updateGameTypeInCloud(gameCode, newType) {
                         // تصميم جديد للملف مع زر الحذف الدائري الأحمر
                         container.innerHTML += `
                             <div style="border: 2px solid var(--border-color); padding: 15px; margin: 5px; border-radius: 12px; text-align: center; background: var(--input-bg); position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='#3498db';" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-color)';">
-                                <span onclick="deleteTeacherFile(${file.id}, '${file.name}')" style="position: absolute; top: -10px; right: -10px; background: #e74c3c; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10;" title="حذف الملف نهائياً">✖</span>
-                                <a href="${fileUrl}" target="_blank" style="text-decoration: none; color: var(--text-color); font-weight: bold; display: block;">
+                                <span onclick="deleteTeacherFile(${file.id}, this.dataset.name)" data-name="${esc(file.name)}" style="position: absolute; top: -10px; right: -10px; background: #e74c3c; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10;" title="حذف الملف نهائياً">✖</span>
+                                <a href="${esc(fileUrl)}" target="_blank" rel="noopener" style="text-decoration: none; color: var(--text-color); font-weight: bold; display: block;">
                                     <div style="font-size: 45px; margin-bottom: 10px;">📄</div>
-                                    <div style="word-break: break-word; font-size: 14px; line-height: 1.4;">${file.name}</div>
+                                    <div style="word-break: break-word; font-size: 14px; line-height: 1.4;">${esc(file.name)}</div>
                                 </a>
                             </div>
                         `;
@@ -2660,10 +2731,10 @@ async function updateGameTypeInCloud(gameCode, newType) {
                         container.innerHTML += `
                             <div class="note-card" style="background: var(--category-bg); border: 1px solid var(--border-color); padding: 15px; margin-bottom: 15px; border-radius: 8px; border-right: 4px solid #8e44ad;">
                                 <h4 style="margin: 0 0 10px 0; color: var(--text-color); display:flex; justify-content:space-between; align-items:center;">
-                                    <span>📌 ${note.title}</span>
+                                    <span>📌 ${esc(note.title)}</span>
                                     <span style="font-size: 12px; color: #95a5a6; font-weight: normal;">🕒 ${note.date}</span>
                                 </h4>
-                                <p style="margin: 0; color: var(--text-color); white-space: pre-wrap; font-size: 14px; line-height:1.6;">${note.text}</p>
+                                <p style="margin: 0; color: var(--text-color); white-space: pre-wrap; font-size: 14px; line-height:1.6;">${esc(note.text)}</p>
                             </div>
                         `;
                     });
@@ -2725,8 +2796,10 @@ function updateView() {
     .catch(() => { wrapper.innerHTML = `<div style="text-align:center; color:red; font-weight:bold;">❌ خطأ في الاتصال بالخادم.</div>`; });
 }
 
+let currentNameList = [];
 function renderDynamicTable(g, s) {
     const list = studentsData[g] && studentsData[g][s] ? studentsData[g][s] : [];
+    currentNameList = list;
     const wrapper = document.getElementById("tableAreaWrapper");
     const rGrid = document.getElementById("reinforcementGrid");
     
@@ -2734,7 +2807,7 @@ function renderDynamicTable(g, s) {
     let thHtml = `<th class="header-blue" style="width:30px;">م</th><th class="header-blue" style="width:200px;">إسم الطالب</th>`;
     let sumMax = 0;
     currentSchema.forEach(col => {
-        thHtml += `<th class="header-blue">${col.name}<br><span style="font-size:11px; color:#c0392b;">(${col.max})</span></th>`;
+        thHtml += `<th class="header-blue">${esc(col.name)}<br><span style="font-size:11px; color:#c0392b;">(${col.max})</span></th>`;
         sumMax += parseFloat(col.max) || 0;
     });
     thHtml += `<th class="header-orange">المجموع<br><span style="font-size:11px; color:#c0392b;">(${sumMax})</span></th>`;
@@ -2761,8 +2834,8 @@ function renderDynamicTable(g, s) {
         // بناء بطاقة التعزيز بأيقونات احترافية
         let rCard = document.createElement("div"); rCard.className = "reinf-card";
         rCard.innerHTML = `
-            <div class="reinf-name" title="انقر لفتح البطاقة التحليلية" onclick="openStudentAnalytics('${name}', ${i})" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.color='#3498db'" onmouseout="this.style.color='var(--text-color)'">
-                <i class="fa-solid fa-chart-pie" style="color:#3498db; margin-left:5px;"></i> ${i+1}. ${shortName}
+            <div class="reinf-name" title="انقر لفتح البطاقة التحليلية" onclick="openStudentAnalytics(currentNameList[${i}], ${i})" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.color='#3498db'" onmouseout="this.style.color='var(--text-color)'">
+                <i class="fa-solid fa-chart-pie" style="color:#3498db; margin-left:5px;"></i> ${i+1}. ${esc(shortName)}
             </div>
             <div class="reinf-row">
                 <span class="reinf-row-title"><i class="fa-solid fa-star" style="color:#f1c40f; margin-left:5px;"></i> تميز/مشاركة</span>
@@ -2780,13 +2853,13 @@ function renderDynamicTable(g, s) {
                     <button class="r-btn" style="background:#7f8c8d" onclick="changeReinfVal('viol-${i}', -1)"><i class="fa-solid fa-minus"></i></button>
                 </div>
             </div>
-            <button class="action-btn" onclick="openBehaviorLog(${i}, '${name}')" style="background:#8e44ad; color:white; margin-top:8px; width:100%; border:none; border-radius:6px; padding:8px; font-weight:bold; cursor:pointer; font-size:14px; transition:0.3s;">
+            <button class="action-btn" onclick="openBehaviorLog(${i}, currentNameList[${i}])" style="background:#8e44ad; color:white; margin-top:8px; width:100%; border:none; border-radius:6px; padding:8px; font-weight:bold; cursor:pointer; font-size:14px; transition:0.3s;">
                 <i class="fa-solid fa-clipboard-list" style="margin-left:5px;"></i> سجل السلوكيات
             </button>
         `;
         rGrid.appendChild(rCard);
         // بناء صف الدرجات
-        let rowHtml = `<td>${i+1}</td><td style="text-align:right;"><span id="name-${i}">${name}</span><br><span id="risk-${i}" class="risk-alert">⚠️ تراجع</span></td>`;
+        let rowHtml = `<td>${i+1}</td><td style="text-align:right;"><span id="name-${i}">${esc(name)}</span><br><span id="risk-${i}" class="risk-alert">⚠️ تراجع</span></td>`;
         
         currentSchema.forEach(col => {
             let val = (d.grades[col.id] !== undefined && d.grades[col.id] !== null) ? d.grades[col.id] : "";
@@ -3222,11 +3295,11 @@ let adminGlobalData = {};
 
 // دالة فتح لوحة المدير بشكل آمن تماماً
  
-function openAdminPanel() {
+function openAdminPanel(silent) {
     let teacherId = localStorage.getItem('teacher_id');
     
     // نطلب كلمة المرور من المستخدم
-    let pass = prompt("الرجاء إدخال كلمة مرور مدير النظام:");
+    let pass = (silent === true && currentAdminPassword) ? currentAdminPassword : prompt("الرجاء إدخال كلمة مرور مدير النظام:");
     if (!pass) return; // إذا ضغط إلغاء، نتوقف
     
     document.getElementById('sideMenu').classList.remove('open');
@@ -3245,6 +3318,7 @@ function openAdminPanel() {
     .then(res => res.json())
     .then(data => {
         if(data.status === 'success') {
+            currentAdminPassword = pass;
             openModal('modalAdminPanel');
             adminGlobalData = data;
             renderAdminData('teachers'); // عرض المعلمين
@@ -3293,13 +3367,13 @@ function renderAdminData(type) {
 
             html += `<tr>
                 <td>${i+1}</td>
-                <td><strong>${t.name}</strong><br><span style="font-size:12px; color:#7f8c8d;">${t.email}</span></td>
+                <td><strong>${esc(t.name)}</strong>${t.role === 'admin' ? ' <span style="font-size:11px; color:#8e44ad;">(مدير)</span>' : ''}<br><span style="font-size:12px; color:#7f8c8d;">${esc(t.email)}</span></td>
                 <td dir="ltr" style="font-size:13px; color:#34495e;">انضم: ${t.date}<br>ينتهي: ${t.subscription_end ? t.subscription_end.split(' ')[0] : '-'}</td>
                 <td>${statusBadge}<br><div style="font-size:12px; margin-top:5px;">${remainingText}</div></td>
                 <td>
                     <div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
-                        <button onclick="adminRenewTeacher(${t.id}, '${t.name}')" style="background:${btnColor}; color:white; border:none; padding:6px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px; width:100%; transition:0.3s;">${btnText}</button>
-                        <button onclick="adminDeleteEntity('teacher', ${t.id}, '${t.name}')" style="background:#e74c3c; color:white; border:none; padding:4px; border-radius:4px; cursor:pointer; font-size:12px; width:100%; transition:0.3s;">🗑️ حذف شامل</button>
+                        <button onclick="adminRenewTeacher(${t.id})" style="background:${btnColor}; color:white; border:none; padding:6px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px; width:100%; transition:0.3s;">${btnText}</button>
+                        <button onclick="adminDeleteEntity('teacher', ${t.id})" style="background:#e74c3c; color:white; border:none; padding:4px; border-radius:4px; cursor:pointer; font-size:12px; width:100%; transition:0.3s;">🗑️ حذف شامل</button>
                     </div>
                 </td>
             </tr>`;
@@ -3309,7 +3383,7 @@ function renderAdminData(type) {
         thead.innerHTML = `<tr><th>م</th><th>المعلم</th><th>الصف</th><th>الشعبة</th></tr>`;
         if (adminGlobalData.classes.length === 0) html = `<tr><td colspan="4">لا توجد صفوف مسجلة.</td></tr>`;
         adminGlobalData.classes.forEach((c, i) => {
-            html += `<tr><td>${i+1}</td><td style="color:#2980b9; font-weight:bold;">${c.teacher_name}</td><td>${c.grade}</td><td>${c.section}</td></tr>`;
+            html += `<tr><td>${i+1}</td><td style="color:#2980b9; font-weight:bold;">${esc(c.teacher_name)}</td><td>${esc(c.grade)}</td><td>${esc(c.section)}</td></tr>`;
         });
     }
     else if (type === 'files') {
@@ -3317,16 +3391,23 @@ function renderAdminData(type) {
         if (adminGlobalData.files.length === 0) html = `<tr><td colspan="5">لا توجد ملفات.</td></tr>`;
         adminGlobalData.files.forEach((f, i) => {
             html += `<tr>
-                <td>${i+1}</td><td style="color:#16a085; font-weight:bold;">${f.teacher_name}</td>
-                <td><a href="${f.file_url}" target="_blank" style="text-decoration:none;">📄 ${f.file_name}</a></td><td dir="ltr">${f.date}</td>
-                <td><button onclick="adminDeleteEntity('file', ${f.id}, '${f.file_name}')" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">🗑️ حذف</button></td>
+                <td>${i+1}</td><td style="color:#16a085; font-weight:bold;">${esc(f.teacher_name)}</td>
+                <td><a href="${esc(f.file_url)}" target="_blank" rel="noopener" style="text-decoration:none;">📄 ${esc(f.file_name)}</a></td><td dir="ltr">${f.date}</td>
+                <td><button onclick="adminDeleteEntity('file', ${f.id})" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">🗑️ حذف</button></td>
             </tr>`;
         });
     }
     tbody.innerHTML = html;
 }
 
+function adminLookupName(type, id) {
+    const list = (type === 'teacher' ? adminGlobalData.teachers : adminGlobalData.files) || [];
+    const item = list.find(x => x.id == id);
+    return item ? (item.name || item.file_name || '') : '';
+}
+
 function adminDeleteEntity(type, id, name) {
+    name = name || adminLookupName(type, id);
     let msg = type === 'teacher' 
         ? `⚠️ تحذير خطير جداً!\nهل أنت متأكد من حذف المعلم (${name})؟\nهذا الإجراء سيقوم تلقائياً بحذف جميع طلابه، درجاته، ملفاته واختباراته بشكل نهائي!`
         : `هل أنت متأكد من حذف الملف (${name})؟`;
@@ -3338,24 +3419,26 @@ function adminDeleteEntity(type, id, name) {
     fetch(scriptURL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: action, id: id })
+        body: JSON.stringify({ action: action, id: id, admin_pass: currentAdminPassword })
     })
     .then(r => r.json())
     .then(d => {
         if(d.status === 'success') {
             alert('✅ تم الحذف بنجاح!');
-            document.getElementById('sideMenu').classList.add('open'); // خدعة لإعادة فتح القائمة
-            openAdminPanel(); // إعادة تحميل البيانات
+            openAdminPanel(true); // إعادة تحميل البيانات
+        } else {
+            alert('❌ ' + (d.message || 'فشل الحذف'));
         }
-    });
+    }).catch(e => alert("❌ فشل الاتصال بالسيرفر."));
 }
         function adminRenewTeacher(id, name) {
+    name = name || adminLookupName('teacher', id);
     if(!confirm(`هل أنت متأكد من تجديد اشتراك المعلم (${name}) لمدة شهر إضافي؟`)) return;
 
     fetch(scriptURL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'admin_renew_teacher', id: id })
+        body: JSON.stringify({ action: 'admin_renew_teacher', id: id, admin_pass: currentAdminPassword })
     })
     .then(r => r.json())
     .then(d => {
@@ -3594,6 +3677,7 @@ function buyReward(itemName, cost) {
 }
         let logStudentId = null;
 let logStudentName = "";
+let behaviorCache = [];
 
 function openBehaviorLog(id, name) {
     logStudentId = id;
@@ -3605,25 +3689,28 @@ function openBehaviorLog(id, name) {
     // جلب البيانات من الخادم
     let fd = new FormData();
     fd.append('action', 'get_behaviors');
-    fd.append('student_id', id);
+    fd.append('student_name', name);
+    fd.append('grade', document.getElementById('gradeSelect').value);
+    fd.append('section', document.getElementById('sectionSelect').value);
     
     fetch(scriptURL, { method: 'POST', body: fd })
     .then(r => r.json())
     .then(d => {
         let historyDiv = document.getElementById("behaviorHistory");
         historyDiv.innerHTML = "";
-        if(d.data.length === 0) {
+        behaviorCache = d.data || [];
+        if(!d.data || d.data.length === 0) {
             historyDiv.innerHTML = "<p style='text-align:center; color:#7f8c8d;'>لا توجد ملاحظات سابقة.</p>";
             return;
         }
-        d.data.forEach(log => {
+        d.data.forEach((log, logIdx) => {
             let icon = log.type === 'positive' ? '🌟' : '⚠️';
             let color = log.type === 'positive' ? '#eafaf1' : '#fdedec';
             historyDiv.innerHTML += `
             <div style="background:${color}; padding:10px; border-radius:8px; margin-bottom:10px; font-size:14px; position:relative;">
-                <strong>${icon} ${log.created_at}</strong><br>
-                ${log.note}
-                <button onclick="sendToWhatsApp('${log.type}', '${log.note}', '${log.created_at}')" style="position:absolute; left:10px; top:10px; background:#25D366; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📲 إرسال لولي الأمر</button>
+                <strong>${icon} ${esc(log.created_at)}</strong><br>
+                <span style="white-space:pre-wrap;">${esc(log.note)}</span>
+                <button onclick="sendToWhatsApp(${logIdx})" style="position:absolute; left:10px; top:10px; background:#25D366; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📲 إرسال لولي الأمر</button>
             </div>`;
         });
     });
@@ -3635,8 +3722,8 @@ function saveBehavior(type) {
     
     let fd = new FormData();
     fd.append('action', 'add_behavior');
-    fd.append('teacher_id', localStorage.getItem('teacher_id'));
-    fd.append('student_id', logStudentId);
+    fd.append('grade', document.getElementById('gradeSelect').value);
+    fd.append('section', document.getElementById('sectionSelect').value);
     fd.append('student_name', logStudentName);
     fd.append('type', type);
     fd.append('note', note);
@@ -3647,11 +3734,17 @@ function saveBehavior(type) {
         if(d.status === 'success') {
             document.getElementById("behaviorNote").value = "";
             openBehaviorLog(logStudentId, logStudentName); // تحديث القائمة
+        } else {
+            alert('❌ ' + (d.message || 'فشل حفظ الملاحظة'));
         }
     });
 }
 
 function sendToWhatsApp(type, note, date) {
+    if (typeof type === 'number') {
+        const log = behaviorCache[type] || {};
+        type = log.type; note = log.note; date = log.created_at;
+    }
     let msgType = type === 'positive' ? 'ملاحظة إيجابية 🌟' : 'تنبيه سلوكي ⚠️';
     let text = `مرحباً،\nنود إشعاركم بخصوص الطالب/ة: ${logStudentName}\nنوع الإشعار: ${msgType}\nالتفاصيل: ${note}\nالتاريخ: ${date}\n\nمع تحيات معلم المادة.`;
     
@@ -3846,41 +3939,16 @@ function sendAnalyticsWhatsApp() {
             btn.innerHTML = "⏳ جاري الحفظ وتوليد الكود...";
             btn.disabled = true;
 
-            // توليد كود مميز يبدأ بحرف G (يعني Game)
-            const gameCode = "G-" + Math.random().toString(36).substring(2, 6).toUpperCase();
             const gameName = "🎮 " + title; // إيموجي لتمييزها في السجل كنشاط تفاعلي
 
-            // نستخدم نفس نظام حفظ الاختبارات لاختصار الوقت والجهد
-            const payload = { 
-                action: "save_quiz", 
-                quizId: gameCode, 
-                quizName: gameName, 
-                questions: items,
-                teacher_id: localStorage.getItem('teacher_id')
-            };
-            
-            fetch(scriptURL, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(payload) 
-            })
-            .then(r => r.json())
-            .then(d => {
-                if(d.status === 'success') {
+            saveQuizWithUniqueCode("G-", gameName, items).then(gameCode => {
+                if (gameCode) {
                     alert(`✅ تم حفظ اللعبة بنجاح!\n\n🔑 كود اللعبة للطلاب هو: ${gameCode}\n\nستجدها محفوظة أيضاً في سجل الأكواد الخاص بك.`);
                     closeModal('modalAiActivity');
-                    document.getElementById('manualGameTitle').value = ""; // تفريغ الحقل
-                    
-                    // تحديث السجل برمجياً إذا كان مفتوحاً لترى اللعبة فوراً
-                    if(typeof loadQuizHistory === "function") {
-                        loadQuizHistory();
-                    }
-                } else {
-                    alert("❌ حدث خطأ أثناء الحفظ: " + d.message);
+                    document.getElementById('manualGameTitle').value = "";
+                    if (typeof loadQuizHistory === "function") loadQuizHistory();
                 }
-            })
-            .catch(e => alert("❌ فشل الاتصال بالخادم."))
-            .finally(() => {
+            }).finally(() => {
                 btn.innerHTML = "💾 إنشاء اللعبة وتوليد الكود";
                 btn.disabled = false;
             });
