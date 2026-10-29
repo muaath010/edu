@@ -669,6 +669,14 @@ thead th .col-tool:hover, thead th .col-tool:focus-visible { background: var(--b
 .col-pop-row { display: flex; gap: 6px; }
 .col-pop-row .note-input { margin: 0; flex: 1; min-width: 0; padding: 7px 10px; text-align: center; font-weight: 800; }
 
+
+/* ===== رقم الطالب في السجل ===== */
+.reg-no { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; padding: 0 5px; margin-inline-end: 6px; border-radius: 6px; background: var(--brand-50); color: var(--brand-600); border: 1px solid var(--brand-100); font-size: 11.5px; font-weight: 900; line-height: 1; vertical-align: 1px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+h2 .reg-no, h4 .reg-no, #winnerNameDisplay .reg-no { height: auto; padding: 3px 8px; font-size: .7em; vertical-align: .15em; }
+.tornado-area .reg-no { font-size: 16px; }
+.group-list { list-style: none; margin: 0; padding: 0; line-height: 2; font-weight: 700; font-size: 14px; }
+.reinf-name .nm { display: inline-flex; align-items: center; min-width: 0; }
+.desk-card .seat-name { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px; }
 </style>
 </head>
 <body>
@@ -1282,6 +1290,12 @@ function initials(name) {
     return (first + ' ' + (lastWord[0] || '')).trim();
 }
 function firstLast(name) { const w = String(name || '').trim().split(/\s+/).filter(x => !/^(بن|بنت|ابن)$/.test(x)); return w.length > 1 ? w[0] + ' ' + w[w.length - 1] : (w[0] || ''); }
+// رقم الطالب في السجل = ترتيبه في كشف الشعبة (عمود "م")
+function regList(g, s) { return g && s ? ((studentsData[g] || {})[s] || []) : currentNameList; }
+function regNo(name, g, s) { const i = regList(g, s).indexOf(name); return i < 0 ? null : i + 1; }
+function noTag(name, g, s) { const n = regNo(name, g, s); return n ? `<span class="reg-no" title="رقمه في السجل">${n}</span>` : ''; }
+function noText(name, g, s) { const n = regNo(name, g, s); return n ? `(${n}) ${name}` : String(name || ''); }
+function noPrint(name) { const n = regNo(name); return n ? `<span style="display:inline-block;min-width:22px;padding:1px 6px;margin-left:6px;border-radius:6px;background:#e6f6f8;color:#0b7683;font-weight:900;font-size:.85em;text-align:center;">${n}</span>` : ''; }
 function shortName(name, n = 3) { return String(name || '').split(' ').slice(0, n).join(' '); }
 function fmt(n, d = 1) {
     if (n === null || n === undefined || isNaN(n)) return '—';
@@ -1799,7 +1813,7 @@ function renderDynamicTable(g, s) {
     rGrid.innerHTML = list.map((name, i) => {
         const d = currentSheetData[name] || { interaction: 0, violation: 0 };
         return `<div class="reinf-card" data-name="${esc(name)}">
-            <div class="reinf-name" onclick="openStudentAnalytics(currentNameList[${i}], ${i})" title="البطاقة التحليلية">${avatarHTML(name)}<span class="nm">${esc(shortName(name))}</span><span class="badge b-muted pct-chip" id="chip-${i}">—</span></div>
+            <div class="reinf-name" onclick="openStudentAnalytics(currentNameList[${i}], ${i})" title="البطاقة التحليلية">${avatarHTML(name)}<span class="nm"><span class="reg-no">${i + 1}</span>${esc(shortName(name))}</span><span class="badge b-muted pct-chip" id="chip-${i}">—</span></div>
             <div class="reinf-row"><span class="reinf-row-title"><i class="fa-solid fa-star" style="color:var(--warn)"></i> التميز</span>
                 <div class="reinf-btn-group"><button class="r-btn minus" onclick="changeReinfVal('int-${i}', -1)" aria-label="إنقاص"><i class="fa-solid fa-minus"></i></button><input type="text" id="int-${i}" class="r-inp excel" value="${parseInt(d.interaction) || 0}" readonly><button class="r-btn plus-good" onclick="changeReinfVal('int-${i}', 1); playSound(880,'sine',.12,.08);" aria-label="زيادة"><i class="fa-solid fa-plus"></i></button></div></div>
             <div class="reinf-row"><span class="reinf-row-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--bad)"></i> المخالفات</span>
@@ -1968,7 +1982,7 @@ function refreshDashboard() {
         <div class="leader-row" onclick="openStudentAnalytics(currentNameList[${r.i}], ${r.i})">
             <span class="leader-rank">${r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : r.rank}</span>
             ${avatarHTML(r.name, 'width:36px;height:36px;font-size:13px;')}
-            <div style="min-width:0;"><div class="leader-name">${esc(shortName(r.name))}</div><div class="leader-meter"><span style="width:${r.pct}%"></span></div></div>
+            <div style="min-width:0;"><div class="leader-name">${noTag(r.name)}${esc(shortName(r.name))}</div><div class="leader-meter"><span style="width:${r.pct}%"></span></div></div>
             <span class="leader-score">${fmt(r.pct)}%</span>
         </div>`).join('') : `<div class="empty-state"><i class="fa-solid fa-trophy"></i>ستظهر الصدارة بعد رصد الدرجات</div>`;
 
@@ -2044,11 +2058,11 @@ function toggleHonorRoll() {
     document.getElementById('honorPodium').innerHTML = pod.map((r, k) => r ? `
         <div class="step ${['p2','p1','p3'][k]}">
             ${avatarHTML(r.name, 'width:58px;height:58px;font-size:20px;margin:0 auto;')}
-            <div class="who">${esc(firstLast(r.name))}</div>
+            <div class="who">${noTag(r.name)}${esc(firstLast(r.name))}</div>
             <div class="blk">${['🥈','🥇','🥉'][k]}<small>${fmt(r.pct)}%</small></div>
         </div>` : '<div class="step"></div>').join('');
     document.getElementById('honorList').innerHTML = top.slice(3).map(r => `
-        <div class="leader-row" onclick="openStudentAnalytics(currentNameList[${r.i}], ${r.i})"><span class="leader-rank">${r.rank}</span>${avatarHTML(r.name, 'width:34px;height:34px;font-size:12px;')}<div class="leader-name">${esc(shortName(r.name))}</div><span class="leader-score">${fmt(r.pct)}%</span></div>`).join('');
+        <div class="leader-row" onclick="openStudentAnalytics(currentNameList[${r.i}], ${r.i})"><span class="leader-rank">${r.rank}</span>${avatarHTML(r.name, 'width:34px;height:34px;font-size:12px;')}<div class="leader-name">${noTag(r.name)}${esc(shortName(r.name))}</div><span class="leader-score">${fmt(r.pct)}%</span></div>`).join('');
     openModal('modalHonor');
     playSound(523, 'triangle', .2, .12); setTimeout(() => playSound(659, 'triangle', .2, .12), 160); setTimeout(() => playSound(784, 'triangle', .4, .12), 320);
     setTimeout(confetti, 450);
@@ -2121,7 +2135,7 @@ function generateDetailedReports(keepOpen) {
         const ringColor = b ? cssVar('--' + (b.color === 'brand' ? 'brand' : b.color === 'violet' ? 'violet' : b.color)) : cssVar('--line-2');
         const canCert = r.pct !== null && r.pct >= 90 && r.completion >= 0.5;
         return `<div class="report-card" data-name="${esc(r.name)}" id="rep-${r.i}">
-            <div class="report-head">${avatarHTML(r.name)}<div style="flex:1; min-width:180px;"><h4>${esc(r.name)}</h4><div class="meta">${r.rank ? `الترتيب ${r.rank} من ${st.withPct.length}` : 'بدون ترتيب (لا درجات)'} · المجموع ${fmt(r.gained)} من ${fmt(r.gradedMax)} مرصودة (الكلي ${fmt(r.totalMax)})</div></div>
+            <div class="report-head">${avatarHTML(r.name)}<div style="flex:1; min-width:180px;"><h4>${noTag(r.name)}${esc(r.name)}</h4><div class="meta">${r.rank ? `الترتيب ${r.rank} من ${st.withPct.length}` : 'بدون ترتيب (لا درجات)'} · المجموع ${fmt(r.gained)} من ${fmt(r.gradedMax)} مرصودة (الكلي ${fmt(r.totalMax)})</div></div>
                 ${b ? `<span class="badge ${b.cls}" style="font-size:14px; padding:6px 14px;">${b.emoji} ${b.name}</span>` : '<span class="badge b-muted">لم يُرصد</span>'}</div>
             <div class="report-body">
                 <div>${assess}<div class="card-sub" style="margin-top:8px;"><i class="fa-solid fa-grip-lines-vertical"></i> الخط الصغير على كل شريط = متوسط الشعبة</div></div>
@@ -2203,7 +2217,7 @@ function printableReport(r, st) {
             <div><div style="font-size:24px;font-weight:900;">تقرير أداء الطالب</div><div style="color:#5b6478;font-weight:700;">${esc(classLabel())} · ${date}</div></div>
             <img src="logo.png" style="height:40px;" crossorigin="anonymous"></div>
         <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;">
-            <div style="flex:1;"><div style="font-size:22px;font-weight:900;">${esc(r.name)}</div>
+            <div style="flex:1;"><div style="font-size:22px;font-weight:900;">${esc(r.name)}</div><div style="color:#0b7683;font-weight:800;margin-top:2px;">رقم الطالب في السجل: ${regNo(r.name) || '—'}</div>
             <div style="color:#5b6478;font-weight:700;margin-top:4px;">${r.rank ? `الترتيب ${r.rank} من ${st.withPct.length}` : ''} · المجموع ${fmt(r.gained)} من ${fmt(r.gradedMax)} مرصودة</div></div>
             <div style="text-align:center;background:#e6f6f8;border-radius:16px;padding:12px 22px;"><div style="font-size:34px;font-weight:900;color:#0b7683;">${r.pct === null ? '—' : fmt(r.pct) + '%'}</div><div style="font-weight:800;">${r.band ? r.band.name : 'لم يُرصد'}</div></div></div>
         <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px;"><thead><tr style="background:#eef2f8;"><th style="padding:9px;text-align:right;">التقييم</th><th style="padding:9px;">المستوى</th><th style="padding:9px;">الدرجة</th><th style="padding:9px;">متوسط الشعبة</th></tr></thead><tbody>${rows}</tbody></table>
@@ -2237,15 +2251,15 @@ function downloadClassReportPDF() {
     el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #0e8f9e;padding-bottom:12px;margin-bottom:14px;">
         <div><div style="font-size:24px;font-weight:900;">تقرير أداء الشعبة</div><div style="color:#5b6478;font-weight:700;">${esc(classLabel())} · ${new Date().toLocaleDateString('ar-OM')}</div></div><img src="logo.png" style="height:40px;"></div>
         <div style="display:flex;gap:10px;margin-bottom:14px;">${[['متوسط الشعبة', st.avg === null ? '—' : fmt(st.avg) + '%'], ['اكتمال الرصد', Math.round(st.completion * 100) + '%'], ['ممتاز', st.top], ['يحتاجون دعماً', st.risk], ['عدد الطلاب', st.rows.length]].map(([k, v]) => `<div style="flex:1;background:#f3f6fb;border-radius:12px;padding:10px;text-align:center;"><div style="color:#5b6478;font-weight:700;font-size:13px;">${k}</div><div style="font-size:22px;font-weight:900;">${v}</div></div>`).join('')}</div>
-        <table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:#eef2f8;"><th style="${cell}">الترتيب</th><th style="${cell}text-align:right;">الطالب</th>${currentSchema.map(c => `<th style="${cell}">${esc(c.name)}<br><span style="color:#8390a8;font-size:11px;">${fmt(c.max)}</span></th>`).join('')}<th style="${cell}">المجموع</th><th style="${cell}">النسبة</th><th style="${cell}">التقدير</th><th style="${cell}">تميز</th><th style="${cell}">مخالفات</th></tr></thead>
-        <tbody>${list.map(r => `<tr class="avoid-break"><td style="${cell}font-weight:800;">${r.rank || '—'}</td><td style="${cell}text-align:right;font-weight:700;">${esc(r.name)}</td>${currentSchema.map(c => `<td style="${cell}">${r.grades[c.id] === null ? '<span style="color:#b0b8c8">—</span>' : fmt(r.grades[c.id])}</td>`).join('')}<td style="${cell}font-weight:800;">${fmt(r.gained)}</td><td style="${cell}font-weight:800;">${r.pct === null ? '—' : fmt(r.pct) + '%'}</td><td style="${cell}">${r.band ? r.band.name : 'لم يُرصد'}</td><td style="${cell}">${r.interaction}</td><td style="${cell}">${r.violation}</td></tr>`).join('')}</tbody></table>
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:#eef2f8;"><th style="${cell}">م</th><th style="${cell}text-align:right;">الطالب</th><th style="${cell}">الترتيب</th>${currentSchema.map(c => `<th style="${cell}">${esc(c.name)}<br><span style="color:#8390a8;font-size:11px;">${fmt(c.max)}</span></th>`).join('')}<th style="${cell}">المجموع</th><th style="${cell}">النسبة</th><th style="${cell}">التقدير</th><th style="${cell}">تميز</th><th style="${cell}">مخالفات</th></tr></thead>
+        <tbody>${list.map(r => `<tr class="avoid-break"><td style="${cell}font-weight:800;color:#0b7683;">${r.i + 1}</td><td style="${cell}text-align:right;font-weight:700;">${esc(r.name)}</td><td style="${cell}font-weight:800;">${r.rank || '—'}</td>${currentSchema.map(c => `<td style="${cell}">${r.grades[c.id] === null ? '<span style="color:#b0b8c8">—</span>' : fmt(r.grades[c.id])}</td>`).join('')}<td style="${cell}font-weight:800;">${fmt(r.gained)}</td><td style="${cell}font-weight:800;">${r.pct === null ? '—' : fmt(r.pct) + '%'}</td><td style="${cell}">${r.band ? r.band.name : 'لم يُرصد'}</td><td style="${cell}">${r.interaction}</td><td style="${cell}">${r.violation}</td></tr>`).join('')}</tbody></table>
         <div style="color:#8390a8;font-size:12px;margin-top:10px;">النسبة محسوبة من الدرجات المرصودة فقط. الخانات الفارغة (—) لم تُرصد بعد.</div>`;
     pdfSave(el, `تقرير_الشعبة_${document.getElementById('gradeSelect').value}_${document.getElementById('sectionSelect').value}.pdf`, true);
 }
 
 function reportText(r, st) {
     const lines = currentSchema.map(c => `• ${c.name}: ${r.grades[c.id] === null ? 'لم يُرصد' : fmt(r.grades[c.id]) + ' من ' + fmt(c.max)}`).join('\n');
-    return `مرحباً ولي أمر الطالب/ة: ${r.name}\n📊 تقرير الأداء من منصة مِحور (${classLabel()})\n\nالنسبة: ${r.pct === null ? 'لم تُرصد درجات بعد' : fmt(r.pct) + '% (' + r.band.name + ')'}\n${r.rank ? `الترتيب: ${r.rank} من ${st.withPct.length}\n` : ''}\n${lines}\n\n⭐ نقاط التميز: ${r.interaction}  |  ⚠️ المخالفات: ${r.violation}\n\n💡 ملاحظات المعلم: ${studentAdvice(r, st)}\n\nشاكرين حسن تعاونكم.`;
+    return `مرحباً ولي أمر الطالب/ة: ${r.name}\nرقم الطالب في السجل: ${r.i + 1}\n📊 تقرير الأداء من منصة مِحور (${classLabel()})\n\nالنسبة: ${r.pct === null ? 'لم تُرصد درجات بعد' : fmt(r.pct) + '% (' + r.band.name + ')'}\n${r.rank ? `الترتيب: ${r.rank} من ${st.withPct.length}\n` : ''}\n${lines}\n\n⭐ نقاط التميز: ${r.interaction}  |  ⚠️ المخالفات: ${r.violation}\n\n💡 ملاحظات المعلم: ${studentAdvice(r, st)}\n\nشاكرين حسن تعاونكم.`;
 }
 function whatsReport(i) { const st = reportCache || classStats(); window.open(`https://wa.me/?text=${encodeURIComponent(reportText(st.rows[i], st))}`, '_blank'); }
 
@@ -2271,7 +2285,7 @@ function openStudentAnalytics(name, index) {
         else { badge = "🤝"; rankName = "نحو التحسن"; rankColor = cssVar('--bad-ink'); }
     }
     const av = document.getElementById('analyticsAvatar'); av.innerText = initials(name); av.style.background = avatarColor(name);
-    document.getElementById('analyticsStudentName').innerText = shortName(name, 4);
+    document.getElementById('analyticsStudentName').innerHTML = noTag(name) + esc(shortName(name, 4));
     document.getElementById('analyticsRankBadge').innerText = badge;
     const rn = document.getElementById('analyticsRankName'); rn.innerText = rankName + (r.band ? ` · ${r.band.name}` : ''); rn.style.color = rankColor;
     document.getElementById('anPct').innerHTML = r.pct === null ? '—' : `${fmt(r.pct)}<small>%</small>`;
@@ -2379,7 +2393,7 @@ function startRandomizer() {
 }
 let lastWinner = null, winnerGiven = 0;
 function announceWinner(w) {
-    document.getElementById('winnerNameDisplay').innerText = "🎉 " + w + " 🎉"; isSpinning = false; document.getElementById('btnSpin').disabled = false;
+    document.getElementById('winnerNameDisplay').innerHTML = `🎉 ${noTag(w)}${esc(w)} 🎉`; isSpinning = false; document.getElementById('btnSpin').disabled = false;
     lastWinner = w; winnerGiven = 0; updateWinnerPoints();
 }
 function winnerIdx() { return lastWinner == null ? -1 : currentNameList.indexOf(lastWinner); }
@@ -2395,18 +2409,18 @@ function awardWinner(n) {
     if (n < 0) n = -Math.min(winnerGiven, 1); if (!n) return;
     changeReinfVal('int-' + i, n);
     winnerGiven += n;
-    if (n > 0) { playSound(880, 'sine', .18, .12); setTimeout(() => playSound(1175, 'sine', .22, .1), 110); toast(`⭐ +${n} لـ ${firstLast(lastWinner)}`); }
+    if (n > 0) { playSound(880, 'sine', .18, .12); setTimeout(() => playSound(1175, 'sine', .22, .1), 110); toast(`⭐ +${n} لـ ${noText(lastWinner).replace(lastWinner, firstLast(lastWinner))}`); }
     updateWinnerPoints();
 }
 function runClassicRandom(winner) {
     const box = document.getElementById("randomBox");
     let spins = 0, delay = 60;
     const step = () => {
-        box.innerText = currentRandomizerList[Math.floor(Math.random() * currentRandomizerList.length)];
+        box.innerText = noText(currentRandomizerList[Math.floor(Math.random() * currentRandomizerList.length)]);
         playSound(500 + spins * 12, 'triangle', 0.06, 0.06);
         if (++spins < 20) { delay *= 1.08; randomizerInterval = setTimeout(step, delay); }
         else {
-            box.innerText = winner; box.style.background = 'var(--grad-accent)'; box.style.color = '#fff';
+            box.innerText = noText(winner); box.style.background = 'var(--grad-accent)'; box.style.color = '#fff';
             playSound(784, 'sine', .6, .15);
             setTimeout(() => { box.style.background = ''; box.style.color = ''; }, 1800);
             announceWinner(winner);
@@ -2417,7 +2431,7 @@ function runClassicRandom(winner) {
 function runTornadoRandom(winner) {
     const area = document.getElementById('tornadoArea'); area.innerHTML = '';
     const pool = shuffle(currentRandomizerList.filter(n => n !== winner)).slice(0, 14).concat([winner]);
-    const els = pool.map(name => { const el = document.createElement('div'); el.className = 'tornado-name'; el.innerText = firstLast(name); area.appendChild(el); return el; });
+    const els = pool.map(name => { const el = document.createElement('div'); el.className = 'tornado-name'; el.innerText = noText(name, null, null).replace(name, firstLast(name)); area.appendChild(el); return el; });
     let angle = 0, radius = 10, time = 0;
     playSound(110, 'sine', 3, 0.15);
     randomizerInterval = setInterval(() => {
@@ -2425,7 +2439,7 @@ function runTornadoRandom(winner) {
         els.forEach((el, i) => { const off = i * (Math.PI * 2 / els.length); const x = Math.cos(angle + off) * radius * 1.6, y = Math.sin(angle + off) * radius * 0.7; el.style.transform = `translate(${x}px, ${y}px) scale(${1 + Math.sin(angle + off) * 0.2})`; el.style.opacity = Math.random() > 0.2 ? 1 : 0.4; });
         if (time > 3000) {
             clearInterval(randomizerInterval); playSound(784, 'sine', .6, .15);
-            area.innerHTML = `<div style="font-size:36px; font-weight:900; color:var(--accent-600); animation:pulse 1s infinite; text-align:center;">${esc(winner)}</div>`;
+            area.innerHTML = `<div style="font-size:36px; font-weight:900; color:var(--accent-600); animation:pulse 1s infinite; text-align:center;">${noTag(winner)}${esc(winner)}</div>`;
             announceWinner(winner);
         }
     }, 50);
@@ -2434,12 +2448,12 @@ function runSpaceRandom(winner) {
     const area = document.getElementById('spaceArea'), rocket = document.getElementById('rocket');
     Array.from(area.children).forEach(c => { if (c.id !== 'rocket') c.remove(); });
     const names = shuffle(currentRandomizerList.filter(n => n !== winner)).slice(0, 7).concat([winner]);
-    let aliens = shuffle(names).map(name => { const a = document.createElement('div'); a.className = 'space-alien'; a.dataset.n = name; a.innerText = firstLast(name) + " 🛸"; a.style.left = (Math.random() * 78 + 6) + '%'; a.style.top = (Math.random() * 120 + 12) + 'px'; area.appendChild(a); return a; });
+    let aliens = shuffle(names).map(name => { const a = document.createElement('div'); a.className = 'space-alien'; a.dataset.n = name; a.innerText = noText(name).replace(name, firstLast(name)) + " 🛸"; a.style.left = (Math.random() * 78 + 6) + '%'; a.style.top = (Math.random() * 120 + 12) + 'px'; area.appendChild(a); return a; });
     randomizerInterval = setInterval(() => {
         const targets = aliens.filter(a => a.dataset.n !== winner);
         if (!targets.length) {
             clearInterval(randomizerInterval); playSound(784, 'sine', .6, .15);
-            const w = aliens[0]; w.innerText = firstLast(winner) + " 👑"; w.style.fontSize = "20px"; w.style.color = "#ffd27a";
+            const w = aliens[0]; w.innerText = noText(winner).replace(winner, firstLast(winner)) + " 👑"; w.style.fontSize = "20px"; w.style.color = "#ffd27a";
             announceWinner(winner); return;
         }
         const target = targets[Math.floor(Math.random() * targets.length)];
@@ -2720,6 +2734,8 @@ function fillResultsFilter() {
     sel.innerHTML = `<option value="">كل الاختبارات (${quizResultsCache.length})</option>` + codes.map(c => `<option value="${esc(c)}">${esc(quizNames[c] || c)} — ${esc(c)} (${quizResultsCache.filter(r => r[3] === c).length})</option>`).join('');
     if (codes.includes(cur)) sel.value = cur;
 }
+function resultRegNo(row) { const m = String(row[2] || '').match(/الصف\s*(.+?)\s*\/\s*شعبة\s*(.+)$/); return m ? regNo(row[1], m[1].trim(), m[2].trim()) : null; }
+function resultNoTag(row) { const n = resultRegNo(row); return n ? `<span class="reg-no" title="رقمه في السجل">${n}</span>` : ''; }
 function renderQuizResults() {
     const f = document.getElementById('resultsFilter').value;
     quizResultsView = quizResultsCache.filter(r => !f || r[3] === f);
@@ -2738,7 +2754,7 @@ function renderQuizResults() {
         const d = new Date(String(row[0]).replace(' ', 'T'));
         const scoreHTML = !sc ? '—' : sc.gradable ? `<span class="badge ${sc.correct / sc.gradable >= .5 ? 'b-good' : 'b-bad'}">${sc.correct} / ${sc.gradable}</span>${sc.review ? ` <span class="badge b-warn">+${sc.review} يدوي</span>` : ''}` : `<span class="badge b-warn">${sc.review} يدوي</span>`;
         return `<tr><td class="num" dir="ltr" style="font-size:12.5px;">${isNaN(d) ? esc(row[0]) : d.toLocaleString('ar-OM', { dateStyle: 'short', timeStyle: 'short' })}</td>
-            <td class="name-cell" style="font-weight:800;">${esc(row[1])}</td><td>${esc(row[2])}</td>
+            <td class="name-cell" style="font-weight:800;">${resultNoTag(row)}${esc(row[1])}</td><td>${esc(row[2])}</td>
             <td><span class="code-pill" title="${esc(quizNames[row[3]] || '')}">${esc(row[3])}</span></td><td>${scoreHTML}</td>
             <td>${cheat > 0 ? `<span class="cheat-alert">⚠️ ${cheat} مرة</span>` : `<span class="safe-status">✅ لا</span>`}</td>
             <td><button class="btn-view-ans" onclick="showStudentAnswers(${i})">عرض <i class="fa-solid fa-eye"></i></button></td></tr>`;
@@ -2747,7 +2763,7 @@ function renderQuizResults() {
 function showStudentAnswers(idx) {
     const row = quizResultsView[idx] || [];
     const cheat = parseInt(row[4]) || 0;
-    let html = `<div class="row" style="align-items:center; margin-bottom:12px;"><b style="font-size:17px;">👤 ${esc(row[1])}</b><span class="badge b-brand" id="studentScoreDisplay">...</span></div>`;
+    let html = `<div class="row" style="align-items:center; margin-bottom:12px;"><b style="font-size:17px;">👤 ${resultNoTag(row)}${esc(row[1])}</b><span class="badge b-brand" id="studentScoreDisplay">...</span></div>`;
     if (cheat > 0) html += `<div class="hint" style="background:var(--bad-50); color:var(--bad-ink); border-color:transparent; font-weight:800;">⚠️ غادر الطالب شاشة الاختبار ${cheat} مرة.</div>`;
     try {
         const answers = JSON.parse(row[5] || '[]'); let correct = 0, review = 0;
@@ -2862,7 +2878,7 @@ function renderSeating() {
     while (seatState.length < total) seatState.push(null);
     const g = document.getElementById('seatingGridContainer');
     g.style.gridTemplateColumns = `repeat(${cols}, minmax(0,1fr))`;
-    g.innerHTML = seatState.map((n, k) => `<div class="desk-card ${n ? '' : 'empty'} ${seatSel === k ? 'sel' : ''}" onclick="seatClick(${k})"><span class="seat-no">${k + 1}</span>${n ? esc(firstLast(n)) : 'فارغ'}</div>`).join('');
+    g.innerHTML = seatState.map((n, k) => `<div class="desk-card ${n ? '' : 'empty'} ${seatSel === k ? 'sel' : ''}" onclick="seatClick(${k})"><span class="seat-no">مقعد ${k + 1}</span><span class="seat-name">${n ? noTag(n) + esc(firstLast(n)) : 'فارغ'}</span></div>`).join('');
     persistSeating();
 }
 function seatClick(k) {
@@ -2878,7 +2894,7 @@ function downloadSeatingPDF() {
     el.style.cssText = 'width:1060px;padding:24px;background:#fff;color:#17223b;font-family:Tajawal,sans-serif;direction:rtl;';
     el.innerHTML = `<div style="font-size:22px;font-weight:900;margin-bottom:6px;">خريطة المقاعد — ${esc(classLabel())}</div>
         <div style="background:#1f3b4d;color:#fff;text-align:center;padding:10px;border-radius:10px;font-weight:900;margin:12px 0;">السبورة</div>
-        <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:10px;">${seatState.map((n, k) => `<div style="border:2px solid ${n ? '#0e8f9e' : '#d3dbe7'};border-radius:10px;padding:12px 6px;text-align:center;font-weight:800;font-size:14px;min-height:56px;"><div style="color:#8390a8;font-size:11px;">${k + 1}</div>${n ? esc(firstLast(n)) : ''}</div>`).join('')}</div>`;
+        <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:10px;">${seatState.map((n, k) => `<div style="border:2px solid ${n ? '#0e8f9e' : '#d3dbe7'};border-radius:10px;padding:12px 6px;text-align:center;font-weight:800;font-size:14px;min-height:56px;"><div style="color:#8390a8;font-size:11px;">مقعد ${k + 1}</div>${n ? noPrint(n) + esc(firstLast(n)) : ''}</div>`).join('')}</div>`;
     pdfSave(el, `خريطة_المقاعد_${lastClass.g}_${lastClass.s}.pdf`, true);
 }
 
@@ -3024,14 +3040,14 @@ function generateGroups() {
     } else shuffle(currentNameList).forEach((n, k) => groups[k % count].push(n));
     lastGroups = groups;
     const colors = ['#0e8f9e', '#eb6834', '#6d5bd0', '#2a78d6', '#16a085', '#e87ba4', '#c9a227', '#d03b3b'];
-    document.getElementById('groupsDisplay').innerHTML = `<div class="groups-grid">${groups.map((g, i) => `<div class="group-card" style="--gc:${colors[i % colors.length]}"><h4><span>المجموعة ${i + 1}</span><span class="badge b-muted">${g.length}</span></h4><ol>${g.map(n => `<li>${esc(shortName(n))}</li>`).join('')}</ol></div>`).join('')}</div>`;
+    document.getElementById('groupsDisplay').innerHTML = `<div class="groups-grid">${groups.map((g, i) => `<div class="group-card" style="--gc:${colors[i % colors.length]}"><h4><span>المجموعة ${i + 1}</span><span class="badge b-muted">${g.length}</span></h4><ul class="group-list">${g.map(n => `<li>${noTag(n)}${esc(shortName(n))}</li>`).join('')}</ul></div>`).join('')}</div>`;
     playSound(700, 'triangle', .15, .08);
 }
 function downloadGroupsPDF() {
     if (!lastGroups.length) return alert('⚠️ قم بتوليد المجموعات أولاً.');
     const el = document.createElement('div');
     el.style.cssText = 'width:760px;padding:24px;background:#fff;color:#17223b;font-family:Tajawal,sans-serif;direction:rtl;';
-    el.innerHTML = `<div style="font-size:22px;font-weight:900;margin-bottom:14px;">تقسيم المجموعات — ${esc(classLabel())}</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">${lastGroups.map((g, i) => `<div style="border:2px solid #0e8f9e;border-radius:12px;padding:12px;" class="avoid-break"><div style="font-weight:900;margin-bottom:6px;">المجموعة ${i + 1}</div><ol style="margin:0;padding-right:18px;line-height:1.9;">${g.map(n => `<li>${esc(n)}</li>`).join('')}</ol></div>`).join('')}</div>`;
+    el.innerHTML = `<div style="font-size:22px;font-weight:900;margin-bottom:14px;">تقسيم المجموعات — ${esc(classLabel())}</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">${lastGroups.map((g, i) => `<div style="border:2px solid #0e8f9e;border-radius:12px;padding:12px;" class="avoid-break"><div style="font-weight:900;margin-bottom:6px;">المجموعة ${i + 1}</div><ol style="margin:0;padding-right:18px;line-height:1.9;">${g.map(n => `<li style="list-style:none;margin-bottom:4px;">${noPrint(n)}${esc(n)}</li>`).join('')}</ol></div>`).join('')}</div>`;
     pdfSave(el, 'تقسيم_المجموعات.pdf');
 }
 
@@ -3162,7 +3178,7 @@ if (!Array.isArray(storeItems)) storeItems = [
 function openRewardsStore(preselect) {
     if (!requireSheet('اختر الصف والشعبة لفتح المتجر.')) return;
     const sel = document.getElementById("rewardStudentSelect");
-    sel.innerHTML = '<option value="">— اختر طالباً —</option>' + currentNameList.map((n, i) => `<option value="${i}">${esc(n)} (${parseInt(document.getElementById('int-' + i).value) || 0} 🌟)</option>`).join('');
+    sel.innerHTML = '<option value="">— اختر طالباً —</option>' + currentNameList.map((n, i) => `<option value="${i}">${i + 1}. ${esc(n)} (${parseInt(document.getElementById('int-' + i).value) || 0} 🌟)</option>`).join('');
     if (preselect !== undefined && preselect !== null) sel.value = preselect;
     updateStudentPointsView(); openModal('modalRewardsStore');
 }
@@ -3191,12 +3207,12 @@ function buyReward(k) {
     if (idx === "") return alert("⚠️ اختر الطالب أولاً.");
     const pts = parseInt(document.getElementById(`int-${idx}`).value) || 0;
     if (pts < it.cost) { playSound(150, 'sawtooth', 0.2, 0.1); return alert(`❌ رصيد الطالب (${pts}) لا يكفي لمكافأة (${it.name}) التي تكلف ${it.cost}.`); }
-    if (!confirm(`شراء (${it.name}) للطالب ${shortName(currentNameList[idx])}؟\nسيُخصم ${it.cost} نقطة.`)) return;
+    if (!confirm(`شراء (${it.name}) للطالب (${idx + 1}) ${shortName(currentNameList[idx])}؟\nسيُخصم ${it.cost} نقطة.`)) return;
     changeReinfVal(`int-${idx}`, -it.cost);
     const sel = document.getElementById("rewardStudentSelect");
     sel.options[sel.selectedIndex].text = `${currentNameList[idx]} (${pts - it.cost} 🌟)`;
     updateStudentPointsView(); playSound(800, 'sine', 0.3, 0.12); confetti();
-    toast(`✅ تم! حصل ${firstLast(currentNameList[idx])} على (${it.name}). لا تنسَ الضغط على "حفظ".`);
+    toast(`✅ تم! حصل (${idx + 1}) ${firstLast(currentNameList[idx])} على (${it.name}). لا تنسَ الضغط على "حفظ".`);
 }
 
 // =====================================================================
@@ -3205,7 +3221,7 @@ function buyReward(k) {
 let logStudentId = null, logStudentName = "", behaviorCache = [];
 function openBehaviorLog(id, name) {
     logStudentId = id; logStudentName = name;
-    document.getElementById("logStudentName").innerText = name;
+    document.getElementById("logStudentName").innerHTML = noTag(name) + esc(name);
     const h = document.getElementById("behaviorHistory");
     h.innerHTML = `<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i></div>`;
     openModal('modalBehaviorLog');
