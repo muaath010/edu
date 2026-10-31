@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="no-referrer">
+    <title>تقرير الطالب — منصة مِحور</title>
+    <link rel="icon" type="image/png" href="https://muaath010.github.io/edu/logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root { --brand: #0e8f9e; --brand-600: #0b7683; --brand-50: #e6f6f8; --ink: #17223b; --ink-3: #5b6478; --line: #e3e8f0; --bg: #eef3f8; --bad: #d03b3b; --bad-50: #fcebeb; --good-50: #e8f7e8; --good-ink: #08730a; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Tajawal, 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+        .top img { height: 30px; }
+        .top .t { font-size: 13px; font-weight: 800; color: var(--ink-3); }
+        .wrap { max-width: 820px; margin: 0 auto; padding: 16px; }
+        .banner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; margin-bottom: 14px; font-size: 14px; line-height: 1.7; }
+        .banner .ok { color: var(--good-ink); font-weight: 900; }
+        .banner .exp { color: var(--ink-3); font-weight: 700; }
+        .banner .sp { flex: 1; }
+        .btn { border: 0; border-radius: 12px; padding: 10px 16px; font: inherit; font-weight: 800; cursor: pointer; background: var(--brand); color: #fff; display: inline-flex; align-items: center; gap: 6px; }
+        .sheet { background: #fff; border-radius: 18px; box-shadow: 0 18px 40px -24px rgba(23,34,59,.35); overflow: hidden; }
+        .sheet .rs-report { margin: 0 auto; }
+        .cert-scale { overflow: hidden; border-radius: 12px; }
+        .cert-scale .classic-certificate { width: 1060px; transform-origin: top right; }
+        .msg { text-align: center; background: #fff; border-radius: 18px; padding: 40px 20px; margin-top: 30px; line-height: 1.9; }
+        .msg .ic { font-size: 54px; }
+        .msg h2 { margin: 6px 0; }
+        .msg p { color: var(--ink-3); font-weight: 700; margin: 0; }
+        .loading { text-align: center; padding: 60px 0; color: var(--ink-3); font-weight: 800; }
+        .spin { width: 34px; height: 34px; border: 4px solid var(--brand-50); border-top-color: var(--brand); border-radius: 50%; margin: 0 auto 12px; animation: s 0.8s linear infinite; }
+        @keyframes s { to { transform: rotate(360deg); } }
+        @media (max-width: 600px) { .sheet .rs-report { padding: 18px 14px !important; } .sheet .rs-report table { font-size: 12.5px !important; } .sheet .rs-title { font-size: 19px !important; white-space: nowrap; } .sheet .rs-logo { height: 26px !important; } .wrap { padding: 10px; } }
+        @media print { .top, .banner { display: none !important; } body { background: #fff; } .wrap { padding: 0; max-width: none; } .sheet { box-shadow: none; border-radius: 0; } .cert-scale .classic-certificate { width: 100%; transform: none !important; } .cert-scale { height: auto !important; } }
+        
+    .classic-certificate { box-sizing: border-box; width: 100%; min-height: 180mm; padding: 14mm 18mm; text-align: center; background: #fffdf7; color: #1e2a44; position: relative; font-family: 'Amiri', serif; border: 3mm double #c9a227; outline: 1.2mm solid #c9a227; outline-offset: -6mm; }
+    .classic-certificate .c-top { font-size: 20px; color: #5b6478; }
+    .classic-certificate .cert-title { font-size: 58px; color: #0b7683; font-weight: 700; margin: 8px 0 4px; }
+    .classic-certificate .c-line { width: 240px; height: 3px; margin: 0 auto 24px; background: linear-gradient(90deg, transparent, #c9a227, transparent); }
+    .classic-certificate .c-body { font-size: 25px; line-height: 2.1; }
+    .classic-certificate .c-name { font-size: 44px; font-weight: 700; color: #d96a0c; }
+    .classic-certificate .c-foot { display: flex; justify-content: space-between; margin-top: 40px; font-size: 20px; font-weight: 700; padding: 0 20mm; }
+    .classic-certificate .seal { position: absolute; left: 20mm; top: 16mm; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, #f6d77a, #c9a227); display: flex; align-items: center; justify-content: center; font-size: 44px; box-shadow: 0 0 0 5px #fff4cf, 0 0 0 7px #c9a227; }
+    .classic-certificate .c-qr { position: absolute; right: 18mm; top: 14mm; width: 92px; text-align: center; font-family: Tajawal, sans-serif; font-size: 11px; font-weight: 700; color: #5b6478; line-height: 1.4; }
+    .classic-certificate .c-qr svg { width: 92px; height: 92px; display: block; background: #fff; }
+    </style>
+</head>
+<body>
+    <div class="top"><img src="https://muaath010.github.io/edu/logo.png" alt="مِحور"><span class="t">منصة مِحور التعليمية</span></div>
+    <div class="wrap" id="app"><div class="loading"><div class="spin"></div>جاري تحميل التقرير...</div></div>
+<script>
+// =====================================================================
+//  عرض التقرير والشهادة — مشترك بين المنصة (الطباعة) وصفحة ولي الأمر report.html
+//  حتى يرى ولي الأمر نفس شكل الورقة بالضبط. كل البيانات تُعامل كنص غير موثوق.
+// =====================================================================
+const RS = (() => {
+    const e = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const num = v => { if (v === null || v === undefined || v === '') return null; const x = Number(v); return isFinite(x) ? x : null; };
+    const f = (v, d = 1) => { const x = num(v); return x === null ? '—' : String(Math.round(x * Math.pow(10, d)) / Math.pow(10, d)); };
+    const lvl = x => x === null ? '#cfd6e2' : x >= .85 ? '#0ca30c' : x < .5 ? '#d03b3b' : x < .65 ? '#fab219' : '#0e8f9e';
+    const day = ts => { const d = new Date(num(ts) || Date.now()); return d.toLocaleDateString('ar-OM'); };
+    const when = ts => { const d = new Date(num(ts) || Date.now()); return d.toLocaleString('ar-OM', { dateStyle: 'medium', timeStyle: 'short' }); };
+    const S1 = '#0e8f9e', S2 = '#eb6834';
+
+    const CERT_CSS = `
+    .classic-certificate { box-sizing: border-box; width: 100%; min-height: 180mm; padding: 14mm 18mm; text-align: center; background: #fffdf7; color: #1e2a44; position: relative; font-family: 'Amiri', serif; border: 3mm double #c9a227; outline: 1.2mm solid #c9a227; outline-offset: -6mm; }
+    .classic-certificate .c-top { font-size: 20px; color: #5b6478; }
+    .classic-certificate .cert-title { font-size: 58px; color: #0b7683; font-weight: 700; margin: 8px 0 4px; }
+    .classic-certificate .c-line { width: 240px; height: 3px; margin: 0 auto 24px; background: linear-gradient(90deg, transparent, #c9a227, transparent); }
+    .classic-certificate .c-body { font-size: 25px; line-height: 2.1; }
+    .classic-certificate .c-name { font-size: 44px; font-weight: 700; color: #d96a0c; }
+    .classic-certificate .c-foot { display: flex; justify-content: space-between; margin-top: 40px; font-size: 20px; font-weight: 700; padding: 0 20mm; }
+    .classic-certificate .seal { position: absolute; left: 20mm; top: 16mm; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, #f6d77a, #c9a227); display: flex; align-items: center; justify-content: center; font-size: 44px; box-shadow: 0 0 0 5px #fff4cf, 0 0 0 7px #c9a227; }
+    .classic-certificate .c-qr { position: absolute; right: 18mm; top: 14mm; width: 92px; text-align: center; font-family: Tajawal, sans-serif; font-size: 11px; font-weight: 700; color: #5b6478; line-height: 1.4; }
+    .classic-certificate .c-qr svg { width: 92px; height: 92px; display: block; background: #fff; }`;
+
+    // رمز QR يُنشأ داخل المتصفح (لا يُرسل الرابط لأي موقع خارجي)
+    function qrSVG(url) {
+        if (!url || typeof qrcode === 'undefined') return '';
+        try { const q = qrcode(0, 'M'); q.addData(url); q.make(); return q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); } catch (x) { return ''; }
+    }
+
+    function radarConfig(D, print) {
+        const axes = Array.isArray(D.radar) ? D.radar : [];
+        return {
+            type: 'radar',
+            data: { labels: axes.map(a => String(a.label || '')), datasets: [
+                { label: 'الطالب', data: axes.map(a => num(a.s) || 0), borderColor: S1, backgroundColor: S1 + '2e', borderWidth: 2, pointBackgroundColor: S1, pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6 },
+                { label: 'متوسط الشعبة', data: axes.map(a => num(a.c) || 0), borderColor: S2, backgroundColor: S2 + '14', borderWidth: 2, borderDash: [5, 4], pointBackgroundColor: S2, pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6 }
+            ] },
+            options: {
+                animation: print ? false : undefined, responsive: !print, maintainAspectRatio: false, devicePixelRatio: print ? 2 : undefined,
+                scales: { r: { min: 0, max: 100, ticks: { display: false, stepSize: 25 }, grid: { color: '#e3e8f0' }, angleLines: { color: '#e3e8f0' }, pointLabels: { font: { family: 'Tajawal', size: 13, weight: '800' }, color: '#3b4660' } } },
+                plugins: { legend: { display: false }, tooltip: { rtl: true, callbacks: { label: c => ` ${c.dataset.label}: ${c.raw}%` } } }
+            }
+        };
+    }
+
+    // صورة الرسم للطباعة (الطباعة لا تنقل الرسوم الحية)
+    function radarImage(D) {
+        return new Promise(res => {
+            if (typeof Chart === 'undefined' || !Array.isArray(D.radar) || D.radar.length < 3) return res('');
+            const cv = document.createElement('canvas');
+            cv.width = 420; cv.height = 300;
+            cv.style.cssText = 'position:fixed; left:-10000px; top:0; width:420px; height:300px;';
+            document.body.appendChild(cv);
+            let ch;
+            try { ch = new Chart(cv, radarConfig(D, true)); res(cv.toDataURL('image/png')); }
+            catch (x) { res(''); }
+            finally { if (ch) ch.destroy(); cv.remove(); }
+        });
+    }
+
+    // o: { qr, expires, radarImg, radarCanvas, logo }
+    function reportHTML(D, o = {}) {
+        const cols = Array.isArray(D.cols) ? D.cols : [];
+        const td = 'padding:8px;border-bottom:1px solid #e3e8f0;';
+        const rows = cols.map(c => {
+            const v = num(c.v), max = num(c.max) || 0, avg = num(c.avg), x = v === null || !max ? null : Math.min(v, max) / max;
+            return `<tr><td style="${td}font-weight:700;">${e(c.name)}</td>
+                <td style="${td}width:40%;"><div style="position:relative;height:10px;background:#eef2f8;border-radius:9px;overflow:hidden;"><div style="height:100%;width:${x === null ? 0 : x * 100}%;background:${lvl(x)};border-radius:9px;"></div></div></td>
+                <td style="${td}text-align:center;font-weight:800;white-space:nowrap;">${v === null ? 'لم يُرصد' : f(v) + ' من ' + f(max)}</td>
+                <td style="${td}text-align:center;color:#5b6478;">${f(avg)}</td></tr>`;
+        }).join('');
+        const pct = num(D.pct), band = D.band && typeof D.band === 'object' ? D.band : null, rank = num(D.rank);
+        const radar = o.radarImg ? `<img src="${o.radarImg}" alt="" style="width:100%;max-width:270px;height:auto;display:block;margin:0 auto;">`
+            : o.radarCanvas ? `<div style="position:relative;height:260px;"><canvas id="rsRadar"></canvas></div>` : '';
+        const legend = `<div style="display:flex;justify-content:center;gap:16px;font-size:12.5px;font-weight:800;color:#3b4660;margin-top:4px;"><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${S1};margin-left:5px;"></i>الطالب</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${S2};margin-left:5px;"></i>متوسط الشعبة</span></div>`;
+        const qr = o.qr ? `<div class="avoid-break" style="display:flex;align-items:center;gap:14px;margin-top:14px;padding:10px 14px;border:1px dashed #b9c3d4;border-radius:14px;">
+                <div style="width:96px;height:96px;flex-shrink:0;background:#fff;">${o.qr.replace('<svg ', '<svg style="width:96px;height:96px;display:block;" ')}</div>
+                <div style="font-size:13.5px;line-height:1.8;color:#3b4660;"><b style="font-size:15px;color:#17223b;">📱 لولي الأمر: امسح الرمز بكاميرا الجوال</b><br>لعرض هذا التقرير مع الرسوم البيانية على جوالك.<br><span style="color:#8390a8;">الرابط صالح حتى ${e(when(o.expires))}</span></div></div>` : '';
+        return `<div class="rs-report" style="width:100%;max-width:760px;box-sizing:border-box;padding:22px 28px;background:#fff;color:#17223b;font-family:Tajawal,sans-serif;direction:rtl;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:4px solid #0e8f9e;padding-bottom:12px;margin-bottom:14px;">
+                <div><div class="rs-title" style="font-size:24px;font-weight:900;">تقرير أداء الطالب</div><div style="color:#5b6478;font-weight:700;">${e(D.classLabel)} · ${e(day(D.date))}</div></div>
+                <img src="${e(o.logo || 'logo.png')}" alt="مِحور" class="rs-logo" style="height:40px;"></div>
+            <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:16px;">
+                <div style="flex:1;min-width:220px;"><div style="font-size:22px;font-weight:900;">${e(D.name)}</div><div style="color:#0b7683;font-weight:800;margin-top:2px;">رقم الطالب في السجل: ${f(D.regNo, 0)}</div>
+                <div style="color:#5b6478;font-weight:700;margin-top:4px;">${rank ? `الترتيب ${f(rank, 0)} من ${f(D.rankOf, 0)} · ` : ''}المجموع ${f(D.gained)} من ${f(D.gradedMax)} مرصودة</div></div>
+                <div style="text-align:center;background:#e6f6f8;border-radius:16px;padding:12px 22px;"><div style="font-size:34px;font-weight:900;color:#0b7683;">${pct === null ? '—' : f(pct) + '%'}</div><div style="font-weight:800;">${band ? e(band.name) : 'لم يُرصد'}</div></div></div>
+            <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px;"><thead><tr style="background:#eef2f8;"><th style="padding:9px;text-align:right;">التقييم</th><th style="padding:9px;">المستوى</th><th style="padding:9px;">الدرجة</th><th style="padding:9px;">متوسط الشعبة</th></tr></thead><tbody>${rows}</tbody></table></div>
+            <div class="avoid-break" style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px;">
+                ${radar ? `<div style="flex:1 1 280px;border:1px solid #e3e8f0;border-radius:14px;padding:10px 10px 8px;"><div style="font-weight:900;font-size:14px;margin-bottom:4px;">📊 مقارنة الطالب بمتوسط الشعبة</div>${radar}${legend}</div>` : ''}
+                <div style="flex:1 1 280px;display:flex;flex-direction:column;gap:12px;">
+                    <div style="display:flex;gap:12px;"><div style="flex:1;background:#e8f7e8;border-radius:12px;padding:10px;text-align:center;font-weight:800;">⭐ نقاط التميز: ${f(D.interaction, 0)}</div><div style="flex:1;background:#fcebeb;border-radius:12px;padding:10px;text-align:center;font-weight:800;">⚠️ المخالفات: ${f(D.violation, 0)}</div></div>
+                    <div style="flex:1;background:#f7f9fc;border-right:5px solid #f5821f;border-radius:12px;padding:14px;line-height:1.9;font-size:14.5px;"><b>ملاحظات المعلم:</b> ${e(D.advice)}</div>
+                </div></div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;margin-top:20px;font-weight:800;"><span>توقيع المعلم: ......................</span><span>توقيع ولي الأمر: ......................</span></div>
+            ${qr}</div>`;
+    }
+
+    function certificateHTML(D, o = {}) {
+        const band = D.band && typeof D.band === 'object' ? D.band : { name: '' };
+        return `<div class="classic-certificate">
+            <div class="c-top">سلطنة عُمان — وزارة التربية والتعليم</div>
+            <div class="cert-title">شهادة شكر وتقدير</div><div class="c-line"></div>
+            <div class="c-body">يسرنا أن نتقدم بخالص الشكر والتقدير للطالب المتميز<br><span class="c-name">${e(D.name)}</span><br>
+            نظير تفوقه وحصوله على تقدير <b>(${e(band.name)})</b> بنسبة <b style="font-family:Tajawal">${f(D.pct)}%</b><br>في ${e(D.classLabel)}، متمنين له دوام التوفيق والنجاح.</div>
+            <div class="c-foot"><span>التاريخ: ${e(day(D.date))}</span><span>معلم المادة: ${e(D.teacher)}</span></div>
+            <div class="seal">🏅</div>
+            ${o.qr ? `<div class="c-qr">${o.qr}امسح للتحقق من الشهادة</div>` : ''}
+        </div>`;
+    }
+
+    return { esc: e, fmt: f, when, CERT_CSS, qrSVG, radarConfig, radarImage, reportHTML, certificateHTML };
+})();
+
+(function () {
+    const API = 'https://darkslateblue-wren-226762.hostingersite.com/api.php';
+    const app = document.getElementById('app');
+    const token = (location.hash || '').replace(/^#/, '') || new URLSearchParams(location.search).get('t') || '';
+    const show = (ic, title, text) => { app.innerHTML = `<div class="msg"><div class="ic">${ic}</div><h2>${RS.esc(title)}</h2><p>${RS.esc(text)}</p></div>`; };
+    if (!token) return show('🔗', 'الرابط غير مكتمل', 'امسح رمز QR الموجود على التقرير مرة أخرى.');
+
+    fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_shared_report', t: token }) })
+    .then(r => r.json())
+    .then(d => {
+        if (d.status === 'expired') return show('⏰', 'انتهت صلاحية الرابط', 'روابط التقارير صالحة لمدة 24 ساعة فقط. اطلب من المعلم رمزاً جديداً.');
+        if (d.status !== 'success' || !d.report) return show('🔍', 'الرابط غير صحيح أو انتهت صلاحيته', 'روابط التقارير صالحة لمدة 24 ساعة فقط. اطلب من المعلم رمزاً جديداً.');
+        const D = d.report, cert = d.kind === 'cert';
+        document.title = (cert ? 'شهادة ' : 'تقرير ') + String(D.name || '') + ' — منصة مِحور';
+        const banner = `<div class="banner">
+            <span class="ok">${cert ? '✅ شهادة صادرة فعلاً من منصة مِحور' : '✅ تقرير رسمي من منصة مِحور'}</span>
+            <span class="exp">${d.teacher ? 'المعلم: ' + RS.esc(d.teacher) + ' · ' : ''}الرابط صالح حتى ${RS.esc(RS.when(d.expires))}</span>
+            <span class="sp"></span><button class="btn" onclick="window.print()">🖨️ حفظ / طباعة</button></div>`;
+        if (cert) {
+            app.innerHTML = banner + `<div class="sheet"><div class="cert-scale" id="certBox">${RS.certificateHTML(D)}</div></div>`;
+            const fit = () => { const box = document.getElementById('certBox'), c = box.firstElementChild; const s = Math.min(1, box.clientWidth / 1060); c.style.transform = `scale(${s})`; box.style.height = (c.offsetHeight * s) + 'px'; };
+            fit(); addEventListener('resize', fit); if (document.fonts) document.fonts.ready.then(fit);
+        } else {
+            app.innerHTML = banner + `<div class="sheet">${RS.reportHTML(D, { radarCanvas: true, logo: 'https://muaath010.github.io/edu/logo.png' })}</div>`;
+            const cv = document.getElementById('rsRadar');
+            if (cv && typeof Chart !== 'undefined' && Array.isArray(D.radar) && D.radar.length >= 3) new Chart(cv, RS.radarConfig(D, false));
+            else if (cv) cv.parentElement.parentElement.remove();
+        }
+    })
+    .catch(() => show('📶', 'تعذر الاتصال', 'تأكد من اتصال الإنترنت ثم أعد تحميل الصفحة.'));
+})();
+</script>
+</body>
+</html>

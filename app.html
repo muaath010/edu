@@ -8,6 +8,7 @@
     <meta name="theme-color" content="#0e8f9e">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -677,6 +678,11 @@ h2 .reg-no, h4 .reg-no, #winnerNameDisplay .reg-no { height: auto; padding: 3px 
 .group-list { list-style: none; margin: 0; padding: 0; line-height: 2; font-weight: 700; font-size: 14px; }
 .reinf-name .nm { display: inline-flex; align-items: center; min-width: 0; }
 .desk-card .seat-name { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px; }
+
+/* ===== رمز QR للتقرير ===== */
+.qr-name { text-align: center; font-weight: 900; font-size: 17px; margin-bottom: 10px; }
+.qr-big { width: 240px; height: 240px; margin: 0 auto 12px; padding: 10px; background: #fff; border-radius: 16px; border: 1px solid var(--line); }
+.qr-big svg { width: 100%; height: 100%; display: block; }
 </style>
 </head>
 <body>
@@ -1099,6 +1105,15 @@ h2 .reg-no, h4 .reg-no, #winnerNameDisplay .reg-no { height: auto; padding: 3px 
     </div>
 </div>
 
+<!-- رمز QR لتقرير الطالب -->
+<div id="modalReportQR" class="modal" style="z-index:2010;">
+    <div class="modal-content" style="max-width:420px;">
+        <span class="close-btn" onclick="closeModal('modalReportQR')">&times;</span>
+        <div class="modal-header"><span class="m-ico" style="background:var(--brand)"><i class="fa-solid fa-qrcode"></i></span><div><h3>رمز التقرير لولي الأمر</h3><p>نسخة مطابقة للتقرير المطبوع مع الرسوم البيانية</p></div></div>
+        <div id="qrShareBox"></div>
+    </div>
+</div>
+
 <div id="modalStudentAnswers" class="modal" style="z-index:2010;">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal('modalStudentAnswers')">&times;</span>
@@ -1264,6 +1279,121 @@ h2 .reg-no, h4 .reg-no, #winnerNameDisplay .reg-no { height: auto; padding: 3px 
 </div>
 
 <script>
+// =====================================================================
+//  عرض التقرير والشهادة — مشترك بين المنصة (الطباعة) وصفحة ولي الأمر report.html
+//  حتى يرى ولي الأمر نفس شكل الورقة بالضبط. كل البيانات تُعامل كنص غير موثوق.
+// =====================================================================
+const RS = (() => {
+    const e = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const num = v => { if (v === null || v === undefined || v === '') return null; const x = Number(v); return isFinite(x) ? x : null; };
+    const f = (v, d = 1) => { const x = num(v); return x === null ? '—' : String(Math.round(x * Math.pow(10, d)) / Math.pow(10, d)); };
+    const lvl = x => x === null ? '#cfd6e2' : x >= .85 ? '#0ca30c' : x < .5 ? '#d03b3b' : x < .65 ? '#fab219' : '#0e8f9e';
+    const day = ts => { const d = new Date(num(ts) || Date.now()); return d.toLocaleDateString('ar-OM'); };
+    const when = ts => { const d = new Date(num(ts) || Date.now()); return d.toLocaleString('ar-OM', { dateStyle: 'medium', timeStyle: 'short' }); };
+    const S1 = '#0e8f9e', S2 = '#eb6834';
+
+    const CERT_CSS = `
+    .classic-certificate { box-sizing: border-box; width: 100%; min-height: 180mm; padding: 14mm 18mm; text-align: center; background: #fffdf7; color: #1e2a44; position: relative; font-family: 'Amiri', serif; border: 3mm double #c9a227; outline: 1.2mm solid #c9a227; outline-offset: -6mm; }
+    .classic-certificate .c-top { font-size: 20px; color: #5b6478; }
+    .classic-certificate .cert-title { font-size: 58px; color: #0b7683; font-weight: 700; margin: 8px 0 4px; }
+    .classic-certificate .c-line { width: 240px; height: 3px; margin: 0 auto 24px; background: linear-gradient(90deg, transparent, #c9a227, transparent); }
+    .classic-certificate .c-body { font-size: 25px; line-height: 2.1; }
+    .classic-certificate .c-name { font-size: 44px; font-weight: 700; color: #d96a0c; }
+    .classic-certificate .c-foot { display: flex; justify-content: space-between; margin-top: 40px; font-size: 20px; font-weight: 700; padding: 0 20mm; }
+    .classic-certificate .seal { position: absolute; left: 20mm; top: 16mm; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, #f6d77a, #c9a227); display: flex; align-items: center; justify-content: center; font-size: 44px; box-shadow: 0 0 0 5px #fff4cf, 0 0 0 7px #c9a227; }
+    .classic-certificate .c-qr { position: absolute; right: 18mm; top: 14mm; width: 92px; text-align: center; font-family: Tajawal, sans-serif; font-size: 11px; font-weight: 700; color: #5b6478; line-height: 1.4; }
+    .classic-certificate .c-qr svg { width: 92px; height: 92px; display: block; background: #fff; }`;
+
+    // رمز QR يُنشأ داخل المتصفح (لا يُرسل الرابط لأي موقع خارجي)
+    function qrSVG(url) {
+        if (!url || typeof qrcode === 'undefined') return '';
+        try { const q = qrcode(0, 'M'); q.addData(url); q.make(); return q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); } catch (x) { return ''; }
+    }
+
+    function radarConfig(D, print) {
+        const axes = Array.isArray(D.radar) ? D.radar : [];
+        return {
+            type: 'radar',
+            data: { labels: axes.map(a => String(a.label || '')), datasets: [
+                { label: 'الطالب', data: axes.map(a => num(a.s) || 0), borderColor: S1, backgroundColor: S1 + '2e', borderWidth: 2, pointBackgroundColor: S1, pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6 },
+                { label: 'متوسط الشعبة', data: axes.map(a => num(a.c) || 0), borderColor: S2, backgroundColor: S2 + '14', borderWidth: 2, borderDash: [5, 4], pointBackgroundColor: S2, pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6 }
+            ] },
+            options: {
+                animation: print ? false : undefined, responsive: !print, maintainAspectRatio: false, devicePixelRatio: print ? 2 : undefined,
+                scales: { r: { min: 0, max: 100, ticks: { display: false, stepSize: 25 }, grid: { color: '#e3e8f0' }, angleLines: { color: '#e3e8f0' }, pointLabels: { font: { family: 'Tajawal', size: 13, weight: '800' }, color: '#3b4660' } } },
+                plugins: { legend: { display: false }, tooltip: { rtl: true, callbacks: { label: c => ` ${c.dataset.label}: ${c.raw}%` } } }
+            }
+        };
+    }
+
+    // صورة الرسم للطباعة (الطباعة لا تنقل الرسوم الحية)
+    function radarImage(D) {
+        return new Promise(res => {
+            if (typeof Chart === 'undefined' || !Array.isArray(D.radar) || D.radar.length < 3) return res('');
+            const cv = document.createElement('canvas');
+            cv.width = 420; cv.height = 300;
+            cv.style.cssText = 'position:fixed; left:-10000px; top:0; width:420px; height:300px;';
+            document.body.appendChild(cv);
+            let ch;
+            try { ch = new Chart(cv, radarConfig(D, true)); res(cv.toDataURL('image/png')); }
+            catch (x) { res(''); }
+            finally { if (ch) ch.destroy(); cv.remove(); }
+        });
+    }
+
+    // o: { qr, expires, radarImg, radarCanvas, logo }
+    function reportHTML(D, o = {}) {
+        const cols = Array.isArray(D.cols) ? D.cols : [];
+        const td = 'padding:8px;border-bottom:1px solid #e3e8f0;';
+        const rows = cols.map(c => {
+            const v = num(c.v), max = num(c.max) || 0, avg = num(c.avg), x = v === null || !max ? null : Math.min(v, max) / max;
+            return `<tr><td style="${td}font-weight:700;">${e(c.name)}</td>
+                <td style="${td}width:40%;"><div style="position:relative;height:10px;background:#eef2f8;border-radius:9px;overflow:hidden;"><div style="height:100%;width:${x === null ? 0 : x * 100}%;background:${lvl(x)};border-radius:9px;"></div></div></td>
+                <td style="${td}text-align:center;font-weight:800;white-space:nowrap;">${v === null ? 'لم يُرصد' : f(v) + ' من ' + f(max)}</td>
+                <td style="${td}text-align:center;color:#5b6478;">${f(avg)}</td></tr>`;
+        }).join('');
+        const pct = num(D.pct), band = D.band && typeof D.band === 'object' ? D.band : null, rank = num(D.rank);
+        const radar = o.radarImg ? `<img src="${o.radarImg}" alt="" style="width:100%;max-width:270px;height:auto;display:block;margin:0 auto;">`
+            : o.radarCanvas ? `<div style="position:relative;height:260px;"><canvas id="rsRadar"></canvas></div>` : '';
+        const legend = `<div style="display:flex;justify-content:center;gap:16px;font-size:12.5px;font-weight:800;color:#3b4660;margin-top:4px;"><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${S1};margin-left:5px;"></i>الطالب</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${S2};margin-left:5px;"></i>متوسط الشعبة</span></div>`;
+        const qr = o.qr ? `<div class="avoid-break" style="display:flex;align-items:center;gap:14px;margin-top:14px;padding:10px 14px;border:1px dashed #b9c3d4;border-radius:14px;">
+                <div style="width:96px;height:96px;flex-shrink:0;background:#fff;">${o.qr.replace('<svg ', '<svg style="width:96px;height:96px;display:block;" ')}</div>
+                <div style="font-size:13.5px;line-height:1.8;color:#3b4660;"><b style="font-size:15px;color:#17223b;">📱 لولي الأمر: امسح الرمز بكاميرا الجوال</b><br>لعرض هذا التقرير مع الرسوم البيانية على جوالك.<br><span style="color:#8390a8;">الرابط صالح حتى ${e(when(o.expires))}</span></div></div>` : '';
+        return `<div class="rs-report" style="width:100%;max-width:760px;box-sizing:border-box;padding:22px 28px;background:#fff;color:#17223b;font-family:Tajawal,sans-serif;direction:rtl;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:4px solid #0e8f9e;padding-bottom:12px;margin-bottom:14px;">
+                <div><div class="rs-title" style="font-size:24px;font-weight:900;">تقرير أداء الطالب</div><div style="color:#5b6478;font-weight:700;">${e(D.classLabel)} · ${e(day(D.date))}</div></div>
+                <img src="${e(o.logo || 'logo.png')}" alt="مِحور" class="rs-logo" style="height:40px;"></div>
+            <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:16px;">
+                <div style="flex:1;min-width:220px;"><div style="font-size:22px;font-weight:900;">${e(D.name)}</div><div style="color:#0b7683;font-weight:800;margin-top:2px;">رقم الطالب في السجل: ${f(D.regNo, 0)}</div>
+                <div style="color:#5b6478;font-weight:700;margin-top:4px;">${rank ? `الترتيب ${f(rank, 0)} من ${f(D.rankOf, 0)} · ` : ''}المجموع ${f(D.gained)} من ${f(D.gradedMax)} مرصودة</div></div>
+                <div style="text-align:center;background:#e6f6f8;border-radius:16px;padding:12px 22px;"><div style="font-size:34px;font-weight:900;color:#0b7683;">${pct === null ? '—' : f(pct) + '%'}</div><div style="font-weight:800;">${band ? e(band.name) : 'لم يُرصد'}</div></div></div>
+            <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px;"><thead><tr style="background:#eef2f8;"><th style="padding:9px;text-align:right;">التقييم</th><th style="padding:9px;">المستوى</th><th style="padding:9px;">الدرجة</th><th style="padding:9px;">متوسط الشعبة</th></tr></thead><tbody>${rows}</tbody></table></div>
+            <div class="avoid-break" style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px;">
+                ${radar ? `<div style="flex:1 1 280px;border:1px solid #e3e8f0;border-radius:14px;padding:10px 10px 8px;"><div style="font-weight:900;font-size:14px;margin-bottom:4px;">📊 مقارنة الطالب بمتوسط الشعبة</div>${radar}${legend}</div>` : ''}
+                <div style="flex:1 1 280px;display:flex;flex-direction:column;gap:12px;">
+                    <div style="display:flex;gap:12px;"><div style="flex:1;background:#e8f7e8;border-radius:12px;padding:10px;text-align:center;font-weight:800;">⭐ نقاط التميز: ${f(D.interaction, 0)}</div><div style="flex:1;background:#fcebeb;border-radius:12px;padding:10px;text-align:center;font-weight:800;">⚠️ المخالفات: ${f(D.violation, 0)}</div></div>
+                    <div style="flex:1;background:#f7f9fc;border-right:5px solid #f5821f;border-radius:12px;padding:14px;line-height:1.9;font-size:14.5px;"><b>ملاحظات المعلم:</b> ${e(D.advice)}</div>
+                </div></div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;margin-top:20px;font-weight:800;"><span>توقيع المعلم: ......................</span><span>توقيع ولي الأمر: ......................</span></div>
+            ${qr}</div>`;
+    }
+
+    function certificateHTML(D, o = {}) {
+        const band = D.band && typeof D.band === 'object' ? D.band : { name: '' };
+        return `<div class="classic-certificate">
+            <div class="c-top">سلطنة عُمان — وزارة التربية والتعليم</div>
+            <div class="cert-title">شهادة شكر وتقدير</div><div class="c-line"></div>
+            <div class="c-body">يسرنا أن نتقدم بخالص الشكر والتقدير للطالب المتميز<br><span class="c-name">${e(D.name)}</span><br>
+            نظير تفوقه وحصوله على تقدير <b>(${e(band.name)})</b> بنسبة <b style="font-family:Tajawal">${f(D.pct)}%</b><br>في ${e(D.classLabel)}، متمنين له دوام التوفيق والنجاح.</div>
+            <div class="c-foot"><span>التاريخ: ${e(day(D.date))}</span><span>معلم المادة: ${e(D.teacher)}</span></div>
+            <div class="seal">🏅</div>
+            ${o.qr ? `<div class="c-qr">${o.qr}امسح للتحقق من الشهادة</div>` : ''}
+        </div>`;
+    }
+
+    return { esc: e, fmt: f, when, CERT_CSS, qrSVG, radarConfig, radarImage, reportHTML, certificateHTML };
+})();
+
 /* =====================================================================
    منصة مِحور 5.0 — الجزء 1: الأساسيات، الاتصال، الكشف، لوحة المؤشرات
    ===================================================================== */
@@ -2148,6 +2278,7 @@ function generateDetailedReports(keepOpen) {
             <div class="report-actions">
                 <button class="btn btn-sm btn-primary" onclick="downloadStudentReport(${r.i})"><i class="fa-regular fa-file-pdf"></i> تحميل التقرير PDF</button>
                 <button class="btn btn-sm btn-wa" onclick="whatsReport(${r.i})"><i class="fa-brands fa-whatsapp"></i> إرسال لولي الأمر</button>
+                <button class="btn btn-sm btn-soft" onclick="showReportQR(${r.i})"><i class="fa-solid fa-qrcode"></i> رمز QR</button>
                 ${canCert ? `<button class="btn btn-sm btn-accent" onclick="downloadCertificate(${r.i})"><i class="fa-solid fa-award"></i> شهادة التفوق</button>` : `<span class="cert-locked"><i class="fa-solid fa-lock"></i> الشهادة تُمنح لتقدير ممتاز (90%+) مع رصد نصف التقييمات على الأقل</span>`}
             </div>
         </div>`;
@@ -2168,14 +2299,7 @@ const PRINT_CSS = `
     body > div { width: auto !important; max-width: 100% !important; margin: 0 auto; }
     .avoid-break, tr { break-inside: avoid; }
     table { border-collapse: collapse; }
-    .classic-certificate { box-sizing: border-box; width: 100% !important; min-height: 180mm; padding: 14mm 18mm; text-align: center; background: #fffdf7; color: #1e2a44; position: relative; font-family: 'Amiri', serif; border: 3mm double #c9a227; outline: 1.2mm solid #c9a227; outline-offset: -6mm; }
-    .classic-certificate .c-top { font-size: 20px; color: #5b6478; }
-    .cert-title { font-size: 58px; color: #0b7683; font-weight: 700; margin: 8px 0 4px; }
-    .classic-certificate .c-line { width: 240px; height: 3px; margin: 0 auto 24px; background: linear-gradient(90deg, transparent, #c9a227, transparent); }
-    .classic-certificate .c-body { font-size: 25px; line-height: 2.1; }
-    .classic-certificate .c-name { font-size: 44px; font-weight: 700; color: #d96a0c; }
-    .classic-certificate .c-foot { display: flex; justify-content: space-between; margin-top: 40px; font-size: 20px; font-weight: 700; padding: 0 20mm; }
-    .classic-certificate .seal { position: absolute; left: 20mm; top: 16mm; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, #f6d77a, #c9a227); display: flex; align-items: center; justify-content: center; font-size: 44px; box-shadow: 0 0 0 5px #fff4cf, 0 0 0 7px #c9a227; }`;
+    ${RS.CERT_CSS}`;
 function pdfSave(el, filename, landscape) {
     const title = String(filename).replace(/\.pdf$/i, '');
     const html = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title>
@@ -2202,44 +2326,72 @@ function pdfSave(el, filename, landscape) {
     setTimeout(go, 5000); // احتياط إذا تأخر تحميل الخطوط
 }
 
-// تقرير PDF بألوان ثابتة (يعمل حتى لو كان الوضع الليلي مفعلاً)
-function printableReport(r, st) {
-    const date = new Date().toLocaleDateString('ar-OM');
-    const lvl = x => x === null ? '#cfd6e2' : x >= .85 ? '#0ca30c' : x < .5 ? '#d03b3b' : x < .65 ? '#fab219' : '#0e8f9e';
-    const rows = currentSchema.map(c => { const v = r.grades[c.id], x = v === null ? null : Math.min(v, c.max) / c.max, avg = st.colAvg[c.id];
-        return `<tr><td style="padding:8px;border-bottom:1px solid #e3e8f0;font-weight:700;">${esc(c.name)}</td>
-        <td style="padding:8px;border-bottom:1px solid #e3e8f0;width:45%;"><div style="height:10px;background:#eef2f8;border-radius:9px;overflow:hidden;"><div style="height:100%;width:${x === null ? 0 : x * 100}%;background:${lvl(x)};border-radius:9px;"></div></div></td>
-        <td style="padding:8px;border-bottom:1px solid #e3e8f0;text-align:center;font-weight:800;">${v === null ? 'لم يُرصد' : fmt(v) + ' من ' + fmt(c.max)}</td>
-        <td style="padding:8px;border-bottom:1px solid #e3e8f0;text-align:center;color:#5b6478;">${avg === null ? '—' : fmt(avg)}</td></tr>`; }).join('');
-    const el = document.createElement('div');
-    el.style.cssText = 'width:760px;padding:26px 30px;background:#fff;color:#17223b;font-family:Tajawal,sans-serif;direction:rtl;';
-    el.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:4px solid #0e8f9e;padding-bottom:14px;margin-bottom:18px;">
-            <div><div style="font-size:24px;font-weight:900;">تقرير أداء الطالب</div><div style="color:#5b6478;font-weight:700;">${esc(classLabel())} · ${date}</div></div>
-            <img src="logo.png" style="height:40px;" crossorigin="anonymous"></div>
-        <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;">
-            <div style="flex:1;"><div style="font-size:22px;font-weight:900;">${esc(r.name)}</div><div style="color:#0b7683;font-weight:800;margin-top:2px;">رقم الطالب في السجل: ${regNo(r.name) || '—'}</div>
-            <div style="color:#5b6478;font-weight:700;margin-top:4px;">${r.rank ? `الترتيب ${r.rank} من ${st.withPct.length}` : ''} · المجموع ${fmt(r.gained)} من ${fmt(r.gradedMax)} مرصودة</div></div>
-            <div style="text-align:center;background:#e6f6f8;border-radius:16px;padding:12px 22px;"><div style="font-size:34px;font-weight:900;color:#0b7683;">${r.pct === null ? '—' : fmt(r.pct) + '%'}</div><div style="font-weight:800;">${r.band ? r.band.name : 'لم يُرصد'}</div></div></div>
-        <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px;"><thead><tr style="background:#eef2f8;"><th style="padding:9px;text-align:right;">التقييم</th><th style="padding:9px;">المستوى</th><th style="padding:9px;">الدرجة</th><th style="padding:9px;">متوسط الشعبة</th></tr></thead><tbody>${rows}</tbody></table>
-        <div style="display:flex;gap:12px;margin-bottom:14px;"><div style="flex:1;background:#e8f7e8;border-radius:12px;padding:10px;text-align:center;font-weight:800;">⭐ نقاط التميز: ${r.interaction}</div><div style="flex:1;background:#fcebeb;border-radius:12px;padding:10px;text-align:center;font-weight:800;">⚠️ المخالفات: ${r.violation}</div></div>
-        <div style="background:#f7f9fc;border-right:5px solid #f5821f;border-radius:12px;padding:14px;line-height:1.9;font-size:14.5px;"><b>ملاحظات المعلم:</b> ${esc(studentAdvice(r, st))}</div>
-        <div style="display:flex;justify-content:space-between;margin-top:34px;font-weight:800;"><span>توقيع المعلم: ......................</span><span>توقيع ولي الأمر: ......................</span></div>`;
-    return el;
+// =====================================================================
+//  نسخة التقرير لولي الأمر (رمز QR) — نفس ما يُطبع بالضبط، والرابط صالح 24 ساعة
+// =====================================================================
+function reportSnapshot(r, st, kind) {
+    return {
+        v: 1, kind, name: r.name, regNo: r.i + 1, classLabel: classLabel(), date: Date.now(),
+        pct: r.pct, band: r.band ? { name: r.band.name, emoji: r.band.emoji } : null,
+        rank: r.rank || null, rankOf: st.withPct.length, gained: r.gained, gradedMax: r.gradedMax, totalMax: r.totalMax,
+        interaction: r.interaction, violation: r.violation, advice: studentAdvice(r, st),
+        teacher: localStorage.getItem('teacher_name') || '',
+        cols: currentSchema.map(c => ({ name: c.name, max: c.max, v: r.grades[c.id], avg: st.colAvg[c.id] })),
+        radar: radarAxes(r, st).map(a => ({ label: a[0], s: a[1] === null ? 0 : Math.round(a[1]), c: a[2] === null ? 0 : Math.round(a[2]) })),
+    };
 }
-function downloadStudentReport(i) { const st = reportCache || classStats(); const r = st.rows[i]; pdfSave(printableReport(r, st), `تقرير_${firstLast(r.name)}.pdf`); }
-
-function downloadCertificate(i) {
-    const st = reportCache || classStats(); const r = st.rows[i];
-    const el = document.createElement('div');
-    el.className = 'classic-certificate';
-    el.innerHTML = `<div class="c-top">سلطنة عُمان — وزارة التربية والتعليم</div>
-        <div class="cert-title">شهادة شكر وتقدير</div><div class="c-line"></div>
-        <div class="c-body">يسرنا أن نتقدم بخالص الشكر والتقدير للطالب المتميز<br><span class="c-name">${esc(r.name)}</span><br>
-        نظير تفوقه وحصوله على تقدير <b>(${r.band.name})</b> بنسبة <b style="font-family:Tajawal">${fmt(r.pct)}%</b><br>في ${esc(classLabel())}، متمنين له دوام التوفيق والنجاح.</div>
-        <div class="c-foot"><span>التاريخ: ${new Date().toLocaleDateString('ar-OM')}</span><span>معلم المادة: ${esc(localStorage.getItem('teacher_name') || '')}</span></div>
-        <div class="seal">🏅</div>`;
-    pdfSave(el, `شهادة_${firstLast(r.name)}.pdf`, true);
+function reportPageURL(token) {
+    const base = location.hostname === 'muaath010.github.io' ? 'https://muaath010.github.io/edu/report.html' : new URL('report.html', location.href).href.split('#')[0];
+    return base + '#' + token;
+}
+// يحفظ نسخة على الخادم ويرجع { D, url, expires }
+function shareReport(r, st, kind) {
+    const D = reportSnapshot(r, st, kind);
+    return fetch(scriptURL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'share_report', kind, grade: lastClass.g, section: lastClass.s, student_name: r.name, snapshot: D }) })
+        .then(res => res.json())
+        .then(d => { if (d.status !== 'success') throw new Error(d.message || 'share failed'); return { D, url: reportPageURL(d.token), expires: d.expires }; });
+}
+function shareOrLocal(r, st, kind) {
+    return shareReport(r, st, kind).catch(err => {
+        toast('⚠️ تعذر إنشاء رمز QR (' + (err && err.message && err.message !== 'Failed to fetch' ? err.message : 'تحقق من الاتصال') + '). سيُطبع بدون الرمز.');
+        return { D: reportSnapshot(r, st, kind), url: '', expires: 0 };
+    });
+}
+async function downloadStudentReport(i) {
+    const st = reportCache || classStats(); const r = st.rows[i]; if (!r) return;
+    toast('⏳ جاري تجهيز التقرير ورمز QR...', 'info');
+    const s = await shareOrLocal(r, st, 'report');
+    const radarImg = await RS.radarImage(s.D);
+    const box = document.createElement('div');
+    box.innerHTML = RS.reportHTML(s.D, { qr: RS.qrSVG(s.url), expires: s.expires, radarImg });
+    pdfSave(box.firstElementChild, `تقرير_${firstLast(r.name)}.pdf`);
+}
+async function downloadCertificate(i) {
+    const st = reportCache || classStats(); const r = st.rows[i]; if (!r) return;
+    const s = await shareOrLocal(r, st, 'cert');
+    const box = document.createElement('div');
+    box.innerHTML = RS.certificateHTML(s.D, { qr: RS.qrSVG(s.url) });
+    pdfSave(box.firstElementChild, `شهادة_${firstLast(r.name)}.pdf`, true);
     confetti();
+}
+// عرض رمز QR على الشاشة (لاجتماع أولياء الأمور أو لإرساله)
+async function showReportQR(i) {
+    const st = reportCache || classStats(); const r = st.rows[i]; if (!r) return;
+    const box = document.getElementById('qrShareBox');
+    box.innerHTML = `<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i>جاري إنشاء الرمز...</div>`;
+    openModal('modalReportQR');
+    try {
+        const s = await shareReport(r, st, 'report');
+        box.innerHTML = `<div class="qr-name">${noTag(r.name)}${esc(r.name)}</div>
+            <div class="qr-big">${RS.qrSVG(s.url)}</div>
+            <div class="card-sub center">يمسحه ولي الأمر بكاميرا الجوال ليرى التقرير مع الرسوم البيانية<br><b>صالح حتى ${esc(RS.when(s.expires))}</b></div>
+            <div class="btn-row" style="justify-content:center; margin-top:12px;">
+                <button class="btn btn-primary" onclick="copyText('${esc(s.url)}')"><i class="fa-solid fa-link"></i> نسخ الرابط</button>
+                <a class="btn" href="${esc(s.url)}" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> فتح</a>
+            </div>`;
+    } catch (err) {
+        box.innerHTML = `<div class="empty-state" style="color:var(--bad-ink)"><i class="fa-solid fa-circle-exclamation"></i>${esc(err && err.message && err.message !== 'Failed to fetch' ? err.message : 'تعذر الاتصال بالخادم')}</div>`;
+    }
 }
 
 function downloadClassReportPDF() {
@@ -2261,12 +2413,31 @@ function reportText(r, st) {
     const lines = currentSchema.map(c => `• ${c.name}: ${r.grades[c.id] === null ? 'لم يُرصد' : fmt(r.grades[c.id]) + ' من ' + fmt(c.max)}`).join('\n');
     return `مرحباً ولي أمر الطالب/ة: ${r.name}\nرقم الطالب في السجل: ${r.i + 1}\n📊 تقرير الأداء من منصة مِحور (${classLabel()})\n\nالنسبة: ${r.pct === null ? 'لم تُرصد درجات بعد' : fmt(r.pct) + '% (' + r.band.name + ')'}\n${r.rank ? `الترتيب: ${r.rank} من ${st.withPct.length}\n` : ''}\n${lines}\n\n⭐ نقاط التميز: ${r.interaction}  |  ⚠️ المخالفات: ${r.violation}\n\n💡 ملاحظات المعلم: ${studentAdvice(r, st)}\n\nشاكرين حسن تعاونكم.`;
 }
-function whatsReport(i) { const st = reportCache || classStats(); window.open(`https://wa.me/?text=${encodeURIComponent(reportText(st.rows[i], st))}`, '_blank'); }
+function whatsReport(i, stats) {
+    const st = stats || reportCache || classStats(); const r = st.rows[i]; if (!r) return;
+    const w = window.open('', '_blank'); // نفتح النافذة فوراً حتى لا يمنعها المتصفح
+    shareReport(r, st, 'report')
+        .then(s => reportText(r, st) + `\n\n🔗 التقرير الكامل مع الرسوم البيانية (الرابط صالح 24 ساعة):\n${s.url}`)
+        .catch(() => reportText(r, st))
+        .then(t => { const u = 'https://wa.me/?text=' + encodeURIComponent(t); if (w) w.location.href = u; else window.open(u, '_blank'); });
+}
 
 // =====================================================================
 //  البطاقة التحليلية للطالب (بيانات مباشرة من الشاشة)
 // =====================================================================
 let studentRadarChart = null, currentAnalyticsStudent = "", currentAnalyticsIndex = -1;
+// محاور الرادار: [الاسم، الطالب، متوسط الشعبة] — المحاور بلا بيانات لا تظهر
+function radarAxes(r, st) {
+    const discipline = v => Math.max(0, 100 - v * 20);
+    const participation = v => st.maxInt > 0 ? Math.min(100, v / st.maxInt * 100) : 0;
+    const axes = [['التحصيل العام', r.pct, st.avg]];
+    if (st.examAvg !== null) axes.push(['الاختبارات', r.examPct, st.examAvg]);
+    if (st.actAvg !== null) axes.push(['الأنشطة والمشاريع', r.actPct, st.actAvg]);
+    const avgDisc = st.rows.length ? st.rows.reduce((a, x) => a + discipline(x.violation), 0) / st.rows.length : 0;
+    const avgPart = st.rows.length ? st.rows.reduce((a, x) => a + participation(x.interaction), 0) / st.rows.length : 0;
+    axes.push(['الانضباط', discipline(r.violation), avgDisc], ['المشاركة', participation(r.interaction), avgPart]);
+    return axes;
+}
 
 function openStudentAnalytics(name, index) {
     currentAnalyticsStudent = name; currentAnalyticsIndex = index;
@@ -2320,13 +2491,8 @@ function openStudentAnalytics(name, index) {
     else ins += `<span style="color:var(--good-ink)">🛡️ انضباط مثالي، لا مخالفات مسجلة.</span>`;
     document.getElementById('analyticsInsights').innerHTML = ins;
 
-    // الرادار: الطالب مقابل متوسط الشعبة (محاور بلا بيانات لا تظهر)
-    const axes = [['التحصيل العام', r.pct, st.avg]];
-    if (st.examAvg !== null) axes.push(['الاختبارات', r.examPct, st.examAvg]);
-    if (st.actAvg !== null) axes.push(['الأنشطة والمشاريع', r.actPct, st.actAvg]);
-    const avgDisc = st.rows.length ? st.rows.reduce((a, x) => a + discipline(x.violation), 0) / st.rows.length : 0;
-    const avgPart = st.rows.length ? st.rows.reduce((a, x) => a + participation(x.interaction), 0) / st.rows.length : 0;
-    axes.push(['الانضباط', discipline(r.violation), avgDisc], ['المشاركة', participation(r.interaction), avgPart]);
+    // الرادار: الطالب مقابل متوسط الشعبة
+    const axes = radarAxes(r, st);
 
     const draw = () => {
         if (typeof Chart === 'undefined') return setTimeout(draw, 300);
@@ -2356,7 +2522,7 @@ function openStudentAnalytics(name, index) {
 
 function sendAnalyticsWhatsApp() {
     const st = classStats(); const r = st.rows[currentAnalyticsIndex];
-    if (r) window.open(`https://wa.me/?text=${encodeURIComponent(reportText(r, st))}`, '_blank');
+    if (r) whatsReport(currentAnalyticsIndex, st);
 }
 
 // =====================================================================
