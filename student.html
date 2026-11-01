@@ -114,6 +114,182 @@
         .key-btn.wrong { background: var(--bad); color: #fff; border-color: var(--bad); pointer-events: none; opacity: .55; }
         #success-score:empty { display: none; }
         @media (max-width: 520px) { .container { padding: 22px 16px; border-radius: 22px; } .row2 { flex-direction: column; gap: 0; } .header h1 { font-size: 20px; } .code-input { font-size: 28px !important; letter-spacing: 5px; } }
+    
+        /* ===================== محرك الألعاب ===================== */
+        #game-section { max-width: 860px !important; }
+        .g-area { display: block !important; }
+        .g-hud { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; position: sticky; top: 8px; z-index: 5; background: var(--surface); padding: 8px; border-radius: 16px; box-shadow: 0 8px 22px -14px rgba(10,20,50,.4); }
+        .g-prog { flex: 1; min-width: 0; }
+        .g-prog-top { display: flex; justify-content: space-between; font-size: 13px; font-weight: 800; color: var(--ink-2); margin-bottom: 5px; }
+        .g-prev { color: var(--accent); }
+        .g-bar { height: 10px; background: var(--surface-3); border-radius: 99px; overflow: hidden; }
+        .g-bar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--brand), #2bc4b4); border-radius: 99px; transition: width .4s var(--ease-bounce); }
+        .g-chip { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 6px 10px; font-weight: 900; white-space: nowrap; font-size: 15px; }
+        .g-streak.hot { background: #fff1e3; border-color: #ffc38a; animation: hotPulse 1s infinite; }
+        @keyframes hotPulse { 50% { transform: scale(1.07); } }
+        .g-mute { border: 0; background: var(--surface-2); border-radius: 12px; width: 38px; height: 38px; font-size: 17px; cursor: pointer; }
+        .g-btn { display: block; width: 100%; margin-top: 16px; border: 0; border-radius: 16px; padding: 15px; font: inherit; font-size: 18px; font-weight: 900; color: #fff; background: var(--grad-accent); cursor: pointer; box-shadow: 0 12px 24px -12px var(--accent); transition: transform .2s; }
+        .g-btn:hover { transform: translateY(-2px); }
+        .g-btn:disabled { opacity: .7; }
+        .g-btn.ghost { background: var(--surface-2); color: var(--ink-2); box-shadow: none; border: 1px solid var(--line); font-size: 15px; padding: 11px; }
+        .fx-good { animation: fxGood .55s ease; }
+        .fx-bad { animation: fxBad .45s ease; }
+        @keyframes fxGood { 0% { box-shadow: 0 0 0 0 rgba(12,163,12,.55); } 100% { box-shadow: 0 0 0 16px rgba(12,163,12,0); } }
+        @keyframes fxBad { 20%, 60% { transform: translateX(-7px); } 40%, 80% { transform: translateX(7px); } }
+        .g-ghost { position: fixed; z-index: 9999; pointer-events: none; opacity: .92; transform: rotate(-3deg) scale(1.05); box-shadow: 0 18px 30px -10px rgba(10,20,50,.45); }
+        .dragging { opacity: .35; }
+        .drop-over { outline: 3px dashed var(--brand); outline-offset: 3px; background: var(--brand-50) !important; }
+        .g-confetti { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
+
+        /* شاشة النتيجة */
+        .g-result { text-align: center; padding: 6px 0; }
+        .g-stars { font-size: 58px; letter-spacing: 6px; line-height: 1; margin-bottom: 8px; }
+        .g-stars span { color: #dfe4ec; display: inline-block; animation: starIn .5s var(--ease-bounce) both; }
+        .g-stars span.on { color: #ffc531; text-shadow: 0 4px 14px rgba(255,180,0,.5); }
+        @keyframes starIn { from { transform: scale(0) rotate(-90deg); } }
+        .g-result h2 { margin: 6px 0; font-size: 26px; font-weight: 900; }
+        .g-res-score { display: inline-block; font-size: 30px; font-weight: 900; color: var(--brand-600); background: var(--brand-50); padding: 8px 26px; border-radius: 18px; margin: 6px 0; }
+        .g-res-meta { color: var(--ink-3); font-weight: 800; margin-bottom: 12px; }
+        .g-review { text-align: right; background: var(--surface-2); border-radius: 16px; padding: 12px 16px; margin-top: 8px; }
+        .g-review h3 { margin: 0 0 8px; font-size: 16px; }
+        .g-review ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow: auto; }
+        .g-review li { display: flex; gap: 10px; justify-content: space-between; background: var(--surface); border-radius: 10px; padding: 8px 12px; font-size: 14px; }
+        .g-review li b { color: var(--bad); }
+        .g-review li span { color: var(--ink-2); font-weight: 700; text-align: left; }
+        .g-perfect { color: var(--good); font-weight: 900; font-size: 18px; margin: 10px 0; }
+        .g-prev-note { margin-top: 12px; color: var(--accent); font-weight: 800; }
+
+        /* 1) المطابقة */
+        .g-matching { display: grid; grid-template-columns: 1fr 1.4fr; gap: 14px; }
+        .mt-col { display: flex; flex-direction: column; gap: 9px; }
+        .mt-head { font-weight: 900; color: var(--ink-3); font-size: 13px; text-align: center; }
+        .mt-card { position: relative; font: inherit; font-weight: 800; font-size: 15px; text-align: right; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; transition: transform .15s, border-color .15s, background .15s; line-height: 1.5; }
+        .mt-card.term { background: var(--surface-2); text-align: center; font-weight: 900; }
+        .mt-card:hover { border-color: var(--brand); transform: translateY(-2px); }
+        .mt-card.sel { border-color: #f5a300; background: #fff6dc; transform: scale(1.02); }
+        .mt-card.paired { border-color: var(--pc); background: color-mix(in srgb, var(--pc) 13%, #fff); color: var(--ink); cursor: default; transform: none; }
+        .mt-card.paired::after { content: attr(data-n); position: absolute; top: -9px; left: -9px; width: 24px; height: 24px; border-radius: 50%; background: var(--pc); color: #fff; font-size: 12px; display: grid; place-items: center; }
+
+        /* 2) الفرز */
+        .st-pool { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; min-height: 64px; padding: 14px; border-radius: 18px; background: var(--surface-2); border: 2px dashed var(--line); margin-bottom: 14px; }
+        .st-pool:empty::after { content: '✨ أحسنت! فرزت كل البطاقات'; color: var(--ink-3); font-weight: 800; }
+        .st-item { background: var(--brand); color: #fff; padding: 10px 16px; border-radius: 12px; font-weight: 800; cursor: grab; touch-action: none; box-shadow: 0 6px 14px -8px var(--brand); transition: transform .15s; }
+        .st-item.picked { background: #f5a300; transform: scale(1.08); }
+        .st-item.locked { cursor: default; background: var(--good); box-shadow: none; padding: 7px 12px; font-size: 14px; }
+        .st-item.locked.was-wrong { background: var(--bad); }
+        .st-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+        .st-box { position: relative; border: 2px solid var(--line); border-radius: 18px; padding: 12px; min-height: 120px; background: var(--surface); cursor: pointer; transition: border-color .2s; }
+        .st-box:hover { border-color: var(--brand); }
+        .st-title { font-weight: 900; text-align: center; margin-bottom: 8px; padding-left: 26px; padding-right: 26px; }
+        .st-count { position: absolute; top: 10px; left: 10px; }
+        .st-count span { display: grid; place-items: center; min-width: 24px; height: 24px; border-radius: 8px; background: var(--brand-50); color: var(--brand-600); font-weight: 900; font-size: 13px; }
+        .st-in { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+
+        /* 3) الترتيب */
+        .sq-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+        .sq-item { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 2px solid var(--line); border-radius: 16px; padding: 10px 12px; cursor: grab; touch-action: none; transition: border-color .2s; }
+        .sq-item:hover { border-color: var(--brand); }
+        .sq-n { flex-shrink: 0; width: 34px; height: 34px; border-radius: 11px; background: var(--brand); color: #fff; font-weight: 900; display: grid; place-items: center; }
+        .sq-txt { flex: 1; min-width: 0; line-height: 1.5; }
+        .sq-txt small { display: block; color: var(--ink-3); font-weight: 700; }
+        .sq-arrows { display: flex; flex-direction: column; gap: 3px; }
+        .sq-arrows button { border: 0; background: var(--surface-2); border-radius: 8px; width: 34px; height: 24px; cursor: pointer; font-size: 11px; color: var(--ink-2); }
+        .sq-item.locked { cursor: default; }
+        .sq-item.ok { border-color: var(--good); background: var(--good-50); } .sq-item.ok .sq-n { background: var(--good); }
+        .sq-item.no { border-color: var(--bad); background: var(--bad-50); } .sq-item.no .sq-n { background: var(--bad); }
+        .sq-fix { font-size: 12.5px; font-weight: 900; color: var(--bad); white-space: nowrap; }
+
+        /* 4) رائد الفضاء */
+        .sp-top { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
+        .sp-hint { flex: 1; background: #fff8e6; border: 1px solid #ffe2a6; border-radius: 14px; padding: 12px 14px; font-weight: 800; line-height: 1.7; }
+        .sp-q { background: var(--surface-2); border-radius: 12px; padding: 8px 12px; font-weight: 900; color: var(--ink-3); white-space: nowrap; }
+        .sp-scene { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 4px 0 14px; padding: 14px; border-radius: 20px; background: radial-gradient(circle at 30% 30%, #2b3a6b, #111a33); color: #fff; }
+        .sp-ring { position: relative; width: 120px; height: 120px; }
+        .sp-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .sp-ring circle { fill: none; stroke-width: 9; }
+        .sp-ring .bg { stroke: rgba(255,255,255,.15); }
+        .sp-ring .fg { stroke: #0e8f9e; stroke-dasharray: 327; stroke-dashoffset: 0; stroke-linecap: round; transition: stroke-dashoffset .5s, stroke .5s; }
+        .sp-man { position: absolute; inset: 0; display: grid; place-items: center; font-size: 50px; transition: transform .5s var(--ease-bounce); animation: floaty 3s ease-in-out infinite; }
+        @keyframes floaty { 50% { translate: 0 -6px; } }
+        .sp-o2 b { display: block; font-size: 30px; font-weight: 900; }
+        .sp-o2 span { opacity: .7; font-weight: 700; }
+        .sp-word { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; margin-bottom: 16px; }
+        .sp-l { width: 42px; height: 52px; border-bottom: 4px solid var(--ink-2); display: grid; place-items: center; font-size: 28px; font-weight: 900; color: var(--brand-600); }
+        .sp-l.on { border-color: var(--brand); animation: starIn .35s var(--ease-bounce); }
+        .sp-l.lost { color: var(--bad); border-color: var(--bad); }
+        .sp-gap { width: 18px; }
+        .sp-keys { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+        .sp-keys > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+        .sp-key { width: 44px; height: 46px; border-radius: 11px; border: 1.5px solid var(--line); background: var(--surface); font: inherit; font-size: 20px; font-weight: 900; cursor: pointer; color: var(--ink); transition: transform .12s; }
+        .sp-key:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--brand); }
+        .sp-key.ok { background: var(--good); color: #fff; border-color: var(--good); }
+        .sp-key.no { background: var(--bad); color: #fff; border-color: var(--bad); opacity: .75; }
+        .sp-key:disabled { cursor: default; }
+
+        /* 5) الذاكرة */
+        .mm-round { text-align: center; font-weight: 900; color: var(--violet); margin-bottom: 10px; }
+        .mm-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+        .mm-card { border: 0; padding: 0; background: none; aspect-ratio: 1 / 1.05; perspective: 800px; cursor: pointer; font: inherit; }
+        .mm-in { position: relative; display: block; width: 100%; height: 100%; transition: transform .45s; transform-style: preserve-3d; }
+        .mm-card.flip .mm-in { transform: rotateY(180deg); }
+        .mm-back, .mm-front { position: absolute; inset: 0; border-radius: 16px; display: grid; place-items: center; backface-visibility: hidden; padding: 8px; text-align: center; }
+        .mm-back { background: linear-gradient(135deg, var(--violet), var(--brand)); color: #fff; font-size: 34px; font-weight: 900; box-shadow: 0 8px 18px -10px var(--violet); }
+        .mm-front { transform: rotateY(180deg); background: var(--surface); border: 2px solid var(--line); font-weight: 800; font-size: 14px; line-height: 1.45; overflow: hidden; }
+        .mm-front.w { font-size: 17px; font-weight: 900; color: var(--brand-600); }
+        .mm-card.done .mm-front { border-color: var(--good); background: var(--good-50); }
+
+        /* 6) سباق الأسئلة */
+        .rc-timer { height: 12px; background: var(--surface-3); border-radius: 99px; overflow: hidden; margin-bottom: 14px; }
+        .rc-timer span { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #d03b3b, #f5a300 40%, #0ca30c); border-radius: 99px; }
+        .rc-q { background: linear-gradient(135deg, var(--brand), #1a6fb0); color: #fff; border-radius: 20px; padding: 22px 18px; font-size: 21px; font-weight: 900; text-align: center; line-height: 1.6; margin-bottom: 14px; }
+        .rc-q small { display: block; font-size: 13px; opacity: .8; margin-bottom: 4px; }
+        .rc-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .rc-opt { border: 0; border-radius: 16px; padding: 18px 12px; font: inherit; font-size: 18px; font-weight: 900; color: #fff; cursor: pointer; transition: transform .15s, opacity .2s; box-shadow: 0 8px 18px -12px rgba(0,0,0,.5); }
+        .rc-opt.c0 { background: #e2533a; } .rc-opt.c1 { background: #1a6fb0; } .rc-opt.c2 { background: #c99a10; } .rc-opt.c3 { background: #16a085; }
+        .rc-opt:hover:not(:disabled) { transform: translateY(-3px); }
+        .rc-opt:disabled { opacity: .45; cursor: default; }
+        .rc-opt.right { opacity: 1; outline: 4px solid var(--good); outline-offset: 2px; }
+        .rc-opt.wrong { opacity: 1; outline: 4px solid var(--bad); outline-offset: 2px; }
+
+        /* 7) البالونات */
+        .bl-q { background: var(--surface-2); border: 2px solid var(--line); border-radius: 18px; padding: 16px; text-align: center; font-weight: 900; font-size: 19px; line-height: 1.6; margin-bottom: 10px; }
+        .bl-q small { display: block; color: var(--ink-3); font-size: 13px; }
+        .bl-sky { position: relative; height: 370px; border-radius: 20px; overflow: hidden; background: linear-gradient(180deg, #bfe9ff, #e8f7ff 70%, #c7f0d0); }
+        .bl { position: absolute; left: clamp(54px, var(--x), calc(100% - 54px)); bottom: var(--y, 8%); translate: -50% 0; width: 104px; height: 124px; border: 0; padding: 0 6px 16px; border-radius: 50% 50% 46% 46%; background: radial-gradient(circle at 32% 28%, rgba(255,255,255,.55), transparent 32%), var(--bc); color: #fff; font: inherit; font-weight: 900; font-size: 14px; line-height: 1.3; cursor: pointer; animation: bob var(--s) ease-in-out var(--d) infinite; box-shadow: inset -8px -10px 0 rgba(0,0,0,.12); }
+        .bl::after { content: ''; position: absolute; left: 50%; bottom: -46px; width: 2px; height: 46px; background: rgba(0,0,0,.25); }
+        .bl span { display: block; overflow: hidden; max-height: 80px; }
+        @keyframes bob { 0%, 100% { translate: -50% 0; } 50% { translate: -50% -34px; } }
+        .bl.pop { animation: popB .3s ease forwards; pointer-events: none; }
+        .bl.pop.bad { animation: popBad .5s ease forwards; }
+        @keyframes popB { to { transform: scale(1.6); opacity: 0; } }
+        @keyframes popBad { 30% { transform: scale(1.2); } to { transform: scale(0); opacity: 0; } }
+
+        /* 8) البحث عن الكلمات */
+        .ws-wrap { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+        .ws-grid { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 3px; touch-action: none; background: var(--surface-2); padding: 8px; border-radius: 16px; }
+        .ws-c { aspect-ratio: 1; display: grid; place-items: center; font-weight: 900; font-size: clamp(13px, 2.6vw, 19px); background: var(--surface); border-radius: 7px; cursor: pointer; color: var(--ink); }
+        .ws-c.sel { background: #ffd56a; }
+        .ws-c.found { background: var(--fc); color: #fff; }
+        .ws-c.missed { background: color-mix(in srgb, var(--fc) 20%, #fff); color: var(--bad); outline: 2px solid var(--bad); outline-offset: -2px; }
+        .ws-side h4 { margin: 0 0 8px; }
+        .ws-clues { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 8px; font-weight: 700; line-height: 1.55; font-size: 14.5px; }
+        .ws-clues li.ok span { color: var(--ink-3); text-decoration: line-through; }
+        .ws-ans { display: block; color: var(--good); font-weight: 900; }
+        .ws-clues li.no .ws-ans { color: var(--bad); }
+
+        @media (max-width: 620px) {
+            .g-matching { grid-template-columns: 1fr 1.25fr; gap: 8px; }
+            .mt-card { font-size: 13.5px; padding: 10px; }
+            .mm-grid { gap: 7px; }
+            .mm-front { font-size: 12px; } .mm-front.w { font-size: 14px; }
+            .rc-opts { grid-template-columns: 1fr; }
+            .bl { width: 82px; height: 98px; font-size: 12.5px; left: clamp(44px, var(--x), calc(100% - 44px)); }
+            .ws-wrap { grid-template-columns: 1fr; }
+            .sp-key { width: 38px; height: 42px; font-size: 18px; }
+            .sp-l { width: 34px; height: 44px; font-size: 23px; }
+            .g-chip { padding: 5px 8px; font-size: 13px; }
+        }
+
     </style>
 </head>
 <body>
@@ -331,11 +507,7 @@
                 let gameType = (currentQuestions && currentQuestions[0] && currentQuestions[0].type) ? currentQuestions[0].type : 'matching'; 
                 let title = document.getElementById('fetchedQuizName').innerText;
                 
-                if (gameType === 'matching') { startMatchingGame(title, currentQuestions); } 
-                else if (gameType === 'sorting') { startSortingGame(title, currentQuestions); } 
-                else if (gameType === 'sequence') { startSequenceGame(title, currentQuestions); } 
-                else if (gameType === 'spaceman') { startSpacemanGame(title, currentQuestions); } 
-                else { alert("القالب غير مدعوم حالياً!"); location.reload(); }
+                startGame(gameType, title, currentQuestions);
                 return;
             }
             
@@ -420,215 +592,444 @@
             osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + duration);
         }
 
-        let firstCard = null; let matchedCount = 0; let totalPairs = 0;
-        function startMatchingGame(title, items) {
-            document.getElementById('login-section').style.display = 'none';
-            document.getElementById('game-section').style.display = 'block';
-            document.getElementById('gameTitle').innerText = "🧩 " + title;
-            document.getElementById('gameSubtitle').innerText = "لعبة المطابقة (تُحسب النتيجة من المحاولة الأولى)";
-            let cardsArray = []; totalPairs = items.length; matchedCount = 0;
-            items.forEach((item, index) => {
-                cardsArray.push({ text: item.word, id: index, type: 'word' });
-                cardsArray.push({ text: item.def, id: index, type: 'def' });
-            });
-            cardsArray = cardsArray.sort(() => Math.random() - 0.5);
-            const gameArea = document.getElementById('gameArea');
-            gameArea.innerHTML = "";
-            cardsArray.forEach((card) => {
-                let div = document.createElement('div');
-                div.className = 'match-card'; div.innerText = card.text;
-                div.dataset.id = card.id; div.dataset.type = card.type;
-                div.onclick = () => handleCardClick(div);
-                gameArea.appendChild(div);
-            });
-            playSound(600, 'triangle', 0.1);
-        }
+// =====================================================================
+//  محرك ألعاب بوابة الطلاب (8 قوالب) — نفس شكل الإرسال الذي يصححه الخادم:
+//  كل عنصر { word, def }، والعنصر الخاطئ يُسجل في gameMistakes[رقمه].
+// =====================================================================
+const GAME_META = {
+    matching: { icon: '🧩', name: 'المطابقة', how: 'اختر مصطلحاً ثم التعريف المناسب له.' },
+    sorting:  { icon: '🗂️', name: 'الفرز والتصنيف', how: 'اسحب كل بطاقة إلى الصندوق الصحيح، أو اضغطها ثم اضغط الصندوق.' },
+    sequence: { icon: '🔢', name: 'الترتيب', how: 'اسحب الخطوات أو استخدم الأسهم لترتيبها، ثم اضغط «تحقق».' },
+    spaceman: { icon: '👨‍🚀', name: 'إنقاذ رائد الفضاء', how: 'خمّن حروف الكلمة من التلميح قبل أن ينفد الأكسجين.' },
+    memory:   { icon: '🃏', name: 'بطاقات الذاكرة', how: 'اقلب بطاقتين في كل مرة لتجد المصطلح وتعريفه.' },
+    race:     { icon: '⚡', name: 'سباق الأسئلة', how: 'اختر المصطلح الصحيح قبل انتهاء الوقت. السرعة تمنحك نقاطاً إضافية!' },
+    balloons: { icon: '🎈', name: 'فرقعة البالونات', how: 'افرقع البالون الذي يحمل المصطلح الصحيح.' },
+    wordsearch: { icon: '🔎', name: 'البحث عن الكلمات', how: 'اسحب على الحروف لتحديد الكلمة المناسبة لكل تلميح.' },
+};
+const G = { type: '', title: '', items: [], done: 0, total: 0, score: 0, streak: 0, best: 0, muted: false, preview: false, timers: [] };
+const gEl = id => document.getElementById(id);
+const gShuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const gNorm = s => String(s || '').replace(/[ً-ْـ]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').trim().toLowerCase();
+const gLater = (fn, ms) => { const t = setTimeout(fn, ms); G.timers.push(t); return t; };
+function gSound(f, type, d, v) { if (!G.muted) playSound(f, type, d, v); }
 
-        function handleCardClick(card) {
-            if(card.classList.contains('matched') || card.classList.contains('selected') || card.classList.contains('wrong-locked')) return;
-            card.classList.add('selected'); playSound(800, 'sine', 0.1);
-            if(!firstCard) { firstCard = card; } 
-            else {
-                let secondCard = card;
-                if(firstCard.dataset.id === secondCard.dataset.id && firstCard.dataset.type !== secondCard.dataset.type) {
-                    firstCard.classList.replace('selected', 'matched');
-                    secondCard.classList.replace('selected', 'matched');
-                    playSound(1200, 'sine', 0.2); 
-                    firstCard = null; matchedCount++;
-                    if(matchedCount === totalPairs) { setTimeout(() => { playSound(500, 'triangle', 0.5); submitGameSuccess(); }, 1000); }
-                } else {
-                    gameMistakes[firstCard.dataset.id] = true; 
-                    firstCard.classList.replace('selected', 'wrong-locked'); 
-                    secondCard.classList.add('wrong'); 
-                    playSound(150, 'sawtooth', 0.3);
-                    let trueMatchType = firstCard.dataset.type === 'word' ? 'def' : 'word';
-                    let trueMatch = document.querySelector(`.match-card[data-id="${firstCard.dataset.id}"][data-type="${trueMatchType}"]`);
-                    setTimeout(() => {
-                        secondCard.classList.remove('selected', 'wrong'); 
-                        if (trueMatch) { trueMatch.classList.add('wrong-locked'); }
-                        firstCard = null; matchedCount++;
-                        if(matchedCount === totalPairs) { setTimeout(() => { playSound(500, 'triangle', 0.5); submitGameSuccess(); }, 1000); }
-                    }, 800);
-                }
-            }
-        }
+// تشغيل اللعبة المناسبة
+function startGame(type, title, items) {
+    if (!GAME_META[type]) type = 'matching';
+    G.timers.forEach(clearTimeout); G.timers = [];
+    Object.assign(G, { type, title, items, done: 0, total: items.length, score: 0, streak: 0, best: 0 });
+    for (const k in gameMistakes) delete gameMistakes[k];
+    gEl('login-section').style.display = 'none';
+    gEl('game-section').style.display = 'block';
+    const m = GAME_META[type];
+    gEl('gameTitle').innerText = m.icon + ' ' + title;
+    gEl('gameSubtitle').innerText = m.how;
+    const area = gEl('gameArea');
+    area.className = 'g-area';
+    area.innerHTML = `<div class="g-hud">
+            <div class="g-prog"><div class="g-prog-top"><span>${m.name}${G.preview ? ' · <b class="g-prev">معاينة</b>' : ''}</span><span id="gCount">0 / ${G.total}</span></div><div class="g-bar"><span id="gBar"></span></div></div>
+            <div class="g-chip" title="النقاط">⭐ <b id="gScore">0</b></div>
+            <div class="g-chip g-streak" id="gStreakBox" title="إجابات صحيحة متتالية">🔥 <b id="gStreak">0</b></div>
+            <button class="g-mute" id="gMute" onclick="gToggleMute()" title="الصوت">${G.muted ? '🔇' : '🔊'}</button>
+        </div><div id="gBoard" class="g-board g-${type}"></div>`;
+    ({ matching: gMatching, sorting: gSorting, sequence: gSequence, spaceman: gSpaceman, memory: gMemory, race: gRace, balloons: gBalloons, wordsearch: gWordsearch })[type]();
+    gSound(600, 'triangle', 0.1);
+}
+function gToggleMute() { G.muted = !G.muted; gEl('gMute').innerText = G.muted ? '🔇' : '🔊'; }
+function gHud() {
+    gEl('gCount').innerText = `${G.done} / ${G.total}`;
+    gEl('gBar').style.width = (G.total ? G.done / G.total * 100 : 0) + '%';
+    gEl('gScore').innerText = G.score;
+    gEl('gStreak').innerText = G.streak;
+    gEl('gStreakBox').classList.toggle('hot', G.streak >= 3);
+}
+// تسجيل نتيجة عنصر (مرة واحدة لكل عنصر)
+function gResolve(idx, correct, bonus) {
+    if (!correct) gameMistakes[idx] = true;
+    if (correct && !gameMistakes[idx]) { G.streak++; G.best = Math.max(G.best, G.streak); G.score += 100 + (bonus || 0) + Math.min(G.streak - 1, 5) * 10; }
+    else G.streak = 0;
+    G.done++; gHud();
+}
+function gMiss(idx) { if (!gameMistakes[idx]) { gameMistakes[idx] = true; } G.streak = 0; gHud(); }
+function gFx(el, cls) { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+function gGood(el) { gFx(el, 'fx-good'); gSound(1046, 'sine', 0.15, 0.12); }
+function gBad(el) { gFx(el, 'fx-bad'); gSound(160, 'sawtooth', 0.25, 0.08); try { if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate(60); } catch (e) {} }
+const gHtml = s => esc(s);
 
-        function startSortingGame(title, items) {
-            document.getElementById('login-section').style.display = 'none';
-            document.getElementById('game-section').style.display = 'block';
-            document.getElementById('gameTitle').innerText = "🗂️ " + title;
-            document.getElementById('gameSubtitle').innerText = "لعبة الفرز والتصنيف (الخطأ يُحسب فوراً)";
-            const gameArea = document.getElementById('gameArea');
-            gameArea.innerHTML = `
-                <div style="color:#7f8c8d; font-weight:bold; margin-bottom:10px; text-align:center;">👈 اضغط على المصطلح، ثم اختر الصندوق. (لا يمكنك التراجع!)</div>
-                <div class="sorting-layout"><div class="items-pool" id="itemsPool"></div><div class="boxes-container" id="boxesContainer"></div></div>
-            `;
-            let pool = document.getElementById('itemsPool');
-            let boxes = document.getElementById('boxesContainer');
-            let selectedWordElem = null;
-            let sortedCount = 0;
-            let words = [...items].sort(() => Math.random() - 0.5); 
-            words.forEach(w => {
-                let el = document.createElement('div'); el.className = 'sort-item'; el.innerText = w.word; el.dataset.def = w.def; 
-                el.dataset.originalIndex = items.findIndex(item => item.word === w.word && item.def === w.def);
-                el.onclick = () => {
-                    if(selectedWordElem) selectedWordElem.classList.remove('selected-item');
-                    selectedWordElem = el; el.classList.add('selected-item'); playSound(800, 'sine', 0.1);
-                };
-                pool.appendChild(el);
-            });
-            let defs = [...items].sort(() => Math.random() - 0.5);
-            defs.forEach(d => {
-                let box = document.createElement('div'); box.className = 'sort-box'; box.innerHTML = `<div class="box-title">${esc(d.def)}</div>`;
-                box.onclick = () => {
-                    if(!selectedWordElem) return;
-                    sortedCount++; 
-                    if(selectedWordElem.dataset.def === d.def) {
-                        selectedWordElem.classList.remove('selected-item'); selectedWordElem.style.background = '#27ae60'; 
-                        selectedWordElem.onclick = null; box.appendChild(selectedWordElem); selectedWordElem = null; playSound(1200, 'sine', 0.2);
-                    } else {
-                        gameMistakes[selectedWordElem.dataset.originalIndex] = true;
-                        selectedWordElem.classList.remove('selected-item'); selectedWordElem.style.background = '#e74c3c'; 
-                        selectedWordElem.onclick = null; box.appendChild(selectedWordElem); selectedWordElem = null; playSound(150, 'sawtooth', 0.3);
-                    }
-                    if(sortedCount === items.length) { setTimeout(() => { playSound(500, 'triangle', 0.5); submitGameSuccess(); }, 1000); }
-                };
-                boxes.appendChild(box);
-            });
-            playSound(600, 'triangle', 0.1);
-        }
+// ---------- شاشة النتيجة ----------
+function gFinish() {
+    G.timers.forEach(clearTimeout); G.timers = [];
+    const wrong = Object.keys(gameMistakes).length, right = G.total - wrong, ratio = G.total ? right / G.total : 0;
+    const stars = ratio >= 0.9 ? 3 : ratio >= 0.6 ? 2 : ratio > 0 ? 1 : 0;
+    const msg = stars === 3 ? 'أداء مذهل! 🏆' : stars === 2 ? 'أحسنت! أداء رائع 👏' : stars === 1 ? 'بداية جيدة، استمر 💪' : 'لا بأس، راجع الدرس وستتحسن 🌱';
+    const review = G.items.map((it, i) => gameMistakes[i] ? `<li><b>${gHtml(it.word)}</b><span>${gHtml(it.def)}</span></li>` : '').join('');
+    gEl('gameSubtitle').innerText = 'انتهت اللعبة';
+    gEl('gameArea').innerHTML = `<div class="g-result">
+        <div class="g-stars">${[1, 2, 3].map(n => `<span class="${n <= stars ? 'on' : ''}" style="animation-delay:${n * 0.18}s">★</span>`).join('')}</div>
+        <h2>${msg}</h2>
+        <div class="g-res-score">${right} من ${G.total}</div>
+        <div class="g-res-meta">⭐ ${G.score} نقطة · 🔥 أطول سلسلة: ${G.best}</div>
+        ${review ? `<div class="g-review"><h3>راجع هذه الإجابات</h3><ul>${review}</ul></div>` : '<div class="g-perfect">✅ كل إجاباتك صحيحة!</div>'}
+        ${G.preview
+            ? `<div class="g-prev-note">هذه معاينة للمعلم، لم تُرسل أي نتيجة.</div><button class="g-btn" onclick="startGame(G.type, G.title, G.items)">🔁 إعادة اللعب</button>`
+            : `<button class="g-btn" id="gSend" onclick="this.disabled=true; this.innerText='⏳ جاري الإرسال...'; submitGameSuccess();">📤 إرسال النتيجة للمعلم</button>`}
+    </div>`;
+    if (stars >= 2) gConfetti();
+    gSound(stars >= 2 ? 784 : 440, 'triangle', 0.5, 0.12);
+}
+function gConfetti() {
+    const c = document.createElement('canvas'); c.className = 'g-confetti'; document.body.appendChild(c);
+    const x = c.getContext('2d'); c.width = innerWidth; c.height = innerHeight;
+    const cols = ['#0e8f9e', '#f5821f', '#6d5bd0', '#ffcf4a', '#0ca30c', '#e87ba4'];
+    const p = Array.from({ length: 140 }, () => ({ x: innerWidth / 2 + (Math.random() - .5) * 240, y: innerHeight * .3, vx: (Math.random() - .5) * 14, vy: -Math.random() * 13 - 4, s: Math.random() * 7 + 4, c: cols[Math.floor(Math.random() * cols.length)], r: Math.random() * 6, vr: (Math.random() - .5) * .3 }));
+    let f = 0;
+    (function tick() { x.clearRect(0, 0, c.width, c.height); p.forEach(q => { q.vy += .35; q.x += q.vx; q.y += q.vy; q.r += q.vr; x.save(); x.translate(q.x, q.y); x.rotate(q.r); x.fillStyle = q.c; x.fillRect(-q.s / 2, -q.s / 4, q.s, q.s / 2); x.restore(); }); if (++f < 150) requestAnimationFrame(tick); else c.remove(); })();
+}
 
-        function startSequenceGame(title, items) {
-            document.getElementById('login-section').style.display = 'none';
-            document.getElementById('game-section').style.display = 'block';
-            document.getElementById('gameTitle').innerText = "🔢 " + title;
-            document.getElementById('gameSubtitle').innerText = "لعبة الترتيب المنطقي (التحقق لمرة واحدة فقط)";
-            const gameArea = document.getElementById('gameArea');
-            gameArea.innerHTML = `
-                <div style="color:#7f8c8d; font-weight:bold; margin-bottom:10px; text-align:center;">👈 رتب الخطوات، ثم اضغط على زر التحقق. (لديك محاولة واحدة فقط!)</div>
-                <div class="sequence-layout"><div class="seq-pool" id="seqPool"></div><div class="seq-slots" id="seqSlots"></div></div>
-                <button id="btnCheckSeq" onclick="checkSequence()" style="display:none; background:#8e44ad; color:white; border:none; padding:15px; border-radius:8px; font-weight:bold; font-size:18px; cursor:pointer; width:100%; margin-top:20px; box-shadow:0 4px 10px rgba(142, 68, 173, 0.3);">تحقق من الترتيب النهائي ✅</button>
-            `;
-            let pool = document.getElementById('seqPool'); let slotsContainer = document.getElementById('seqSlots');
-            items.forEach((_, i) => { let slot = document.createElement('div'); slot.className = 'seq-slot'; slotsContainer.appendChild(slot); });
-            let shuffled = items.map((item, index) => ({ text: item.word + " : " + item.def, originalIndex: index })).sort(() => Math.random() - 0.5);
-            shuffled.forEach(item => {
-                let el = document.createElement('div'); el.className = 'seq-item'; el.innerText = item.text; el.dataset.correctIndex = item.originalIndex;
-                el.onclick = function() {
-                    let slots = document.querySelectorAll('.seq-slot'); playSound(800, 'sine', 0.1);
-                    if(this.parentElement === pool) {
-                        for(let slot of slots) { if(slot.children.length === 0) { slot.appendChild(this); break; } }
-                    } else { pool.appendChild(this); }
-                    let allFilled = Array.from(slots).every(slot => slot.children.length > 0);
-                    document.getElementById('btnCheckSeq').style.display = allFilled ? 'block' : 'none';
-                };
-                pool.appendChild(el);
-            });
-            playSound(600, 'triangle', 0.1);
-        }
-
-        window.checkSequence = function() {
-            let slots = document.querySelectorAll('.seq-slot'); let isWin = true;
-            document.getElementById('btnCheckSeq').style.display = 'none';
-            slots.forEach((slot, index) => {
-                let item = slot.children[0];
-                if(parseInt(item.dataset.correctIndex) === index) { item.style.background = '#27ae60'; item.onclick = null; } 
-                else { isWin = false; gameMistakes[item.dataset.correctIndex] = true; item.style.background = '#e74c3c'; item.onclick = null; }
-            });
-            if(isWin) playSound(1200, 'sine', 0.2); else playSound(150, 'sawtooth', 0.3);
-            setTimeout(() => { submitGameSuccess(); }, 1500);
+// ---------- سحب بالمؤشر (يعمل باللمس والفأرة، لأن البوابة تمنع السحب الأصلي) ----------
+function gDraggable(el, onDrop, opts = {}) {
+    el.addEventListener('pointerdown', e => {
+        if (el.classList.contains('locked') || e.button > 0) return;
+        const r = el.getBoundingClientRect(), sx = e.clientX, sy = e.clientY;
+        let ghost = null, moved = false, over = null;
+        const move = ev => {
+            const dx = ev.clientX - sx, dy = ev.clientY - sy;
+            if (!moved && Math.hypot(dx, dy) < 8) return;
+            if (!moved) { moved = true; ghost = el.cloneNode(true); ghost.classList.add('g-ghost'); ghost.style.width = r.width + 'px'; document.body.appendChild(ghost); el.classList.add('dragging'); if (opts.onStart) opts.onStart(); }
+            ghost.style.left = (r.left + dx) + 'px'; ghost.style.top = (r.top + dy) + 'px';
+            ghost.style.visibility = 'hidden';
+            const t = document.elementFromPoint(ev.clientX, ev.clientY);
+            ghost.style.visibility = '';
+            const zone = t && t.closest(opts.zones || '.g-drop');
+            if (over !== zone) { if (over) over.classList.remove('drop-over'); over = zone; if (over) over.classList.add('drop-over'); }
+            if (opts.onMove) opts.onMove(ev);
+            ev.preventDefault();
         };
+        const up = ev => {
+            document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); document.removeEventListener('pointercancel', up);
+            if (over) over.classList.remove('drop-over');
+            el.classList.remove('dragging');
+            if (ghost) ghost.remove();
+            if (moved) { el.dataset.justDragged = '1'; setTimeout(() => delete el.dataset.justDragged, 50); onDrop(over, ev); }
+        };
+        document.addEventListener('pointermove', move, { passive: false }); document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
+    });
+}
 
-        let smItems = []; let smCurrentIndex = 0; let smWord = ""; let smGuessed = []; let smWrongCount = 0; const smMaxWrong = 6; 
-        function startSpacemanGame(title, items) {
-            document.getElementById('login-section').style.display = 'none'; document.getElementById('game-section').style.display = 'block';
-            document.getElementById('gameTitle').innerText = "👨‍🚀 " + title; document.getElementById('gameSubtitle').innerText = "إنقاذ رائد الفضاء (نفاد الأكسجين يعني ضياع السؤال)";
-            smItems = items; smCurrentIndex = 0; loadSpacemanWord();
+// =====================================================================
+//  1) المطابقة: عمودان
+// =====================================================================
+function gMatching() {
+    const board = gEl('gBoard');
+    const pal = ['#0e8f9e', '#f5821f', '#6d5bd0', '#1a6fb0', '#16a085', '#e87ba4', '#c9a227', '#d0563b'];
+    const order = G.items.map((_, i) => i);
+    board.innerHTML = `<div class="mt-col"><div class="mt-head">المصطلحات</div>${gShuffle(order).map(i => `<button class="mt-card term" data-i="${i}">${gHtml(G.items[i].word)}</button>`).join('')}</div>
+        <div class="mt-col"><div class="mt-head">التعريفات</div>${gShuffle(order).map(i => `<button class="mt-card def" data-i="${i}">${gHtml(G.items[i].def)}</button>`).join('')}</div>`;
+    let sel = null, pairs = 0;
+    board.querySelectorAll('.mt-card').forEach(card => card.addEventListener('click', () => {
+        if (card.classList.contains('locked')) return;
+        if (!sel || sel.classList.contains(card.classList.contains('term') ? 'term' : 'def')) {
+            if (sel) sel.classList.remove('sel');
+            sel = card; card.classList.add('sel'); gSound(700, 'sine', 0.06, 0.06); return;
         }
-
-        function loadSpacemanWord() {
-            if (smCurrentIndex >= smItems.length) { setTimeout(() => { playSound(500, 'triangle', 0.5); submitGameSuccess(); }, 500); return; }
-            smWord = smItems[smCurrentIndex].word.trim().toLowerCase(); let def = smItems[smCurrentIndex].def; smGuessed = []; smWrongCount = 0;
-            const gameArea = document.getElementById('gameArea');
-            gameArea.innerHTML = `
-                <div class="spaceman-layout">
-                    <div class="hint-box">💡 <b>تلميح:</b> ${esc(def)}</div>
-                    <div class="oxygen-container"><div class="oxygen-bar" id="oxygenBar"></div><div class="oxygen-text" id="oxygenText">مستوى الأكسجين: 100%</div></div>
-                    <div class="word-display" id="wordDisplay"></div><div class="keyboard" id="keyboard"></div>
-                    <div style="font-weight:bold; color:#7f8c8d; margin-top:20px; font-size:14px;">السؤال ( ${smCurrentIndex + 1} ) من أصل ( ${smItems.length} )</div>
-                </div>
-            `;
-            updateSpacemanDisplay(); buildKeyboard(); updateOxygen(); playSound(600, 'triangle', 0.1);
+        const a = sel, b = card; sel = null; a.classList.remove('sel');
+        const term = a.classList.contains('term') ? a : b, def = term === a ? b : a, i = +term.dataset.i;
+        if (gNorm(G.items[+def.dataset.i].def) === gNorm(G.items[i].def)) {
+            const c = pal[pairs % pal.length]; pairs++;
+            [term, def].forEach(x => { x.classList.add('locked', 'paired'); x.style.setProperty('--pc', c); x.dataset.n = pairs; gGood(x); });
+            gResolve(i, true);
+            if (pairs === G.total) gLater(gFinish, 900);
+        } else {
+            gMiss(i); [term, def].forEach(gBad);
         }
+    }));
+}
 
-        function updateSpacemanDisplay() {
-            const display = document.getElementById('wordDisplay'); display.innerHTML = ""; let allGuessed = true;
-            for (let i = 0; i < smWord.length; i++) {
-                let char = smWord[i]; let box = document.createElement('div');
-                if (char === " " || char === "-") { box.style.border = "none"; box.style.width = "20px"; box.innerText = char === "-" ? "-" : ""; } 
-                else { box.className = "letter-box"; if (smGuessed.includes(char)) { box.innerText = char; } else { box.innerText = ""; allGuessed = false; } }
-                display.appendChild(box);
-            }
-            if (allGuessed) {
-                playSound(1200, 'sine', 0.2); document.getElementById('keyboard').style.pointerEvents = "none";
-                setTimeout(() => { smCurrentIndex++; loadSpacemanWord(); }, 1500);
-            }
-        }
+// =====================================================================
+//  2) الفرز: صناديق حسب التصنيف (العناصر بنفس التعريف = صندوق واحد)
+// =====================================================================
+function gSorting() {
+    const board = gEl('gBoard');
+    const cats = [...new Set(G.items.map(it => String(it.def).trim()))];
+    board.innerHTML = `<div class="st-pool g-drop" data-cat="" id="stPool">${gShuffle(G.items.map((it, i) => i)).map(i => `<div class="st-item" data-i="${i}">${gHtml(G.items[i].word)}</div>`).join('')}</div>
+        <div class="st-boxes">${cats.map((c, k) => `<div class="st-box g-drop" data-cat="${k}"><div class="st-title">${gHtml(c)}</div><div class="st-count"><span>0</span></div><div class="st-in"></div></div>`).join('')}</div>`;
+    let picked = null;
+    const place = (item, box) => {
+        if (!box || box.dataset.cat === '' || item.classList.contains('locked')) return;
+        const i = +item.dataset.i, right = cats.indexOf(String(G.items[i].def).trim());
+        const target = board.querySelector(`.st-box[data-cat="${right}"]`);
+        item.classList.remove('picked'); picked = null;
+        if (+box.dataset.cat === right) { gResolve(i, true); gGood(box); }
+        else { gResolve(i, false); gBad(box); item.classList.add('was-wrong'); }
+        item.classList.add('locked');
+        target.querySelector('.st-in').appendChild(item);
+        const cnt = target.querySelector('.st-count span'); cnt.innerText = target.querySelectorAll('.st-item').length;
+        if (G.done === G.total) gLater(gFinish, 900);
+    };
+    board.querySelectorAll('.st-item').forEach(item => {
+        gDraggable(item, zone => place(item, zone));
+        item.addEventListener('click', () => {
+            if (item.dataset.justDragged || item.classList.contains('locked')) return;
+            if (picked) picked.classList.remove('picked');
+            picked = picked === item ? null : item; if (picked) { item.classList.add('picked'); gSound(700, 'sine', 0.06, 0.06); }
+        });
+    });
+    board.querySelectorAll('.st-box').forEach(box => box.addEventListener('click', () => { if (picked) place(picked, box); }));
+}
 
-        function buildKeyboard() {
-            const kb = document.getElementById('keyboard'); let lettersArray = "ابتثجحخدذرزسشصضطظعغفقكلمنهويأإآؤئءةى".split("");
-            if (/[a-z]/.test(smWord)) lettersArray = lettersArray.concat("abcdefghijklmnopqrstuvwxyz".split(""));
-            lettersArray.forEach(l => {
-                let btn = document.createElement('button'); btn.className = "key-btn"; btn.innerText = l;
-                btn.onclick = () => handleSpacemanGuess(l, btn); kb.appendChild(btn);
-            });
-        }
+// =====================================================================
+//  3) الترتيب: سحب لإعادة الترتيب + أسهم
+// =====================================================================
+function gSequence() {
+    const board = gEl('gBoard');
+    let order = gShuffle(G.items.map((_, i) => i));
+    if (order.length > 1 && order.every((v, k) => v === k)) order.reverse(); // لا نبدأ بالترتيب الصحيح
+    const render = () => {
+        board.innerHTML = `<ol class="sq-list" id="sqList">${order.map((i, k) => `<li class="sq-item" data-i="${i}"><span class="sq-n">${k + 1}</span>
+            <div class="sq-txt"><b>${gHtml(G.items[i].word)}</b>${G.items[i].def ? `<small>${gHtml(G.items[i].def)}</small>` : ''}</div>
+            <span class="sq-arrows"><button data-d="-1" title="لأعلى">▲</button><button data-d="1" title="لأسفل">▼</button></span></li>`).join('')}</ol>
+            <button class="g-btn" id="sqCheck">✅ تحقق من الترتيب</button>`;
+        board.querySelectorAll('.sq-item').forEach(li => {
+            li.querySelectorAll('.sq-arrows button').forEach(b => b.addEventListener('click', e => {
+                e.stopPropagation(); const k = order.indexOf(+li.dataset.i), t = k + +b.dataset.d;
+                if (t < 0 || t >= order.length) return; [order[k], order[t]] = [order[t], order[k]]; gSound(650, 'sine', 0.05, 0.05); render();
+            }));
+            gDraggable(li, (zone, ev) => {
+                const list = gEl('sqList'), others = [...list.children].filter(x => x !== li);
+                let to = others.findIndex(x => ev.clientY < x.getBoundingClientRect().top + x.offsetHeight / 2); if (to < 0) to = others.length;
+                const ids = others.map(x => +x.dataset.i); ids.splice(to, 0, +li.dataset.i); order = ids; gSound(650, 'sine', 0.05, 0.05); render();
+            }, { zones: '#sqList' });
+        });
+        gEl('sqCheck').onclick = check;
+    };
+    const check = () => {
+        board.querySelectorAll('.sq-arrows').forEach(a => a.remove());
+        board.querySelectorAll('.sq-item').forEach((li, k) => {
+            const i = +li.dataset.i, ok = i === k; li.classList.add('locked', ok ? 'ok' : 'no');
+            if (!ok) li.insertAdjacentHTML('beforeend', `<span class="sq-fix">مكانها الصحيح: ${i + 1}</span>`);
+            gResolve(i, ok);
+        });
+        const allOk = !Object.keys(gameMistakes).length; allOk ? gSound(1046, 'sine', 0.3, 0.12) : gSound(200, 'sawtooth', 0.3, 0.08);
+        const btn = gEl('sqCheck');
+        btn.innerText = allOk ? '🎉 متابعة' : '👀 عرض الترتيب الصحيح';
+        btn.onclick = () => {
+            if (allOk) return gFinish();
+            order = G.items.map((_, i) => i);
+            board.querySelector('#sqList').innerHTML = order.map((i, k) => `<li class="sq-item locked ${gameMistakes[i] ? 'no' : 'ok'}"><span class="sq-n">${k + 1}</span><div class="sq-txt"><b>${gHtml(G.items[i].word)}</b>${G.items[i].def ? `<small>${gHtml(G.items[i].def)}</small>` : ''}</div></li>`).join('');
+            btn.innerText = 'متابعة ⬅️'; btn.onclick = gFinish;
+        };
+    };
+    render();
+}
 
-        function handleSpacemanGuess(letter, btn) {
-            if (smWord.includes(letter)) {
-                smGuessed.push(letter); btn.classList.add('correct'); playSound(800, 'sine', 0.1); updateSpacemanDisplay();
+// =====================================================================
+//  4) رائد الفضاء: تخمين الحروف
+// =====================================================================
+const AR_KEYS = ['ا ب ت ث ج ح خ', 'د ذ ر ز س ش ص', 'ض ط ظ ع غ ف ق', 'ك ل م ن ه و ي', 'ء ؤ ئ ة'];
+function gSpaceman() {
+    let idx = 0;
+    const next = () => {
+        if (idx >= G.items.length) return gLater(gFinish, 400);
+        const it = G.items[idx], word = String(it.word).trim(), norm = [...word].map(gNorm);
+        let guessed = new Set(), wrong = 0; const MAX = 6;
+        const latin = /[a-z]/i.test(word);
+        const rows = latin ? ['a b c d e f g h i', 'j k l m n o p q r', 's t u v w x y z'] : AR_KEYS;
+        gEl('gBoard').innerHTML = `<div class="sp-top"><div class="sp-hint">💡 ${gHtml(it.def)}</div><div class="sp-q">${idx + 1} / ${G.items.length}</div></div>
+            <div class="sp-scene"><div class="sp-ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" class="bg"/><circle cx="60" cy="60" r="52" class="fg" id="spRing"/></svg><div class="sp-man" id="spMan">👨‍🚀</div></div>
+            <div class="sp-o2"><b id="spO2">100%</b><span>أكسجين</span></div></div>
+            <div class="sp-word" id="spWord" dir="${latin ? 'ltr' : 'rtl'}"></div>
+            <div class="sp-keys" dir="${latin ? 'ltr' : 'rtl'}">${rows.map(r => `<div>${r.split(' ').map(k => `<button class="sp-key" data-k="${k}">${k}</button>`).join('')}</div>`).join('')}</div>`;
+        const draw = (reveal) => {
+            gEl('spWord').innerHTML = [...word].map((ch, k) => ch === ' ' || ch === '-' ? '<span class="sp-gap"></span>'
+                : `<span class="sp-l ${guessed.has(norm[k]) ? 'on' : reveal ? 'lost' : ''}">${guessed.has(norm[k]) || reveal ? gHtml(ch) : ''}</span>`).join('');
+            const o2 = Math.round((MAX - wrong) / MAX * 100);
+            gEl('spO2').innerText = o2 + '%';
+            const ring = gEl('spRing'); ring.style.strokeDashoffset = 327 * (1 - o2 / 100); ring.style.stroke = o2 > 50 ? '#0e8f9e' : o2 > 20 ? '#f5a300' : '#d03b3b';
+            gEl('spMan').style.transform = `translateY(${wrong * 5}px) rotate(${wrong * 7}deg)`;
+        };
+        draw(false);
+        const letters = new Set(norm.filter(c => c.trim() && c !== '-'));
+        gEl('gBoard').querySelectorAll('.sp-key').forEach(btn => btn.addEventListener('click', () => {
+            if (btn.disabled) return; btn.disabled = true;
+            const k = gNorm(btn.dataset.k);
+            if (letters.has(k)) {
+                guessed.add(k); btn.classList.add('ok'); gSound(880, 'sine', 0.08, 0.08); draw(false);
+                if ([...letters].every(l => guessed.has(l))) { gGood(gEl('spWord')); gResolve(idx, true); gEl('spMan').innerText = '🚀'; lockKeys(); idx++; gLater(next, 1300); }
             } else {
-                smWrongCount++; btn.classList.add('wrong'); playSound(150, 'sawtooth', 0.3); updateOxygen();
-                if (smWrongCount >= smMaxWrong) {
-                    gameMistakes[smCurrentIndex] = true; document.getElementById('keyboard').style.pointerEvents = "none";
-                    const display = document.getElementById('wordDisplay'); display.innerHTML = "";
-                    for (let i = 0; i < smWord.length; i++) {
-                        let char = smWord[i]; let box = document.createElement('div');
-                        if (char === " " || char === "-") { box.style.border = "none"; box.style.width = "20px"; box.innerText = char === "-" ? "-" : ""; } 
-                        else { box.className = "letter-box"; box.innerText = char; box.style.color = "#e74c3c"; box.style.borderColor = "#e74c3c"; }
-                        display.appendChild(box);
-                    }
-                    setTimeout(() => { smCurrentIndex++; loadSpacemanWord(); }, 2500);
-                }
+                wrong++; btn.classList.add('no'); gBad(gEl('spMan')); draw(false);
+                if (wrong >= MAX) { gResolve(idx, false); draw(true); lockKeys(); idx++; gLater(next, 2200); }
             }
-        }
+        }));
+        const lockKeys = () => gEl('gBoard').querySelectorAll('.sp-key').forEach(b => b.disabled = true);
+    };
+    next();
+}
 
-        function updateOxygen() {
-            let oxygenPercent = Math.max(0, 100 - (smWrongCount * (100 / smMaxWrong)));
-            const bar = document.getElementById('oxygenBar'); document.getElementById('oxygenText').innerText = `مستوى الأكسجين: ${Math.round(oxygenPercent)}%`;
-            bar.style.width = oxygenPercent + "%";
-            if (oxygenPercent > 50) bar.style.background = "#3498db"; else if (oxygenPercent > 20) bar.style.background = "#f39c12"; else bar.style.background = "#e74c3c"; 
+// =====================================================================
+//  5) بطاقات الذاكرة (جولات حتى 8 أزواج)
+// =====================================================================
+function gMemory() {
+    const rounds = []; const ids = gShuffle(G.items.map((_, i) => i));
+    for (let k = 0; k < ids.length; k += 8) rounds.push(ids.slice(k, k + 8));
+    let r = 0;
+    const play = () => {
+        if (r >= rounds.length) return gLater(gFinish, 500);
+        const set = rounds[r], misses = {};
+        const cards = gShuffle(set.flatMap(i => [{ i, t: 'w', txt: G.items[i].word }, { i, t: 'd', txt: G.items[i].def }]));
+        gEl('gBoard').innerHTML = (rounds.length > 1 ? `<div class="mm-round">الجولة ${r + 1} من ${rounds.length}</div>` : '')
+            + `<div class="mm-grid" style="--cols:${cards.length <= 8 ? 4 : cards.length <= 12 ? 4 : 4}">${cards.map((c, k) => `<button class="mm-card" data-k="${k}"><span class="mm-in"><span class="mm-back">?</span><span class="mm-front ${c.t}">${gHtml(c.txt)}</span></span></button>`).join('')}</div>`;
+        let open = [], busy = false, found = 0;
+        gEl('gBoard').querySelectorAll('.mm-card').forEach(btn => btn.addEventListener('click', () => {
+            if (busy || btn.classList.contains('flip')) return;
+            btn.classList.add('flip'); gSound(600, 'sine', 0.05, 0.05); open.push(btn);
+            if (open.length < 2) return;
+            const [a, b] = open.map(x => cards[+x.dataset.k]), [ea, eb] = open; open = [];
+            if (a.t !== b.t && gNorm(G.items[a.i].def) === gNorm(G.items[b.i].def) && gNorm(G.items[a.i].word) === gNorm(G.items[b.i].word)) {
+                [ea, eb].forEach(x => { x.classList.add('done'); gGood(x); });
+                gResolve(a.i, (misses[a.i] || 0) <= 2); found++;
+                if (found === set.length) { r++; gLater(play, 900); }
+            } else {
+                busy = true; misses[a.i] = (misses[a.i] || 0) + 1;
+                if (misses[a.i] > 2) gMiss(a.i); else { G.streak = 0; gHud(); }
+                gLater(() => { gBad(ea); gBad(eb); }, 350);
+                gLater(() => { ea.classList.remove('flip'); eb.classList.remove('flip'); busy = false; }, 1000);
+            }
+        }));
+    };
+    play();
+}
+
+// =====================================================================
+//  6) سباق الأسئلة: 4 خيارات + مؤقت
+// =====================================================================
+function gRace() {
+    const order = gShuffle(G.items.map((_, i) => i)); let q = 0; const SEC = 15;
+    const ask = () => {
+        if (q >= order.length) return gLater(gFinish, 400);
+        const i = order[q], others = gShuffle(G.items.map((_, k) => k).filter(k => k !== i && gNorm(G.items[k].word) !== gNorm(G.items[i].word))).slice(0, 3);
+        const opts = gShuffle([i, ...others]);
+        gEl('gBoard').innerHTML = `<div class="rc-timer"><span id="rcT"></span></div>
+            <div class="rc-q"><small>السؤال ${q + 1} من ${order.length}</small>${gHtml(G.items[i].def)}</div>
+            <div class="rc-opts">${opts.map((k, n) => `<button class="rc-opt c${n}" data-k="${k}">${gHtml(G.items[k].word)}</button>`).join('')}</div>`;
+        const start = performance.now(); let over = false;
+        const bar = gEl('rcT'); bar.style.transition = 'none'; bar.style.width = '100%'; void bar.offsetWidth; bar.style.transition = `width ${SEC}s linear`; bar.style.width = '0%';
+        const finish = (k, btn) => {
+            if (over) return; over = true; clearTimeout(tm);
+            const secs = (performance.now() - start) / 1000, ok = k === i;
+            gEl('gBoard').querySelectorAll('.rc-opt').forEach(b => { b.disabled = true; if (+b.dataset.k === i) b.classList.add('right'); });
+            bar.style.transition = 'none'; bar.style.width = getComputedStyle(bar).width;
+            if (ok) { gGood(btn); gResolve(i, true, Math.round(Math.max(0, SEC - secs) / SEC * 50)); }
+            else { if (btn) { btn.classList.add('wrong'); gBad(btn); } else gBad(gEl('gBoard').querySelector('.rc-q')); gResolve(i, false); }
+            q++; gLater(ask, ok ? 900 : 1700);
+        };
+        const tm = gLater(() => finish(-1, null), SEC * 1000);
+        gEl('gBoard').querySelectorAll('.rc-opt').forEach(b => b.addEventListener('click', () => finish(+b.dataset.k, b)));
+    };
+    ask();
+}
+
+// =====================================================================
+//  7) فرقعة البالونات
+// =====================================================================
+function gBalloons() {
+    const order = gShuffle(G.items.map((_, i) => i)); let q = 0;
+    const cols = ['#f5821f', '#0e8f9e', '#6d5bd0', '#e84d8a', '#1a6fb0', '#16a085'];
+    const ask = () => {
+        if (q >= order.length) return gLater(gFinish, 400);
+        const i = order[q], others = gShuffle(G.items.map((_, k) => k).filter(k => k !== i && gNorm(G.items[k].word) !== gNorm(G.items[i].word))).slice(0, 4);
+        const opts = gShuffle([i, ...others]);
+        gEl('gBoard').innerHTML = `<div class="bl-q"><small>${q + 1} / ${order.length}</small>${gHtml(G.items[i].def)}</div>
+            <div class="bl-sky">${opts.map((k, n) => `<button class="bl" data-k="${k}" style="--bc:${cols[n % cols.length]}; --x:${12 + n * (76 / Math.max(1, opts.length - 1))}%; --y:${n % 2 ? 50 : 8}%; --d:${(n % 3) * 0.6}s; --s:${3.2 + (n % 2) * 0.8}s"><span>${gHtml(G.items[k].word)}</span></button>`).join('')}</div>`;
+        let tried = false, over = false;
+        gEl('gBoard').querySelectorAll('.bl').forEach(b => b.addEventListener('click', () => {
+            if (over || b.classList.contains('pop')) return;
+            b.classList.add('pop');
+            if (+b.dataset.k === i) {
+                over = true; gSound(1200, 'square', 0.06, 0.06); gGood(gEl('gBoard').querySelector('.bl-q')); gResolve(i, !tried); q++; gLater(ask, 900);
+            } else {
+                tried = true; gMiss(i); b.classList.add('bad'); gBad(gEl('gBoard').querySelector('.bl-q'));
+            }
+        }));
+    };
+    ask();
+}
+
+// =====================================================================
+//  8) البحث عن الكلمات
+// =====================================================================
+function gWordsearch() {
+    const words = G.items.map((it, i) => ({ i, w: [...gNorm(String(it.word).replace(/[\s\-]/g, ''))] })).filter(x => x.w.length >= 2);
+    const latin = words.some(x => /[a-z]/.test(x.w.join('')));
+    const N = Math.min(13, Math.max(8, ...words.map(x => x.w.length + 1)));
+    const grid = Array.from({ length: N }, () => Array(N).fill(''));
+    // اتجاهات بترتيب القراءة: يمين←يسار للعربية، وعمودي، وقطري
+    const dirs = latin ? [[0, 1], [1, 0], [1, 1]] : [[0, -1], [1, 0], [1, -1]];
+    const placed = [];
+    gShuffle(words).sort((a, b) => b.w.length - a.w.length).forEach(x => {
+        for (let t = 0; t < 300; t++) {
+            const [dr, dc] = dirs[Math.floor(Math.random() * dirs.length)];
+            const r0 = Math.floor(Math.random() * N), c0 = Math.floor(Math.random() * N);
+            const cells = x.w.map((ch, k) => [r0 + dr * k, c0 + dc * k]);
+            if (cells.some(([r, c]) => r < 0 || c < 0 || r >= N || c >= N || (grid[r][c] && grid[r][c] !== x.w[cells.findIndex(p => p[0] === r && p[1] === c)]))) continue;
+            cells.forEach(([r, c], k) => grid[r][c] = x.w[k]);
+            placed.push({ i: x.i, cells, key: cells.map(p => p.join(',')).join('|') }); return;
         }
+    });
+    const fill = latin ? 'abcdefghijklmnopqrstuvwxyz' : 'ابتثجحخدذرزسشصضطظعغفقكلمنهوي';
+    grid.forEach(row => row.forEach((v, c) => { if (!v) row[c] = fill[Math.floor(Math.random() * fill.length)]; }));
+    // العناصر التي لم تُوضع في الشبكة (نادر) تُحسب مُنجزة بلا أخطاء
+    G.items.forEach((_, i) => { if (!placed.some(p => p.i === i)) gResolve(i, true); });
+
+    const board = gEl('gBoard');
+    board.innerHTML = `<div class="ws-wrap"><div class="ws-grid" id="wsGrid" dir="ltr" style="--n:${N}">${grid.map((row, r) => row.map((ch, c) => `<div class="ws-c" data-r="${r}" data-c="${c}">${gHtml(ch)}</div>`).join('')).join('')}</div>
+        <div class="ws-side"><h4>التلميحات</h4><ol class="ws-clues">${placed.map(p => `<li data-i="${p.i}"><span>${gHtml(G.items[p.i].def)}</span><b class="ws-ans"></b></li>`).join('')}</ol>
+        <button class="g-btn ghost" id="wsGive">🏳️ إنهاء وكشف الباقي</button></div></div>`;
+    const gridEl = gEl('wsGrid'), cell = (r, c) => gridEl.querySelector(`.ws-c[data-r="${r}"][data-c="${c}"]`);
+    const pal = ['#0e8f9e', '#f5821f', '#6d5bd0', '#1a6fb0', '#16a085', '#e84d8a', '#c9a227'];
+    let start = null, path = [], found = 0;
+    const line = (a, b) => {
+        const dr = Math.sign(b[0] - a[0]), dc = Math.sign(b[1] - a[1]), n = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]));
+        if (!(a[0] === b[0] || a[1] === b[1] || Math.abs(b[0] - a[0]) === Math.abs(b[1] - a[1]))) return [a];
+        return Array.from({ length: n + 1 }, (_, k) => [a[0] + dr * k, a[1] + dc * k]);
+    };
+    const paint = () => { gridEl.querySelectorAll('.ws-c.sel').forEach(x => x.classList.remove('sel')); path.forEach(([r, c]) => cell(r, c).classList.add('sel')); };
+    const at = e => { const t = document.elementFromPoint(e.clientX, e.clientY); const c = t && t.closest('.ws-c'); return c ? [+c.dataset.r, +c.dataset.c] : null; };
+    const mark = (p, color, cls) => { p.cells.forEach(([r, c]) => { const x = cell(r, c); x.classList.add(cls); x.style.setProperty('--fc', color); }); };
+    gridEl.addEventListener('pointerdown', e => { const p = at(e); if (!p) return; start = p; path = [p]; paint(); try { gridEl.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); });
+    gridEl.addEventListener('pointermove', e => { if (!start) return; const p = at(e); if (p) { path = line(start, p); paint(); } });
+    const end = () => {
+        if (!start) return; const key = path.map(p => p.join(',')).join('|'), rev = [...path].reverse().map(p => p.join(',')).join('|');
+        start = null;
+        const hit = placed.find(p => !p.found && (p.key === key || p.key === rev));
+        if (hit) {
+            hit.found = true; found++; mark(hit, pal[found % pal.length], 'found');
+            const li = board.querySelector(`.ws-clues li[data-i="${hit.i}"]`); li.classList.add('ok'); li.querySelector('.ws-ans').innerText = G.items[hit.i].word;
+            gGood(li); gResolve(hit.i, true);
+            if (placed.every(p => p.found)) gLater(gFinish, 1000);
+        } else if (path.length > 1) { gBad(gridEl); G.streak = 0; gHud(); }
+        path = []; paint();
+    };
+    gridEl.addEventListener('pointerup', end); gridEl.addEventListener('pointercancel', end);
+    gEl('wsGive').onclick = () => {
+        if (!confirm('سيتم كشف الكلمات المتبقية واحتسابها خاطئة. متابعة؟')) return;
+        placed.filter(p => !p.found).forEach(p => {
+            p.found = true; mark(p, '#d03b3b', 'missed');
+            const li = board.querySelector(`.ws-clues li[data-i="${p.i}"]`); li.classList.add('no'); li.querySelector('.ws-ans').innerText = G.items[p.i].word;
+            gResolve(p.i, false);
+        });
+        gLater(gFinish, 1500);
+    };
+    gHud();
+}
+
+// معاينة المعلم: student.html?preview=1 (البيانات من صانع الأنشطة على نفس الجهاز)
+(function () {
+    if (!/[?&]preview=1/.test(location.search)) return;
+    let p = null; try { p = JSON.parse(localStorage.getItem('mehwar_game_preview') || 'null'); } catch (e) {}
+    if (!p || !Array.isArray(p.items) || !p.items.length) return;
+    G.preview = true;
+    document.addEventListener('DOMContentLoaded', () => { currentQuestions = p.items; startGame(p.type, p.title || 'معاينة النشاط', p.items); });
+})();
 
         function submitGameSuccess() {
             let answersPayload = currentQuestions.map((q, index) => {
@@ -657,7 +1058,7 @@
             .then(data => {
                 if (data.status !== 'success' && data.status !== 'already_submitted') {
                     alert("❌ " + (data.message || "لم يتم حفظ الإجابات، حاول مرة أخرى."));
-                    if(!isGame) { document.getElementById('btn-submit').style.display = 'block'; document.getElementById('submit-loading').style.display = 'none'; }
+                    if(!isGame) { document.getElementById('btn-submit').style.display = 'block'; document.getElementById('submit-loading').style.display = 'none'; } else { const sb = document.getElementById('gSend'); if (sb) { sb.disabled = false; sb.innerText = '📤 إعادة الإرسال'; } }
                     return;
                 }
                 if (data.status === 'already_submitted') alert(data.message);
@@ -668,7 +1069,7 @@
             })
             .catch(error => {
                 alert("حدث خطأ أثناء إرسال الإجابات. تأكد من اتصالك بالإنترنت.");
-                if(!isGame) { document.getElementById('btn-submit').style.display = 'block'; document.getElementById('submit-loading').style.display = 'none'; }
+                if(!isGame) { document.getElementById('btn-submit').style.display = 'block'; document.getElementById('submit-loading').style.display = 'none'; } else { const sb = document.getElementById('gSend'); if (sb) { sb.disabled = false; sb.innerText = '📤 إعادة الإرسال'; } }
             });
         }
 

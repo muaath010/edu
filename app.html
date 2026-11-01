@@ -683,6 +683,48 @@ h2 .reg-no, h4 .reg-no, #winnerNameDisplay .reg-no { height: auto; padding: 3px 
 .qr-name { text-align: center; font-weight: 900; font-size: 17px; margin-bottom: 10px; }
 .qr-big { width: 240px; height: 240px; margin: 0 auto 12px; padding: 10px; background: #fff; border-radius: 16px; border: 1px solid var(--line); }
 .qr-big svg { width: 100%; height: 100%; display: block; }
+
+/* ===== المستودع: مجلدات وطابور رفع ===== */
+.repo-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.repo-toolbar .note-input { margin: 0; max-width: 240px; padding: 8px 12px; }
+.repo-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-weight: 800; }
+.repo-crumbs .crumb { border: 0; background: var(--surface-2); color: var(--ink-2); border-radius: 9px; padding: 6px 10px; font: inherit; font-size: 13.5px; cursor: pointer; }
+.repo-crumbs .crumb:last-child { background: var(--brand-50); color: var(--brand-600); }
+.repo-crumbs .sep { font-size: 10px; color: var(--ink-3); }
+.folder-card { position: relative; border: 1px solid var(--line); background: linear-gradient(180deg, #fff8e6, var(--surface-2)); border-radius: 16px; padding: 18px 12px 14px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: transform .2s, box-shadow .2s; }
+body.dark-mode .folder-card { background: linear-gradient(180deg, #3a2f12, var(--surface-2)); }
+.folder-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+.folder-card .f-ico { font-size: 38px; }
+.folder-card .f-name { font-weight: 900; font-size: 14px; word-break: break-word; }
+.f-meta { font-size: 12px; color: var(--ink-3); font-weight: 700; word-break: break-word; }
+.folder-card .f-del { position: absolute; top: 8px; left: 8px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--bad-50); color: var(--bad-ink); opacity: 0; transition: opacity .2s; cursor: pointer; }
+.folder-card:hover .f-del, .file-card:hover .f-move { opacity: 1; }
+.file-card .f-move { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--brand-50); color: var(--brand-600); opacity: 0; transition: opacity .2s; cursor: pointer; }
+@media (hover: none) { .folder-card .f-del, .file-card .f-del, .file-card .f-move { opacity: 1; } }
+.upload-queue { border: 1px solid var(--line); border-radius: 16px; padding: 12px; margin-bottom: 16px; background: var(--surface-2); }
+.uq-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.uq-total, .uq-bar { height: 6px; background: var(--line); border-radius: 9px; overflow: hidden; }
+.uq-total { height: 8px; margin-bottom: 10px; }
+.uq-total span, .uq-bar span { display: block; height: 100%; background: var(--brand); border-radius: 9px; transition: width .25s; }
+.uq-list { max-height: 230px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.uq-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 10px; padding: 7px 10px; font-size: 13px; }
+.uq-ico { width: 20px; text-align: center; color: var(--brand); }
+.uq-main { flex: 1; min-width: 0; }
+.uq-name { font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+.uq-dir { font-weight: 700; color: var(--ink-3); margin-inline-start: 8px; font-size: 12px; }
+.uq-msg { font-weight: 800; color: var(--ink-3); white-space: nowrap; font-size: 12px; }
+.uq-row.ok .uq-bar span { background: var(--good); }
+.uq-row.fail .uq-msg { color: var(--bad-ink); }
+.uq-row.fail .uq-bar span { background: var(--bad); }
+.uq-row.skip { opacity: .7; }
+.uq-row.skip .uq-msg { color: var(--warn-ink); }
+
+/* ===== صانع الأنشطة: 8 قوالب ===== */
+.game-pick { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 10px; }
+.game-pick .tool { position: relative; }
+.game-pick .tool.picked { outline: 3px solid var(--violet); outline-offset: 1px; background: var(--violet-50); }
+.game-pick .new-tag { position: absolute; top: 6px; left: 6px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 900; padding: 1px 6px; border-radius: 6px; }
+@media (max-width: 620px) { .game-pick { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 </head>
 <body>
@@ -910,13 +952,24 @@ h2 .reg-no, h4 .reg-no, #winnerNameDisplay .reg-no { height: auto; padding: 3px 
     <div class="modal-content modal-large">
         <span class="close-btn" onclick="closeModal('modalRepo')">&times;</span>
         <div class="modal-header"><span class="m-ico" style="background:#5468ff"><i class="fa-solid fa-cloud-arrow-up"></i></span><div><h3>المستودع السحابي</h3><p>PDF، Word، PowerPoint، Excel، صور، فيديو · حتى 20 ميجابايت</p></div></div>
+        <div class="repo-toolbar">
+            <nav id="repoCrumbs" class="repo-crumbs"></nav>
+            <div class="spacer"></div>
+            <input type="search" id="repoSearch" class="note-input" placeholder="🔍 ابحث في كل الملفات" oninput="renderRepo()">
+            <button class="btn btn-sm" onclick="newRepoFolder()"><i class="fa-solid fa-folder-plus"></i> مجلد جديد</button>
+        </div>
         <div class="upload-area" id="dropZone">
             <i class="fa-solid fa-cloud-arrow-up big"></i>
-            <p style="font-weight:800; margin:0 0 12px;">اسحب الملف هنا أو اختره من جهازك</p>
-            <input type="file" id="fileInput" style="display:none;" onchange="handleFileUpload(this)">
-            <button onclick="document.getElementById('fileInput').click()" class="btn btn-primary"><i class="fa-solid fa-folder-open"></i> اختيار ملف</button>
-            <div id="uploadStatus" style="margin-top:12px; font-weight:800;"></div>
+            <p style="font-weight:800; margin:0 0 4px;">اسحب الملفات أو المجلدات هنا</p>
+            <p class="card-sub" style="margin:0 0 12px;">سيُرفع إلى: <b id="repoTarget">المستودع</b></p>
+            <input type="file" id="fileInput" multiple style="display:none;" onchange="repoPick(this)">
+            <input type="file" id="folderInput" webkitdirectory directory multiple style="display:none;" onchange="repoPick(this)">
+            <div class="btn-row" style="justify-content:center;">
+                <button onclick="document.getElementById('fileInput').click()" class="btn btn-primary"><i class="fa-solid fa-file-arrow-up"></i> رفع ملفات</button>
+                <button onclick="document.getElementById('folderInput').click()" class="btn btn-soft"><i class="fa-solid fa-folder-open"></i> رفع مجلد</button>
+            </div>
         </div>
+        <div id="uploadQueue" class="upload-queue" style="display:none;"></div>
         <div id="repoGrid" class="repo-grid"></div>
     </div>
 </div>
@@ -1105,6 +1158,19 @@ h2 .reg-no, h4 .reg-no, #winnerNameDisplay .reg-no { height: auto; padding: 3px 
     </div>
 </div>
 
+<!-- نقل ملف إلى مجلد -->
+<div id="modalMoveFile" class="modal" style="z-index:2010;">
+    <div class="modal-content" style="max-width:440px;">
+        <span class="close-btn" onclick="closeModal('modalMoveFile')">&times;</span>
+        <div class="modal-header"><span class="m-ico" style="background:#5468ff"><i class="fa-solid fa-folder-tree"></i></span><div><h3>نقل إلى مجلد</h3><p id="moveFileName"></p></div></div>
+        <label class="label">المجلد</label>
+        <select id="moveFolderSelect" class="note-input"></select>
+        <label class="label">أو مجلد جديد داخله (اختياري)</label>
+        <input type="text" id="moveNewFolder" class="note-input" placeholder="اسم مجلد جديد">
+        <button class="btn btn-primary btn-block" onclick="confirmMoveFile()"><i class="fa-solid fa-check"></i> نقل</button>
+    </div>
+</div>
+
 <!-- رمز QR لتقرير الطالب -->
 <div id="modalReportQR" class="modal" style="z-index:2010;">
     <div class="modal-content" style="max-width:420px;">
@@ -1254,16 +1320,24 @@ h2 .reg-no, h4 .reg-no, #winnerNameDisplay .reg-no { height: auto; padding: 3px 
         <div class="modal-header"><span class="m-ico" style="background:var(--violet)"><i class="fa-solid fa-puzzle-piece"></i></span><div><h3>صانع الأنشطة التفاعلية</h3><p>أدخل المصطلحات وتعريفاتها، واختر قالب اللعبة، ثم شارك الكود مع الطلاب</p></div></div>
         <input type="text" id="manualGameTitle" class="note-input" placeholder="اسم النشاط (مثال: تحدي مكونات الحاسب)" style="font-weight:800;">
         <label class="label">قالب اللعبة</label>
-        <div class="tools-grid" style="grid-template-columns:repeat(4,minmax(0,1fr)); margin-bottom:14px;" id="gamePick">
+        <div class="tools-grid game-pick" id="gamePick">
             <button class="tool" data-t="matching" onclick="pickTemplate(this)"><span class="tool-ico" style="background:#6d5bd0">🧩</span>المطابقة</button>
             <button class="tool" data-t="sorting" onclick="pickTemplate(this)"><span class="tool-ico" style="background:#0e8f9e">🗂️</span>الفرز</button>
             <button class="tool" data-t="sequence" onclick="pickTemplate(this)"><span class="tool-ico" style="background:#e2632d">🔢</span>الترتيب</button>
             <button class="tool" data-t="spaceman" onclick="pickTemplate(this)"><span class="tool-ico" style="background:#1a6fb0">👨‍🚀</span>رائد الفضاء</button>
+            <button class="tool" data-t="memory" onclick="pickTemplate(this)"><span class="tool-ico" style="background:#8e44ad">🃏</span>بطاقات الذاكرة<small class="new-tag">جديد</small></button>
+            <button class="tool" data-t="race" onclick="pickTemplate(this)"><span class="tool-ico" style="background:#d03b3b">⚡</span>سباق الأسئلة<small class="new-tag">جديد</small></button>
+            <button class="tool" data-t="balloons" onclick="pickTemplate(this)"><span class="tool-ico" style="background:#e84d8a">🎈</span>البالونات<small class="new-tag">جديد</small></button>
+            <button class="tool" data-t="wordsearch" onclick="pickTemplate(this)"><span class="tool-ico" style="background:#16a085">🔎</span>البحث عن الكلمات<small class="new-tag">جديد</small></button>
         </div>
-        <select id="gameTemplateType" style="display:none;"><option value="matching">matching</option><option value="sorting">sorting</option><option value="sequence">sequence</option><option value="spaceman">spaceman</option></select>
+        <div class="hint" id="tplHint"></div>
+        <select id="gameTemplateType" style="display:none;"><option value="matching">matching</option><option value="sorting">sorting</option><option value="sequence">sequence</option><option value="spaceman">spaceman</option><option value="memory">memory</option><option value="race">race</option><option value="balloons">balloons</option><option value="wordsearch">wordsearch</option></select>
         <div id="manualActivityRows" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;"></div>
         <button onclick="addManualActivityRow()" class="btn btn-soft btn-block" style="margin-bottom:14px;"><i class="fa-solid fa-plus"></i> إضافة مصطلح</button>
-        <button onclick="saveManualGame()" id="btnSaveGame" class="btn btn-accent btn-lg btn-block"><i class="fa-solid fa-floppy-disk"></i> إنشاء اللعبة وتوليد الكود</button>
+        <div class="btn-row">
+            <button onclick="previewGame()" class="btn btn-soft btn-lg"><i class="fa-solid fa-eye"></i> معاينة كما يراها الطالب</button>
+            <button onclick="saveManualGame()" id="btnSaveGame" class="btn btn-accent btn-lg"><i class="fa-solid fa-floppy-disk"></i> إنشاء اللعبة وتوليد الكود</button>
+        </div>
     </div>
 </div>
 
@@ -2949,47 +3023,7 @@ function showStudentAnswers(idx) {
 // =====================================================================
 //  المستودع السحابي
 // =====================================================================
-function fileIcon(name) {
-    const e = String(name).split('.').pop().toLowerCase();
-    return { pdf: '📕', doc: '📘', docx: '📘', ppt: '📙', pptx: '📙', xls: '📗', xlsx: '📗', csv: '📗', jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️', webp: '🖼️', mp4: '🎬', mp3: '🎵', zip: '🗜️', txt: '📄' }[e] || '📄';
-}
-function openRepoModal() { openModal('modalRepo'); loadRepoFiles(); }
-let repoCache = [];
-function loadRepoFiles() {
-    const c = document.getElementById("repoGrid"); if (!c) return;
-    c.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-spinner fa-spin"></i>جاري تحميل الملفات...</div>`;
-    fetch(`${scriptURL}?action=get_repo_files&t=${Date.now()}`).then(r => r.json()).then(d => {
-        if (d.status !== 'success') { c.innerHTML = `<div class="empty-state" style="grid-column:1/-1">❌ ${esc(d.message || '')}</div>`; return; }
-        repoCache = d.files || [];
-        c.innerHTML = repoCache.length ? repoCache.map((f, k) => `<a class="file-card" href="${esc(f.url)}" target="_blank" rel="noopener">
-            <button class="f-del" onclick="event.preventDefault(); event.stopPropagation(); deleteTeacherFile(${parseInt(f.id)}, ${k})" title="حذف"><i class="fa-solid fa-xmark"></i></button>
-            <span class="f-ico">${fileIcon(f.name)}</span><span class="f-name">${esc(f.name)}</span></a>`).join('')
-            : `<div class="empty-state" style="grid-column:1/-1"><i class="fa-regular fa-folder-open"></i>لا توجد ملفات مرفوعة بعد.</div>`;
-    }).catch(() => { c.innerHTML = `<div class="empty-state" style="grid-column:1/-1">❌ خطأ في الاتصال بالخادم.</div>`; });
-}
-function deleteTeacherFile(fileId, k) {
-    const name = (repoCache[k] && repoCache[k].name) || 'المحدد';
-    if (!confirm(`⚠️ حذف الملف (${name}) نهائياً؟`)) return;
-    const fd = new FormData(); fd.append('action', 'delete_repo_file'); fd.append('file_id', fileId);
-    fetch(scriptURL, { method: 'POST', body: fd }).then(r => r.json()).then(d => { if (d.status === 'success') { toast('✅ تم حذف الملف.'); loadRepoFiles(); } else alert('❌ ' + d.message); }).catch(() => alert("❌ فشل الاتصال بالخادم."));
-}
-function uploadFile(file) {
-    const st = document.getElementById('uploadStatus');
-    if (file.size > 20 * 1024 * 1024) { st.innerHTML = `<span style="color:var(--bad-ink)">❌ حجم الملف أكبر من 20 ميجابايت.</span>`; return; }
-    st.innerHTML = `<span style="color:var(--ink-3)"><i class="fa-solid fa-spinner fa-spin"></i> جاري رفع ${esc(file.name)}...</span>`;
-    const fd = new FormData(); fd.append("file", file); fd.append("action", "upload_file");
-    fetch(scriptURL, { method: 'POST', body: fd }).then(r => r.json()).then(d => {
-        st.innerHTML = d.status === 'success' ? `<span style="color:var(--good-ink)">✅ تم رفع الملف بنجاح.</span>` : `<span style="color:var(--bad-ink)">❌ ${esc(d.message)}</span>`;
-        if (d.status === 'success') loadRepoFiles();
-    }).catch(() => { st.innerHTML = `<span style="color:var(--bad-ink)">❌ فشل الاتصال بالخادم.</span>`; });
-}
-function handleFileUpload(input) { if (input.files && input.files[0]) uploadFile(input.files[0]); input.value = ''; }
-function setupDropZone() {
-    const z = document.getElementById('dropZone'); if (!z) return;
-    ['dragenter', 'dragover'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.add('drag'); }));
-    ['dragleave', 'drop'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.remove('drag'); }));
-    z.addEventListener('drop', e => { if (e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]); });
-}
+// المستودع السحابي في repo.js
 
 // =====================================================================
 //  دفتر التحضير
@@ -3428,34 +3462,68 @@ function initPickers() {
     const first = document.querySelector('#gamePick .tool'); if (first) pickTemplate(first);
     const a = document.querySelector('#arenaPick .tool'); if (a) pickArena(a);
 }
+// قوالب الألعاب: ماذا يُكتب في كل خانة + أقل عدد للعناصر
+const GAME_TPL = {
+    matching:   { w: 'المصطلح', d: 'التعريف', min: 2, hint: 'اكتب المصطلح وتعريفه. يطابق الطالب كل مصطلح بتعريفه في عمودين.' },
+    sorting:    { w: 'العنصر', d: 'اسم التصنيف (الصندوق)', min: 2, hint: 'اكتب العنصر، وفي الخانة الثانية <b>اسم التصنيف</b>. العناصر التي لها التصنيف نفسه تذهب لصندوق واحد. مثال: «الفأرة» ← «وحدة إدخال»، «الشاشة» ← «وحدة إخراج».' },
+    sequence:   { w: 'اسم الخطوة', d: 'وصف الخطوة (اختياري)', min: 2, hint: 'اكتب الخطوات <b>بالترتيب الصحيح</b> من الأولى إلى الأخيرة، وستُخلط للطالب.' },
+    spaceman:   { w: 'الكلمة', d: 'التلميح', min: 1, hint: 'اكتب كلمة واحدة يخمّن الطالب حروفها، وتلميحاً يساعده عليها.' },
+    memory:     { w: 'المصطلح', d: 'التعريف', min: 3, hint: 'بطاقات مقلوبة يبحث فيها الطالب عن كل مصطلح وتعريفه. الأفضل التعريفات القصيرة.' },
+    race:       { w: 'الإجابة (المصطلح)', d: 'السؤال (التعريف)', min: 4, hint: 'يظهر التعريف ويختار الطالب المصطلح من 4 خيارات خلال 15 ثانية. يحتاج 4 عناصر على الأقل.' },
+    balloons:   { w: 'الإجابة (المصطلح)', d: 'السؤال (التعريف)', min: 4, hint: 'يظهر التعريف ويفرقع الطالب البالون الذي عليه المصطلح الصحيح. يحتاج 4 عناصر على الأقل.' },
+    wordsearch: { w: 'الكلمة', d: 'التلميح', min: 3, hint: 'كلمات تُخفى في شبكة حروف، والتلميحات تظهر للطالب. اكتب كلمة واحدة (2 إلى 10 حروف) بلا مسافات.' },
+};
 function pickTemplate(btn) {
-    document.querySelectorAll('#gamePick .tool').forEach(b => b.style.outline = b === btn ? '3px solid var(--violet)' : '');
-    document.getElementById('gameTemplateType').value = btn.dataset.t;
+    document.querySelectorAll('#gamePick .tool').forEach(b => b.classList.toggle('picked', b === btn));
+    const t = btn.dataset.t, m = GAME_TPL[t];
+    document.getElementById('gameTemplateType').value = t;
+    document.getElementById('tplHint').innerHTML = '💡 ' + m.hint;
+    document.querySelectorAll('#manualActivityRows .activity-row').forEach(row => { row.querySelector('.act-word').placeholder = m.w; row.querySelector('.act-def').placeholder = m.d; });
 }
 function openAiGenerator() {
     const c = document.getElementById('manualActivityRows');
+    if (!document.querySelector('#gamePick .tool.picked')) pickTemplate(document.querySelector('#gamePick .tool[data-t="matching"]'));
     if (!c.children.length) { addManualActivityRow(); addManualActivityRow(); addManualActivityRow(); }
     openModal('modalAiActivity');
 }
 function addManualActivityRow() {
     const row = document.createElement('div');
     row.className = 'activity-row'; row.style.cssText = 'display:flex; gap:8px; align-items:center;';
-    row.innerHTML = `<input type="text" class="act-word note-input" placeholder="المصطلح (مثال: الفأرة)" style="flex:1; margin:0; font-weight:800;">
-        <input type="text" class="act-def note-input" placeholder="التعريف (مثال: وحدة إدخال للتحكم بالمؤشر)" style="flex:2; margin:0;">
+    const m = GAME_TPL[document.getElementById('gameTemplateType').value] || GAME_TPL.matching;
+    row.innerHTML = `<input type="text" class="act-word note-input" placeholder="${m.w}" style="flex:1; margin:0; font-weight:800;">
+        <input type="text" class="act-def note-input" placeholder="${m.d}" style="flex:2; margin:0;">
         <button class="btn btn-sm btn-danger" onclick="this.parentElement.remove()" title="حذف"><i class="fa-solid fa-xmark"></i></button>`;
     document.getElementById('manualActivityRows').appendChild(row);
+}
+function collectGameItems() {
+    const type = document.getElementById('gameTemplateType').value, m = GAME_TPL[type] || GAME_TPL.matching;
+    const items = [], seen = new Set();
+    document.querySelectorAll('.activity-row').forEach(row => {
+        const w = row.querySelector('.act-word').value.trim(), d = row.querySelector('.act-def').value.trim();
+        if (!w || (!d && type !== 'sequence')) return;
+        if (seen.has(w)) return; seen.add(w);
+        items.push({ word: w, def: d, type });
+    });
+    if (items.length < m.min) { alert(`⚠️ هذا القالب يحتاج ${m.min} ${m.min >= 3 && m.min <= 10 ? 'عناصر' : 'عنصراً'} على الأقل (أدخلت ${items.length}).`); return null; }
+    if (type === 'sorting' && new Set(items.map(i => i.def)).size < 2) { alert('⚠️ لعبة الفرز تحتاج تصنيفين مختلفين على الأقل في خانة «اسم التصنيف».'); return null; }
+    if (type === 'wordsearch' || type === 'spaceman') {
+        const bad = items.filter(i => /\s/.test(i.word) || (type === 'wordsearch' && (i.word.length < 2 || i.word.length > 10)));
+        if (bad.length) { alert(`⚠️ ${type === 'wordsearch' ? 'البحث عن الكلمات يحتاج كلمة واحدة من 2 إلى 10 حروف' : 'رائد الفضاء يحتاج كلمة واحدة بلا مسافات'}. راجع: ${bad.map(i => i.word).join('، ')}`); return null; }
+    }
+    if ((type === 'race' || type === 'balloons') && new Set(items.map(i => i.word)).size < 4) { alert('⚠️ يحتاج هذا القالب 4 إجابات مختلفة على الأقل.'); return null; }
+    return items;
+}
+function previewGame() {
+    const items = collectGameItems(); if (!items) return;
+    const title = document.getElementById('manualGameTitle').value.trim() || 'معاينة النشاط';
+    try { localStorage.setItem('mehwar_game_preview', JSON.stringify({ type: items[0].type, title, items })); } catch (e) { return alert('❌ تعذر تجهيز المعاينة.'); }
+    const base = studentPortalURL();
+    window.open(base + (base.includes('?') ? '&' : '?') + 'preview=1', '_blank');
 }
 function saveManualGame() {
     const title = document.getElementById('manualGameTitle').value.trim();
     if (!title) { alert("⚠️ اكتب اسم النشاط أولاً."); return document.getElementById('manualGameTitle').focus(); }
-    const type = document.getElementById('gameTemplateType').value;
-    const items = [], seen = new Set();
-    document.querySelectorAll('.activity-row').forEach(row => {
-        const w = row.querySelector('.act-word').value.trim(), d = row.querySelector('.act-def').value.trim();
-        if (w && d) { if (seen.has(w)) return; seen.add(w); items.push({ word: w, def: d, type }); }
-    });
-    if (items.length < 2) return alert("⚠️ أدخل مصطلحين وتعريفين على الأقل.");
-    if (type === 'sorting' && new Set(items.map(i => i.def)).size !== items.length) toast('⚠️ في لعبة الفرز يُفضّل أن يكون لكل مصطلح تعريف مختلف.');
+    const items = collectGameItems(); if (!items) return;
     const btn = document.getElementById('btnSaveGame'); btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...`;
     saveQuizWithUniqueCode("G-", "🎮 " + title, items).then(code => {
         if (code) {
@@ -3466,6 +3534,235 @@ function saveManualGame() {
             confetti();
         }
     }).finally(() => { btn.disabled = false; btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> إنشاء اللعبة وتوليد الكود`; });
+}
+
+// =====================================================================
+//  المستودع السحابي: مجلدات + رفع عدة ملفات ومجلدات دفعة واحدة
+// =====================================================================
+const REPO_EXT = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'csv', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'mp3', 'mp4', 'zip'];
+const REPO_MAX_MB = 20, REPO_PARALLEL = 3;
+const SYSTEM_FILES = /^(\.|thumbs\.db$|desktop\.ini$|~\$)/i;
+let repoCache = [], repoFolder = '', repoVirtual = new Set(), repoQueue = [], repoRunning = 0, repoBatch = null;
+
+function fileIcon(name) {
+    const e = String(name).split('.').pop().toLowerCase();
+    return { pdf: '📕', doc: '📘', docx: '📘', ppt: '📙', pptx: '📙', xls: '📗', xlsx: '📗', csv: '📗', jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️', webp: '🖼️', mp4: '🎬', mp3: '🎵', zip: '🗜️', txt: '📄' }[e] || '📄';
+}
+const joinPath = (...p) => p.filter(Boolean).join('/');
+const cleanPath = p => String(p || '').replace(/\\/g, '/').split('/').map(s => s.trim().replace(/^\.+|\.+$/g, '')).filter(Boolean).slice(0, 5).map(s => s.slice(0, 60)).join('/');
+
+function openRepoModal() { openModal('modalRepo'); loadRepoFiles(); }
+function loadRepoFiles() {
+    const c = document.getElementById('repoGrid'); if (!c) return;
+    if (!repoCache.length) c.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-spinner fa-spin"></i>جاري تحميل الملفات...</div>`;
+    return fetch(`${scriptURL}?action=get_repo_files&t=${Date.now()}`).then(r => r.json()).then(d => {
+        if (d.status !== 'success') { c.innerHTML = `<div class="empty-state" style="grid-column:1/-1">❌ ${esc(d.message || '')}</div>`; return; }
+        repoCache = (d.files || []).map(f => Object.assign({}, f, { folder: cleanPath(f.folder) }));
+        renderRepo();
+    }).catch(() => { c.innerHTML = `<div class="empty-state" style="grid-column:1/-1">❌ خطأ في الاتصال بالخادم.</div>`; });
+}
+
+// كل المجلدات المعروفة (من الملفات + المجلدات الجديدة الفارغة)
+function allFolders() {
+    const s = new Set();
+    const add = p => { const parts = p.split('/'); for (let i = 1; i <= parts.length; i++) s.add(parts.slice(0, i).join('/')); };
+    repoCache.forEach(f => f.folder && add(f.folder));
+    repoVirtual.forEach(add);
+    return [...s].sort((a, b) => a.localeCompare(b, 'ar'));
+}
+function folderCount(path) { return repoCache.filter(f => f.folder === path || f.folder.startsWith(path + '/')).length; }
+
+function renderRepo() {
+    const c = document.getElementById('repoGrid'); if (!c) return;
+    const q = (document.getElementById('repoSearch').value || '').trim();
+    // شريط المسار
+    const parts = repoFolder ? repoFolder.split('/') : [];
+    document.getElementById('repoCrumbs').innerHTML = `<button class="crumb" onclick="repoGo('')"><i class="fa-solid fa-house"></i> المستودع</button>`
+        + parts.map((p, i) => `<i class="fa-solid fa-chevron-left sep"></i><button class="crumb" onclick="repoGo(${esc(JSON.stringify(parts.slice(0, i + 1).join('/')))})">${esc(p)}</button>`).join('');
+    document.getElementById('repoTarget').innerText = repoFolder ? repoFolder.split('/').join(' › ') : 'المستودع (الرئيسي)';
+
+    let html = '';
+    if (q) {
+        const hits = repoCache.filter(f => f.name.includes(q) || f.folder.includes(q));
+        html = hits.map(fileCard).join('') || `<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-magnifying-glass"></i>لا توجد نتائج لـ «${esc(q)}»</div>`;
+    } else {
+        const subs = allFolders().filter(p => p.startsWith(repoFolder ? repoFolder + '/' : '') && p.split('/').length === parts.length + 1);
+        html = subs.map(p => {
+            const n = folderCount(p), name = p.split('/').pop();
+            return `<div class="folder-card" onclick="repoGo(${esc(JSON.stringify(p))})" title="${esc(p)}">
+                <button class="f-del" onclick="event.stopPropagation(); deleteRepoFolder(${esc(JSON.stringify(p))})" title="حذف المجلد"><i class="fa-solid fa-xmark"></i></button>
+                <span class="f-ico">📁</span><span class="f-name">${esc(name)}</span><span class="f-meta">${n ? `${n} ${n >= 3 && n <= 10 ? 'ملفات' : 'ملف'}` : 'فارغ'}</span></div>`;
+        }).join('') + repoCache.filter(f => f.folder === repoFolder).map(fileCard).join('');
+        if (!html) html = `<div class="empty-state" style="grid-column:1/-1"><i class="fa-regular fa-folder-open"></i>${repoFolder ? 'هذا المجلد فارغ. ارفع إليه ملفات من الأعلى.' : 'لا توجد ملفات مرفوعة بعد.'}</div>`;
+    }
+    c.innerHTML = html;
+}
+function fileCard(f) {
+    const k = repoCache.indexOf(f);
+    return `<a class="file-card" href="${esc(f.url)}" target="_blank" rel="noopener" title="${esc(f.name)}">
+        <button class="f-del" onclick="event.preventDefault(); event.stopPropagation(); deleteTeacherFile(${k})" title="حذف"><i class="fa-solid fa-xmark"></i></button>
+        <button class="f-move" onclick="event.preventDefault(); event.stopPropagation(); openMoveFile(${k})" title="نقل إلى مجلد"><i class="fa-solid fa-folder-tree"></i></button>
+        <span class="f-ico">${fileIcon(f.name)}</span><span class="f-name">${esc(f.name)}</span>
+        ${document.getElementById('repoSearch').value.trim() && f.folder ? `<span class="f-meta">📁 ${esc(f.folder)}</span>` : ''}</a>`;
+}
+function repoGo(path) { repoFolder = cleanPath(path); document.getElementById('repoSearch').value = ''; renderRepo(); }
+function newRepoFolder() {
+    const name = cleanPath(prompt('اسم المجلد الجديد:', '') || '');
+    if (!name) return;
+    if (name.includes('/')) return alert('⚠️ اكتب اسماً واحداً بدون علامة /');
+    const p = joinPath(repoFolder, name);
+    if (allFolders().includes(p)) { repoGo(p); return; }
+    repoVirtual.add(p); repoGo(p);
+    toast(`📁 تم إنشاء «${name}». يُحفظ المجلد بعد رفع أول ملف بداخله.`);
+}
+
+function deleteTeacherFile(k) {
+    const f = repoCache[k]; if (!f) return;
+    if (!confirm(`⚠️ حذف الملف (${f.name}) نهائياً؟`)) return;
+    const fd = new FormData(); fd.append('action', 'delete_repo_file'); fd.append('file_id', f.id);
+    fetch(scriptURL, { method: 'POST', body: fd }).then(r => r.json()).then(d => {
+        if (d.status === 'success') { toast('✅ تم حذف الملف.'); if (f.folder) repoVirtual.add(f.folder); loadRepoFiles(); } else alert('❌ ' + d.message);
+    }).catch(() => alert('❌ خطأ في الاتصال.'));
+}
+function deleteRepoFolder(path) {
+    const n = folderCount(path);
+    if (!n) { [...repoVirtual].forEach(v => { if (v === path || v.startsWith(path + '/')) repoVirtual.delete(v); }); renderRepo(); return; }
+    if (!confirm(`⚠️ حذف المجلد «${path.split('/').pop()}» مع ${n} ${n >= 3 && n <= 10 ? 'ملفات' : 'ملف'} بداخله نهائياً؟`)) return;
+    const fd = new FormData(); fd.append('action', 'delete_repo_folder'); fd.append('folder', path);
+    fetch(scriptURL, { method: 'POST', body: fd }).then(r => r.json()).then(d => {
+        if (d.status !== 'success') return alert('❌ ' + (d.message || 'تعذر الحذف'));
+        [...repoVirtual].forEach(v => { if (v === path || v.startsWith(path + '/')) repoVirtual.delete(v); });
+        if (repoFolder === path || repoFolder.startsWith(path + '/')) repoFolder = path.split('/').slice(0, -1).join('/');
+        toast(`🗑️ تم حذف المجلد و${d.deleted} ملف.`); loadRepoFiles();
+    }).catch(() => alert('❌ خطأ في الاتصال.'));
+}
+
+// نقل ملف إلى مجلد
+let moveIdx = -1;
+function openMoveFile(k) {
+    const f = repoCache[k]; if (!f) return; moveIdx = k;
+    document.getElementById('moveFileName').innerText = f.name;
+    const sel = document.getElementById('moveFolderSelect');
+    sel.innerHTML = `<option value="">🏠 المستودع (الرئيسي)</option>` + allFolders().map(p => `<option value="${esc(p)}">${'— '.repeat(p.split('/').length - 1)}📁 ${esc(p.split('/').pop())}</option>`).join('');
+    sel.value = f.folder;
+    document.getElementById('moveNewFolder').value = '';
+    openModal('modalMoveFile');
+}
+function confirmMoveFile() {
+    const f = repoCache[moveIdx]; if (!f) return;
+    const extra = cleanPath(document.getElementById('moveNewFolder').value);
+    const target = cleanPath(joinPath(document.getElementById('moveFolderSelect').value, extra));
+    if (target === f.folder) return closeModal('modalMoveFile');
+    const fd = new FormData(); fd.append('action', 'move_repo_file'); fd.append('file_id', f.id); fd.append('folder', target);
+    fetch(scriptURL, { method: 'POST', body: fd }).then(r => r.json()).then(d => {
+        if (d.status !== 'success') return alert('❌ ' + (d.message || 'تعذر النقل'));
+        if (f.folder) repoVirtual.add(f.folder);
+        closeModal('modalMoveFile'); toast(`✅ نُقل الملف إلى «${target || 'المستودع'}».`); loadRepoFiles();
+    }).catch(() => alert('❌ خطأ في الاتصال.'));
+}
+
+// ---------- طابور الرفع ----------
+function repoPick(input) { const list = [...(input.files || [])].map(file => ({ file, dir: (file.webkitRelativePath || '').split('/').slice(0, -1).join('/') })); input.value = ''; enqueueUploads(list); }
+async function collectDropped(dt) {
+    const entries = [...(dt.items || [])].filter(i => i.kind === 'file').map(i => i.webkitGetAsEntry ? i.webkitGetAsEntry() : null).filter(Boolean);
+    if (!entries.length) return [...dt.files].map(file => ({ file, dir: '' }));
+    const out = [];
+    const readAll = reader => new Promise((res, rej) => { const acc = []; const step = () => reader.readEntries(b => { if (!b.length) return res(acc); acc.push(...b); step(); }, rej); step(); });
+    async function walk(entry, dir) {
+        if (entry.isFile) { try { out.push({ file: await new Promise((res, rej) => entry.file(res, rej)), dir }); } catch (e) {} }
+        else if (entry.isDirectory) { const here = joinPath(dir, entry.name); for (const e of await readAll(entry.createReader())) await walk(e, here); }
+    }
+    for (const e of entries) await walk(e, '');
+    return out;
+}
+function setupDropZone() {
+    const z = document.getElementById('dropZone'); if (!z) return;
+    ['dragenter', 'dragover'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.add('drag'); }));
+    ['dragleave', 'drop'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.remove('drag'); }));
+    z.addEventListener('drop', e => { collectDropped(e.dataTransfer).then(enqueueUploads); });
+}
+
+function enqueueUploads(list) {
+    if (!list.length) return;
+    if (list.length > 150 && !confirm(`سيتم رفع ${list.length} ملفاً. هل تريد المتابعة؟`)) return;
+    if (!repoBatch || repoBatch.done) repoBatch = { items: [], done: false };
+    const base = repoFolder;
+    list.forEach(({ file, dir }) => {
+        const ext = (file.name.split('.').pop() || '').toLowerCase();
+        const item = { file, folder: cleanPath(joinPath(base, dir)), state: 'wait', pct: 0, msg: '' };
+        if (SYSTEM_FILES.test(file.name)) { item.state = 'skip'; item.msg = 'ملف نظام'; }
+        else if (!REPO_EXT.includes(ext)) { item.state = 'skip'; item.msg = 'نوع غير مسموح'; }
+        else if (file.size > REPO_MAX_MB * 1048576) { item.state = 'skip'; item.msg = `أكبر من ${REPO_MAX_MB} ميجابايت`; }
+        else if (!file.size) { item.state = 'skip'; item.msg = 'ملف فارغ'; }
+        if (item.state === 'skip' && item.msg === 'ملف نظام') return; // لا نعرض ملفات النظام أصلاً
+        repoBatch.items.push(item);
+        if (item.state === 'wait') repoQueue.push(item);
+    });
+    renderQueue(); pumpUploads();
+}
+function pumpUploads() {
+    while (repoRunning < REPO_PARALLEL && repoQueue.length) {
+        const item = repoQueue.shift(); repoRunning++;
+        uploadOne(item).finally(() => { repoRunning--; renderQueue(); if (!repoQueue.length && !repoRunning) finishBatch(); else pumpUploads(); });
+    }
+}
+function uploadOne(item) {
+    item.state = 'up'; item.pct = 0; renderQueue();
+    const fd = new FormData(); fd.append('action', 'upload_file'); fd.append('folder', item.folder); fd.append('file', item.file, item.file.name);
+    const done = d => { if (d && d.status === 'success') { item.state = 'ok'; item.pct = 100; } else { item.state = 'fail'; item.msg = (d && d.message) || 'تعذر الرفع'; } };
+    // الخادم الوهمي للاختبار يعترض fetch فقط
+    if (window.__mockLog) return fetch(scriptURL, { method: 'POST', body: fd }).then(r => r.json()).then(done).catch(() => done(null));
+    return new Promise(res => {
+        const x = new XMLHttpRequest();
+        x.open('POST', scriptURL);
+        const tok = localStorage.getItem('teacher_token'); if (tok) x.setRequestHeader('X-Auth-Token', tok);
+        x.upload.onprogress = e => { if (e.lengthComputable) { item.pct = Math.round(e.loaded / e.total * 100); updateQueueItem(item); } };
+        x.onload = () => { if (x.status === 401) { item.state = 'fail'; item.msg = 'انتهت الجلسة، سجّل الدخول مجدداً'; return res(); } try { done(JSON.parse(x.responseText)); } catch (e) { done(null); } res(); };
+        x.onerror = () => { item.state = 'fail'; item.msg = 'انقطع الاتصال'; res(); };
+        x.send(fd);
+    });
+}
+function finishBatch() {
+    if (!repoBatch) return;
+    repoBatch.done = true;
+    const it = repoBatch.items, ok = it.filter(i => i.state === 'ok').length;
+    if (ok) { it.forEach(i => { if (i.state === 'ok' && i.folder) repoVirtual.delete(i.folder); }); loadRepoFiles(); playSound(880, 'sine', .15, .08); }
+    renderQueue();
+}
+function retryFailed() {
+    if (!repoBatch) return;
+    repoBatch.done = false;
+    repoBatch.items.filter(i => i.state === 'fail').forEach(i => { i.state = 'wait'; i.msg = ''; repoQueue.push(i); });
+    renderQueue(); pumpUploads();
+}
+function clearQueue() { if (repoRunning || repoQueue.length) return; repoBatch = null; renderQueue(); }
+
+const QSTATE = { wait: ['⏳', 'بالانتظار'], up: ['', 'جاري الرفع'], ok: ['✅', 'تم'], fail: ['❌', 'فشل'], skip: ['⏭️', 'تم تجاهله'] };
+function queueRow(i, k) {
+    return `<div class="uq-row ${i.state}" id="uq-${k}"><span class="uq-ico">${i.state === 'up' ? '<i class="fa-solid fa-spinner fa-spin"></i>' : QSTATE[i.state][0]}</span>
+        <div class="uq-main"><div class="uq-name">${fileIcon(i.file.name)} ${esc(i.file.name)}${i.folder ? `<span class="uq-dir">📁 ${esc(i.folder)}</span>` : ''}</div>
+        <div class="uq-bar"><span style="width:${i.state === 'ok' ? 100 : i.pct}%"></span></div></div>
+        <span class="uq-msg">${esc(i.msg || QSTATE[i.state][1])}</span></div>`;
+}
+function renderQueue() {
+    const box = document.getElementById('uploadQueue'); if (!box) return;
+    if (!repoBatch || !repoBatch.items.length) { box.innerHTML = ''; box.style.display = 'none'; return; }
+    const it = repoBatch.items, n = s => it.filter(i => i.state === s).length;
+    const total = it.filter(i => i.state !== 'skip').length, finished = n('ok') + n('fail');
+    const running = !repoBatch.done;
+    box.style.display = 'block';
+    box.innerHTML = `<div class="uq-head">
+            <b>${running ? `<i class="fa-solid fa-cloud-arrow-up"></i> جاري الرفع: ${finished} من ${total}` : `تم رفع ${n('ok')}${n('skip') ? ` · تم تجاهل ${n('skip')}` : ''}${n('fail') ? ` · فشل ${n('fail')}` : ''}`}</b>
+            <div class="spacer"></div>
+            ${!running && n('fail') ? `<button class="btn btn-sm btn-primary" onclick="retryFailed()"><i class="fa-solid fa-rotate-right"></i> إعادة المحاولة</button>` : ''}
+            ${!running ? `<button class="btn btn-sm btn-ghost" onclick="clearQueue()"><i class="fa-solid fa-xmark"></i> إغلاق</button>` : ''}
+        </div>
+        <div class="uq-total"><span style="width:${total ? finished / total * 100 : 100}%"></span></div>
+        <div class="uq-list">${it.map(queueRow).join('')}</div>`;
+}
+function updateQueueItem(item) {
+    const k = repoBatch ? repoBatch.items.indexOf(item) : -1; const row = document.getElementById('uq-' + k);
+    if (row) { const b = row.querySelector('.uq-bar span'); if (b) b.style.width = item.pct + '%'; }
 }
 
 // =====================================================================
