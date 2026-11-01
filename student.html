@@ -290,6 +290,18 @@
             .g-chip { padding: 5px 8px; font-size: 13px; }
         }
 
+        /* رسالة صح/خطأ وتثبيت الإجابة */
+        .g-note { position: fixed; top: 14px; left: 50%; z-index: 9000; width: max-content; max-width: calc(100vw - 32px); text-align: center; font-weight: 900; font-size: 15px; line-height: 1.6; padding: 10px 18px; border-radius: 14px; box-shadow: 0 14px 30px -14px rgba(10,20,50,.45); opacity: 0; transform: translate(-50%, -12px); transition: opacity .25s, transform .25s; pointer-events: none; }
+        .g-note.show { opacity: 1; transform: translate(-50%, 0); }
+        .g-note.ok { background: var(--good-50); color: #08730a; border: 1px solid #b8e6b8; }
+        .g-note.no { background: var(--bad-50); color: #b42318; border: 1px solid #f3c1c1; }
+        .mt-card.wrongpair { background: var(--bad-50) !important; border-color: var(--bad) !important; color: #8a1c1c !important; }
+        .mt-card.wrongpair.term::before { content: '✗ '; }
+        .mm-card.bad .mm-front { border-color: var(--bad); background: var(--bad-50); }
+        .bl-sky.locked .bl:not(.reveal):not(.pop) { opacity: .45; pointer-events: none; }
+        .bl.reveal { animation: none; outline: 4px solid var(--good); outline-offset: 4px; box-shadow: 0 0 0 10px rgba(12,163,12,.18), inset -8px -10px 0 rgba(0,0,0,.12); }
+        .bl.reveal::before { content: '✓'; position: absolute; top: -14px; right: -6px; width: 28px; height: 28px; border-radius: 50%; background: var(--good); color: #fff; display: grid; place-items: center; font-size: 15px; }
+
     </style>
 </head>
 <body>
@@ -336,7 +348,7 @@
                 </select>
             </div>
 
-            <button class="btn-primary" onclick="startQuizUI()">دخول للنشاط 🚀</button>
+            <button class="btn-primary" id="btnStartQuiz" onclick="startQuizUI()">دخول للنشاط 🚀</button>
         </div>
 
         <div id="loading">⏳ جاري الاتصال بالسيرفر... يرجى الانتظار</div>
@@ -491,6 +503,28 @@
 
        // دالة بدء الاختبار (مُحدّثة ومحمية بالكامل)
         function startQuizUI() {
+            const name = document.getElementById('selStudentName').value;
+            if (!name) return showAlert("الرجاء اختيار اسمك للبدء.");
+            const code = document.getElementById('quizCode').value.trim().toUpperCase();
+            const btn = document.getElementById('btnStartQuiz'), label = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = '⏳ جاري التحقق...';
+            fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({
+                action: 'check_submission', quizId: code, studentName: name,
+                grade: document.getElementById('selGrade').value, section: document.getElementById('selSection').value }) })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success' && d.submitted) {
+                    localStorage.setItem('completed_quiz_' + code, 'true');
+                    btn.disabled = false; btn.innerHTML = label;
+                    return showAlert("⛔ لقد سلّمت هذا النشاط من قبل، ولا يمكن إعادته.");
+                }
+                if (d.status !== 'success') { btn.disabled = false; btn.innerHTML = label; return showAlert(d.message || "تعذر التحقق، حاول مرة أخرى."); }
+                startQuizUIInner();
+            })
+            // إذا تعذر الاتصال نسمح بالبدء، والخادم يرفض أي تسليم مكرر عند الإرسال
+            .catch(() => startQuizUIInner());
+        }
+        function startQuizUIInner() {
             const selName = document.getElementById('selStudentName').value;
             const selGrade = document.getElementById('selGrade').value;
             const selSection = document.getElementById('selSection').value;
@@ -611,7 +645,8 @@ const gEl = id => document.getElementById(id);
 const gShuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const gNorm = s => String(s || '').replace(/[ً-ْـ]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').trim().toLowerCase();
 const gLater = (fn, ms) => { const t = setTimeout(fn, ms); G.timers.push(t); return t; };
-function gSound(f, type, d, v) { if (!G.muted) playSound(f, type, d, v); }
+// أصوات الألعاب ملغاة بطلب المعلم
+function gSound() {}
 
 // تشغيل اللعبة المناسبة
 function startGame(type, title, items) {
@@ -630,12 +665,10 @@ function startGame(type, title, items) {
             <div class="g-prog"><div class="g-prog-top"><span>${m.name}${G.preview ? ' · <b class="g-prev">معاينة</b>' : ''}</span><span id="gCount">0 / ${G.total}</span></div><div class="g-bar"><span id="gBar"></span></div></div>
             <div class="g-chip" title="النقاط">⭐ <b id="gScore">0</b></div>
             <div class="g-chip g-streak" id="gStreakBox" title="إجابات صحيحة متتالية">🔥 <b id="gStreak">0</b></div>
-            <button class="g-mute" id="gMute" onclick="gToggleMute()" title="الصوت">${G.muted ? '🔇' : '🔊'}</button>
         </div><div id="gBoard" class="g-board g-${type}"></div>`;
     ({ matching: gMatching, sorting: gSorting, sequence: gSequence, spaceman: gSpaceman, memory: gMemory, race: gRace, balloons: gBalloons, wordsearch: gWordsearch })[type]();
     gSound(600, 'triangle', 0.1);
 }
-function gToggleMute() { G.muted = !G.muted; gEl('gMute').innerText = G.muted ? '🔇' : '🔊'; }
 function gHud() {
     gEl('gCount').innerText = `${G.done} / ${G.total}`;
     gEl('gBar').style.width = (G.total ? G.done / G.total * 100 : 0) + '%';
@@ -734,15 +767,32 @@ function gMatching() {
         }
         const a = sel, b = card; sel = null; a.classList.remove('sel');
         const term = a.classList.contains('term') ? a : b, def = term === a ? b : a, i = +term.dataset.i;
+        pairs++;
         if (gNorm(G.items[+def.dataset.i].def) === gNorm(G.items[i].def)) {
-            const c = pal[pairs % pal.length]; pairs++;
+            const c = pal[(pairs - 1) % pal.length];
             [term, def].forEach(x => { x.classList.add('locked', 'paired'); x.style.setProperty('--pc', c); x.dataset.n = pairs; gGood(x); });
             gResolve(i, true);
-            if (pairs === G.total) gLater(gFinish, 900);
+            gNote('✓ إجابة صحيحة', true);
         } else {
-            gMiss(i); [term, def].forEach(gBad);
+            // الإجابة تُثبّت خطأً: يُقفل المصطلح، ويُكشف تعريفه الصحيح ولا يمكن تغييره
+            const right = [...board.querySelectorAll('.mt-card.def:not(.locked)')].find(x => gNorm(G.items[+x.dataset.i].def) === gNorm(G.items[i].def));
+            [term, right].forEach(x => { if (!x) return; x.classList.add('locked', 'paired', 'wrongpair'); x.style.setProperty('--pc', '#d03b3b'); x.dataset.n = pairs; });
+            gBad(term); gBad(def);
+            gResolve(i, false);
+            gNote(`✗ إجابة خاطئة — الصحيح: «${G.items[i].def}»`, false);
         }
+        if (pairs === G.total) gLater(gFinish, 1300);
     }));
+}
+
+// رسالة صح/خطأ أعلى اللوحة
+function gNote(text, ok) {
+    let n = gEl('gNote');
+    if (!n) { n = document.createElement('div'); n.id = 'gNote'; n.className = 'g-note'; gEl('gameArea').insertBefore(n, gEl('gBoard')); }
+    n.className = 'g-note ' + (ok ? 'ok' : 'no');
+    n.textContent = text;
+    gFx(n, 'show');
+    clearTimeout(n._t); n._t = setTimeout(() => n.classList.remove('show'), ok ? 1200 : 2600);
 }
 
 // =====================================================================
@@ -879,21 +929,34 @@ function gMemory() {
         gEl('gBoard').innerHTML = (rounds.length > 1 ? `<div class="mm-round">الجولة ${r + 1} من ${rounds.length}</div>` : '')
             + `<div class="mm-grid" style="--cols:${cards.length <= 8 ? 4 : cards.length <= 12 ? 4 : 4}">${cards.map((c, k) => `<button class="mm-card" data-k="${k}"><span class="mm-in"><span class="mm-back">?</span><span class="mm-front ${c.t}">${gHtml(c.txt)}</span></span></button>`).join('')}</div>`;
         let open = [], busy = false, found = 0;
-        gEl('gBoard').querySelectorAll('.mm-card').forEach(btn => btn.addEventListener('click', () => {
+        const seen = new Set(), board = gEl('gBoard');
+        const same = (x, y) => x.t !== y.t && gNorm(G.items[x.i].def) === gNorm(G.items[y.i].def) && gNorm(G.items[x.i].word) === gNorm(G.items[y.i].word);
+        const btnOf = k => board.querySelector(`.mm-card[data-k="${k}"]`);
+        const endPair = () => { found++; if (found === set.length) { r++; gLater(play, 1100); } };
+        board.querySelectorAll('.mm-card').forEach(btn => btn.addEventListener('click', () => {
             if (busy || btn.classList.contains('flip')) return;
-            btn.classList.add('flip'); gSound(600, 'sine', 0.05, 0.05); open.push(btn);
+            btn.classList.add('flip'); open.push(btn);
             if (open.length < 2) return;
-            const [a, b] = open.map(x => cards[+x.dataset.k]), [ea, eb] = open; open = [];
-            if (a.t !== b.t && gNorm(G.items[a.i].def) === gNorm(G.items[b.i].def) && gNorm(G.items[a.i].word) === gNorm(G.items[b.i].word)) {
+            const [ka, kb] = open.map(x => +x.dataset.k), a = cards[ka], b = cards[kb], [ea, eb] = open; open = [];
+            if (same(a, b)) {
                 [ea, eb].forEach(x => { x.classList.add('done'); gGood(x); });
-                gResolve(a.i, (misses[a.i] || 0) <= 2); found++;
-                if (found === set.length) { r++; gLater(play, 900); }
+                gResolve(a.i, true); gNote('✓ إجابة صحيحة', true); endPair();
             } else {
-                busy = true; misses[a.i] = (misses[a.i] || 0) + 1;
-                if (misses[a.i] > 2) gMiss(a.i); else { G.streak = 0; gHud(); }
-                gLater(() => { gBad(ea); gBad(eb); }, 350);
-                gLater(() => { ea.classList.remove('flip'); eb.classList.remove('flip'); busy = false; }, 1000);
+                // إذا سبق أن رأى الطالب البطاقة المطابقة واختار غيرها: تُثبّت الإجابة خطأً ويُكشف الزوج الصحيح
+                const pk = cards.findIndex((c, k) => k !== ka && same(a, c) && !btnOf(k).classList.contains('done'));
+                busy = true; gBad(eb);
+                if (pk >= 0 && seen.has(pk)) {
+                    const pb = btnOf(pk); pb.classList.add('flip');
+                    [ea, pb].forEach(x => x.classList.add('done', 'bad'));
+                    gResolve(a.i, false);
+                    gNote(`✗ إجابة خاطئة — «${G.items[a.i].word}» يطابق «${G.items[a.i].def}»`, false);
+                    gLater(() => { eb.classList.remove('flip'); busy = false; endPair(); }, 1300);
+                } else {
+                    G.streak = 0; gHud();
+                    gLater(() => { ea.classList.remove('flip'); eb.classList.remove('flip'); busy = false; }, 1000);
+                }
             }
+            seen.add(ka); seen.add(kb);
         }));
     };
     play();
@@ -940,14 +1003,18 @@ function gBalloons() {
         const opts = gShuffle([i, ...others]);
         gEl('gBoard').innerHTML = `<div class="bl-q"><small>${q + 1} / ${order.length}</small>${gHtml(G.items[i].def)}</div>
             <div class="bl-sky">${opts.map((k, n) => `<button class="bl" data-k="${k}" style="--bc:${cols[n % cols.length]}; --x:${12 + n * (76 / Math.max(1, opts.length - 1))}%; --y:${n % 2 ? 50 : 8}%; --d:${(n % 3) * 0.6}s; --s:${3.2 + (n % 2) * 0.8}s"><span>${gHtml(G.items[k].word)}</span></button>`).join('')}</div>`;
-        let tried = false, over = false;
+        let over = false;
         gEl('gBoard').querySelectorAll('.bl').forEach(b => b.addEventListener('click', () => {
             if (over || b.classList.contains('pop')) return;
-            b.classList.add('pop');
+            over = true; // محاولة واحدة لكل سؤال
+            const sky = gEl('gBoard').querySelector('.bl-sky'), qBox = gEl('gBoard').querySelector('.bl-q');
+            sky.classList.add('locked');
             if (+b.dataset.k === i) {
-                over = true; gSound(1200, 'square', 0.06, 0.06); gGood(gEl('gBoard').querySelector('.bl-q')); gResolve(i, !tried); q++; gLater(ask, 900);
+                b.classList.add('pop'); gGood(qBox); gResolve(i, true); gNote('✓ إجابة صحيحة', true); q++; gLater(ask, 900);
             } else {
-                tried = true; gMiss(i); b.classList.add('bad'); gBad(gEl('gBoard').querySelector('.bl-q'));
+                b.classList.add('pop', 'bad'); gBad(qBox); gResolve(i, false);
+                const right = gEl('gBoard').querySelector(`.bl[data-k="${i}"]`); if (right) right.classList.add('reveal');
+                gNote(`✗ إجابة خاطئة — الصحيح: «${G.items[i].word}»`, false); q++; gLater(ask, 2000);
             }
         }));
     };
