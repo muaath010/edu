@@ -111,6 +111,24 @@ a { color: var(--brand); }
     box-shadow: var(--shadow-sm); transition: transform .25s var(--ease-bounce), color .2s, border-color .2s;
 }
 .icon-btn:hover { transform: translateY(-2px); color: var(--brand); border-color: var(--brand-100); }
+/* جرس إشعارات المدير */
+.bell-wrap { position: relative; }
+.bell-badge { position: absolute; top: -4px; left: -4px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 900; display: none; align-items: center; justify-content: center; border: 2px solid var(--surface); }
+.bell-wrap.has .bell-badge { display: inline-flex; }
+.bell-wrap.has .icon-btn { color: var(--accent); border-color: var(--accent-50); }
+.bell-wrap.ring .icon-btn i { animation: bellRing .9s ease 2; }
+@keyframes bellRing { 0%,100% { transform: rotate(0); } 20% { transform: rotate(18deg); } 40% { transform: rotate(-15deg); } 60% { transform: rotate(9deg); } 80% { transform: rotate(-5deg); } }
+.bell-pop { position: absolute; top: calc(100% + 10px); left: 0; width: min(340px, 88vw); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); z-index: 900; display: none; overflow: hidden; }
+.bell-pop.open { display: block; }
+.bell-pop h4 { margin: 0; padding: 12px 14px; font-size: 15px; font-weight: 900; color: var(--ink); border-bottom: 1px solid var(--line); }
+.bell-list { max-height: 320px; overflow-y: auto; }
+.bell-item { padding: 10px 14px; border-bottom: 1px solid var(--line); display: flex; gap: 10px; align-items: center; }
+.bell-item .avatar { width: 34px; height: 34px; font-size: 13px; }
+.bell-item b { display: block; font-size: 14px; color: var(--ink); }
+.bell-item small { display: block; font-size: 12px; color: var(--ink-3); direction: ltr; text-align: right; overflow-wrap: anywhere; }
+.bell-empty { padding: 22px 14px; text-align: center; color: var(--ink-3); font-weight: 700; font-size: 14px; }
+.bell-foot { padding: 10px 14px; }
+@media (max-width: 620px) { .bell-pop { position: fixed; top: 64px; left: 12px; right: 12px; width: auto; } }
 .user-chip { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 14px; color: var(--ink); }
 .avatar {
     width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
@@ -784,6 +802,15 @@ body.dark-mode .folder-card { background: linear-gradient(180deg, #3a2f12, var(-
         </div>
         <div class="spacer"></div>
         <span class="sync-dot" id="syncDot" title="حالة المزامنة"></span>
+        <div class="bell-wrap" id="adminBell" style="display:none;">
+            <button class="icon-btn" onclick="toggleBellPop(event)" title="طلبات الانضمام"><i class="fa-solid fa-bell"></i></button>
+            <span class="bell-badge" id="bellCount">0</span>
+            <div class="bell-pop" id="bellPop" onclick="event.stopPropagation()">
+                <h4>🔔 طلبات الانضمام الجديدة</h4>
+                <div class="bell-list" id="bellList"></div>
+                <div class="bell-foot"><button class="btn btn-primary btn-block" onclick="reviewPendingTeachers()"><i class="fa-solid fa-user-check"></i> مراجعة وتفعيل</button></div>
+            </div>
+        </div>
         <button class="icon-btn" id="voiceBtn" onclick="toggleVoice()" title="التحكم الصوتي"><i class="fa-solid fa-microphone"></i></button>
         <button class="icon-btn" onclick="toggleDarkMode()" id="themeBtn" title="تبديل المظهر"><i class="fa-solid fa-moon"></i></button>
         <div class="user-chip"><span class="nm-text" id="teacherWelcome"></span><button class="icon-btn" id="btnMenuToggle" onclick="toggleMenu()" title="القائمة" style="padding:0; overflow:hidden;"><span class="avatar" id="topAvatar" style="width:100%;height:100%;">م</span></button></div>
@@ -1685,7 +1712,7 @@ function setTeacherUI(name, role) {
     const h = new Date().getHours();
     const greet = h < 12 ? 'صباح الخير' : h < 17 ? 'طاب يومك' : 'مساء الخير';
     document.getElementById('heroTitle').innerText = `${greet}، ${name} 👋`;
-    if (role === 'admin') document.getElementById('adminMenuBtn').style.display = 'flex';
+    if (role === 'admin') { document.getElementById('adminMenuBtn').style.display = 'flex'; startAdminNotify(); }
 }
 
 function toggleAuth(type) {
@@ -3262,7 +3289,7 @@ function openAdminPanel(silent) {
     if (document.getElementById('sideMenu').classList.contains('open')) toggleMenu();
     fetch(scriptURL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'admin_get_all', admin_pass: pass }) })
     .then(res => res.json()).then(data => {
-        if (data.status === 'success') { currentAdminPassword = pass; adminGlobalData = data; openModal('modalAdminPanel'); renderAdminData(adminCurrentTab); }
+        if (data.status === 'success') { currentAdminPassword = pass; adminGlobalData = data; openModal('modalAdminPanel'); renderAdminData(adminCurrentTab); checkAdminNotify(); }
         else alert("❌ " + data.message);
     }).catch(() => alert("❌ فشل الاتصال بالسيرفر."));
 }
@@ -3273,7 +3300,10 @@ function renderAdminData(type) {
     if (type === 'teachers') {
         thead.innerHTML = `<tr><th>#</th><th style="text-align:right;">المعلم</th><th>الانضمام / الانتهاء</th><th>الحالة</th><th>إجراءات</th></tr>`;
         const now = new Date();
-        html = (adminGlobalData.teachers || []).map((t, i) => {
+        // المنتظرون للتفعيل أولاً
+        const isPending = t => t.role !== 'admin' && !t.subscription_end;
+        const teachers = (adminGlobalData.teachers || []).slice().sort((a, b) => isPending(b) - isPending(a));
+        html = teachers.map((t, i) => {
             const end = t.subscription_end ? new Date(String(t.subscription_end).replace(' ', 'T')) : null;
             let badge, rem, btnText = "🔄 تجديد شهر", btnCls = 'btn-primary';
             if (t.role === 'admin') { badge = `<span class="badge b-violet">🛡️ مدير</span>`; rem = ''; }
@@ -3301,6 +3331,46 @@ function adminDeleteEntity(type, id) {
     if (!confirm(msg)) return;
     fetch(scriptURL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: type === 'teacher' ? 'admin_delete_teacher' : 'admin_delete_file', id, admin_pass: currentAdminPassword }) })
     .then(r => r.json()).then(d => { if (d.status === 'success') { toast('✅ تم الحذف.'); openAdminPanel(true); } else alert('❌ ' + (d.message || 'فشل الحذف')); }).catch(() => alert("❌ فشل الاتصال بالسيرفر."));
+}
+// ---------- إشعارات المدير: طلبات الانضمام ----------
+let adminNotifyTimer = null, adminNotifyLast = -1;
+function startAdminNotify() {
+    document.getElementById('adminBell').style.display = '';
+    if (adminNotifyTimer) return;
+    checkAdminNotify();
+    adminNotifyTimer = setInterval(() => { if (!document.hidden) checkAdminNotify(); }, 120000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) checkAdminNotify(); });
+    document.addEventListener('click', () => document.getElementById('bellPop').classList.remove('open'));
+}
+function checkAdminNotify() {
+    fetch(scriptURL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'admin_notifications' }) })
+    .then(r => r.json()).then(d => {
+        if (d.status !== 'success') return;
+        const n = parseInt(d.count) || 0, wrap = document.getElementById('adminBell');
+        document.getElementById('bellCount').innerText = n > 99 ? '99+' : n;
+        wrap.classList.toggle('has', n > 0);
+        document.getElementById('bellList').innerHTML = (d.pending || []).map(t => `<div class="bell-item"><span class="avatar">${esc(initials(t.name || ''))}</span><div style="min-width:0;"><b>${esc(t.name)}</b><small>${esc(t.email)}</small><small>${esc(t.date || '')}</small></div></div>`).join('')
+            || `<div class="bell-empty">✅ لا توجد طلبات انضمام جديدة</div>`;
+        // تنبيه عند الدخول، وعند وصول طلب جديد أثناء العمل
+        if (n > 0 && (adminNotifyLast < 0 || n > adminNotifyLast)) {
+            toast(adminNotifyLast < 0 ? `🔔 لديك ${n === 1 ? 'طلب انضمام جديد' : n === 2 ? 'طلبا انضمام جديدان' : n <= 10 ? n + ' طلبات انضمام جديدة' : n + ' طلب انضمام جديداً'}` : '🔔 وصل طلب انضمام جديد');
+            wrap.classList.remove('ring'); void wrap.offsetWidth; wrap.classList.add('ring');
+        }
+        adminNotifyLast = n;
+    }).catch(() => {});
+}
+function toggleBellPop(e) {
+    e.stopPropagation();
+    const p = document.getElementById('bellPop');
+    p.classList.toggle('open');
+    if (p.classList.contains('open')) checkAdminNotify();
+}
+function reviewPendingTeachers() {
+    document.getElementById('bellPop').classList.remove('open');
+    adminCurrentTab = 'teachers';
+    const tabs = document.querySelectorAll('#modalAdminPanel .seg button, #modalAdminPanel [onclick^="adminTab"]');
+    tabs.forEach(b => b.classList.toggle('on', /'teachers'/.test(b.getAttribute('onclick') || '')));
+    openAdminPanel(true);
 }
 function adminRenewTeacher(id) {
     const name = adminLookupName('teacher', id);
