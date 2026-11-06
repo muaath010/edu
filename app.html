@@ -111,6 +111,17 @@ a { color: var(--brand); }
     box-shadow: var(--shadow-sm); transition: transform .25s var(--ease-bounce), color .2s, border-color .2s;
 }
 .icon-btn:hover { transform: translateY(-2px); color: var(--brand); border-color: var(--brand-100); }
+/* تخصيص الكشف: اختيار الشعب */
+.schema-targets { margin-bottom: 12px; }
+.schema-targets-head .btn { white-space: nowrap; flex-shrink: 0; }
+.schema-targets-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+.st-grade { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 0; border-top: 1px dashed var(--line); }
+.st-grade:first-child { border-top: 0; }
+.st-grade > span { font-weight: 900; font-size: 13px; color: var(--ink-2); min-width: 58px; }
+.st-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface); cursor: pointer; font-weight: 800; font-size: 13px; color: var(--ink-2); user-select: none; }
+.st-chip input { accent-color: var(--brand); margin: 0; }
+.st-chip:has(input:checked) { background: var(--brand-50); border-color: var(--brand); color: var(--brand-600); }
+.st-chip.cur { cursor: default; }
 /* جرس إشعارات المدير */
 .bell-wrap { position: relative; }
 .bell-badge { position: absolute; top: -4px; left: -4px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 900; display: none; align-items: center; justify-content: center; border: 2px solid var(--surface); }
@@ -1312,6 +1323,14 @@ body.dark-mode .folder-card { background: linear-gradient(180deg, #3a2f12, var(-
         </div>
         <div id="manualSchemaColumns" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;"></div>
         <button onclick="addSchemaColumn()" class="btn btn-soft btn-block" style="margin-bottom:12px;"><i class="fa-solid fa-plus"></i> إضافة عمود</button>
+        <div class="panel schema-targets">
+            <div class="schema-targets-head">
+                <b><i class="fa-solid fa-layer-group" style="color:var(--brand)"></i> تطبيق هذا الكشف على الشعب</b>
+                <button class="btn btn-sm btn-soft" onclick="toggleAllSchemaTargets()" id="schemaAllBtn">تحديد الكل</button>
+            </div>
+            <div id="schemaTargets"></div>
+            <p class="card-sub" style="margin:8px 0 0;">الأعمدة التي لها الاسم نفسه في الشعب الأخرى تحتفظ بدرجاتها.</p>
+        </div>
         <button onclick="saveCustomSchema()" class="btn btn-accent btn-lg btn-block"><i class="fa-solid fa-floppy-disk"></i> اعتماد وحفظ شكل الكشف</button>
     </div>
 </div>
@@ -1991,21 +2010,26 @@ function updateView(skipDirtyCheck) {
         currentSheetData = d.data || {};
         currentSchema = Array.isArray(d.schema) ? d.schema : [];
         if (currentSchema.length === 0) {
-            currentSchema = g === "6" ? [
-                {id:"col_1", name:"الحوار (1)", max:10}, {id:"col_2", name:"الحوار (2)", max:10},
-                {id:"col_3", name:"س ق (1)", max:5}, {id:"col_4", name:"س ق (2)", max:5},
-                {id:"col_5", name:"س ق (3)", max:5}, {id:"col_6", name:"س ق (4)", max:5},
-                {id:"col_7", name:"نشاط (1)", max:20}, {id:"col_8", name:"نشاط (2)", max:20},
-                {id:"col_9", name:"المشروع", max:20}
-            ] : [
-                {id:"col_1", name:"الحوار (1)", max:10}, {id:"col_2", name:"الحوار (2)", max:10},
-                {id:"col_3", name:"نشاط (1)", max:20}, {id:"col_4", name:"نشاط (2)", max:20},
-                {id:"col_5", name:"اختبار قصير", max:20}, {id:"col_6", name:"المشروع", max:20}
-            ];
+            currentSchema = defaultSchema(g);
         }
         renderDynamicTable(g, s);
     })
     .catch(() => { wrapper.innerHTML = `<div class="empty-state" style="color:var(--bad-ink)"><i class="fa-solid fa-wifi"></i>خطأ في الاتصال بالخادم.</div>`; });
+}
+
+// الأعمدة الافتراضية لشعبة لم يُخصص كشفها بعد
+function defaultSchema(g) {
+    return g === "6" ? [
+        {id:"col_1", name:"الحوار (1)", max:10}, {id:"col_2", name:"الحوار (2)", max:10},
+        {id:"col_3", name:"س ق (1)", max:5}, {id:"col_4", name:"س ق (2)", max:5},
+        {id:"col_5", name:"س ق (3)", max:5}, {id:"col_6", name:"س ق (4)", max:5},
+        {id:"col_7", name:"نشاط (1)", max:20}, {id:"col_8", name:"نشاط (2)", max:20},
+        {id:"col_9", name:"المشروع", max:20}
+    ] : [
+        {id:"col_1", name:"الحوار (1)", max:10}, {id:"col_2", name:"الحوار (2)", max:10},
+        {id:"col_3", name:"نشاط (1)", max:20}, {id:"col_4", name:"نشاط (2)", max:20},
+        {id:"col_5", name:"اختبار قصير", max:20}, {id:"col_6", name:"المشروع", max:20}
+    ];
 }
 
 function renderDynamicTable(g, s) {
@@ -3388,7 +3412,29 @@ function openSchemaBuilder() {
     const c = document.getElementById('manualSchemaColumns'); c.innerHTML = '';
     currentSchema.forEach(col => addSchemaColumn(col.name, col.max, col.id));
     if (!currentSchema.length) { addSchemaColumn("الواجبات", 10); addSchemaColumn("الاختبار", 20); }
+    renderSchemaTargets();
     updateSchemaTotal(); openModal('modalSchemaBuilder');
+}
+// قائمة الشعب: الشعبة الحالية محددة دائماً، والباقي يختاره المعلم
+function renderSchemaTargets() {
+    const g0 = document.getElementById('gradeSelect').value, s0 = document.getElementById('sectionSelect').value;
+    document.getElementById('schemaTargets').innerHTML = sortKeys(Object.keys(studentsData)).map(g =>
+        `<div class="st-grade"><span>الصف ${esc(g)}</span>${sortKeys(Object.keys(studentsData[g] || {})).map(sec => {
+            const cur = g === g0 && sec === s0;
+            return `<label class="st-chip${cur ? ' cur' : ''}" title="${cur ? 'الشعبة الحالية' : ''}"><input type="checkbox" class="st-cb" data-g="${esc(g)}" data-s="${esc(sec)}"${cur ? ' checked disabled' : ''} onchange="syncSchemaAllBtn()">${esc(sec)}${cur ? ' (الحالية)' : ''}</label>`;
+        }).join('')}</div>`).join('');
+    syncSchemaAllBtn();
+}
+function syncSchemaAllBtn() {
+    const cbs = [...document.querySelectorAll('#schemaTargets .st-cb:not(:disabled)')];
+    const btn = document.getElementById('schemaAllBtn');
+    btn.style.display = cbs.length ? '' : 'none';
+    btn.innerText = cbs.length && cbs.every(c => c.checked) ? 'إلغاء التحديد' : 'تحديد الكل';
+}
+function toggleAllSchemaTargets() {
+    const cbs = [...document.querySelectorAll('#schemaTargets .st-cb:not(:disabled)')];
+    const on = !cbs.every(c => c.checked);
+    cbs.forEach(c => c.checked = on); syncSchemaAllBtn();
 }
 function addSchemaColumn(defaultName = "", defaultMax = 10, id) {
     const c = document.getElementById('manualSchemaColumns'); if (!c) return;
@@ -3416,7 +3462,22 @@ function handleExcelSchema(input) {
     };
     reader.readAsArrayBuffer(input.files[0]); input.value = '';
 }
-function saveCustomSchema() {
+// يطابق الأعمدة الجديدة مع أعمدة شعبة أخرى بالاسم حتى تبقى درجاتها
+function mapSchemaTo(newSchema, theirs) {
+    const used = new Set(), byName = {};
+    theirs.forEach(col => { const k = String(col.name || '').trim(); if (k && !(k in byName)) byName[k] = col.id; });
+    const mapped = newSchema.map(col => {
+        let id = byName[col.name];
+        if (!id || used.has(id)) {
+            // نفس المعرّف لعمود باسم مختلف هناك سيعرض درجات خاطئة، فنعطيه معرّفاً جديداً
+            id = theirs.some(t => t.id === col.id) || used.has(col.id) ? 'col_' + Date.now() + Math.floor(Math.random() * 1e6) : col.id;
+        }
+        used.add(id);
+        return { id, name: col.name, max: col.max };
+    });
+    return { schema: mapped, removed: theirs.filter(t => !used.has(t.id)) };
+}
+async function saveCustomSchema() {
     const g = document.getElementById("gradeSelect").value, s = document.getElementById("sectionSelect").value;
     if (!g || !s) return alert("⚠️ اختر الصف والشعبة أولاً.");
     const newSchema = [];
@@ -3426,14 +3487,44 @@ function saveCustomSchema() {
         else if (name || max) return alert(`⚠️ العمود "${name || 'بدون اسم'}" يحتاج اسماً ودرجة قصوى أكبر من صفر.`);
     }
     if (!newSchema.length) return alert("⚠️ أضف عموداً واحداً على الأقل.");
-    const removed = currentSchema.filter(c => !newSchema.find(n => n.id === c.id));
-    if (removed.length && !confirm(`⚠️ سيتم حذف ${removed.length} عمود (${removed.map(r => r.name).join('، ')}) ولن تظهر درجاته بعد الآن.\nهل أنت متأكد؟`)) return;
-    if (isDirty && !confirm('لديك درجات غير محفوظة ستضيع عند إعادة تحميل الكشف. هل تريد المتابعة؟')) return;
-    fetch(scriptURL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'save_schema', grade: g, section: s, schema: newSchema }) })
-    .then(r => r.json()).then(d => {
-        if (d.status === 'success') { toast("✅ تم حفظ شكل الكشف الجديد."); closeModal('modalSchemaBuilder'); setDirty(false); updateView(true); }
-        else alert("❌ خطأ من الخادم: " + d.message);
-    }).catch(() => alert("❌ فشل الاتصال بالخادم."));
+    if (new Set(newSchema.map(c => c.name)).size !== newSchema.length) return alert("⚠️ يوجد عمودان بالاسم نفسه. غيّر أحدهما.");
+    const others = [...document.querySelectorAll('#schemaTargets .st-cb:checked:not(:disabled)')].map(cb => ({ g: cb.dataset.g, s: cb.dataset.s }));
+
+    const btn = document.querySelector('#modalSchemaBuilder .btn-accent'), label = btn.innerHTML;
+    const done = () => { btn.disabled = false; btn.innerHTML = label; };
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التجهيز...';
+
+    // تجهيز كشف كل شعبة: الحالية كما هي، والأخرى بعد مطابقة الأعمدة بالاسم
+    const jobs = [{ g, s, schema: newSchema, removed: currentSchema.filter(c => !newSchema.find(n => n.id === c.id)) }];
+    try {
+        for (const t of others) {
+            const r = await fetch(`${scriptURL}?action=get_grades&grade=${encodeURIComponent(t.g)}&section=${encodeURIComponent(t.s)}&t=${Date.now()}`);
+            const dd = await r.json();
+            if (dd.status !== 'success') throw new Error(`الصف ${t.g} · الشعبة ${t.s}: ${dd.message || 'تعذر التحميل'}`);
+            const theirs = Array.isArray(dd.schema) && dd.schema.length ? dd.schema : defaultSchema(t.g);
+            jobs.push(Object.assign({ g: t.g, s: t.s }, mapSchemaTo(newSchema, theirs)));
+        }
+    } catch (e) { done(); return alert('❌ لم يُحفظ شيء. ' + (e.message || 'فشل الاتصال بالخادم.')); }
+
+    const lost = jobs.filter(j => j.removed.length);
+    if (lost.length && !confirm('⚠️ ستُحذف هذه الأعمدة ولن تظهر درجاتها بعد الآن:\n\n' + lost.map(j => `• الصف ${j.g} · الشعبة ${j.s}: ${j.removed.map(r => r.name).join('، ')}`).join('\n') + '\n\nهل أنت متأكد؟')) return done();
+    if (isDirty && !confirm('لديك درجات غير محفوظة ستضيع عند إعادة تحميل الكشف. هل تريد المتابعة؟')) return done();
+
+    const failed = [];
+    for (let i = 0; i < jobs.length; i++) {
+        const j = jobs[i];
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ ${i + 1} / ${jobs.length}...`;
+        try {
+            const r = await fetch(scriptURL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'save_schema', grade: j.g, section: j.s, schema: j.schema }) });
+            const dd = await r.json();
+            if (dd.status !== 'success') failed.push(`الصف ${j.g} · الشعبة ${j.s}`);
+        } catch (e) { failed.push(`الصف ${j.g} · الشعبة ${j.s}`); }
+    }
+    done();
+    const ok = jobs.length - failed.length;
+    if (failed.length) alert(`⚠️ حُفظ الكشف في ${ok} من ${jobs.length} شعبة.\nلم يُحفظ في: ${failed.join('، ')}\nحاول مرة أخرى لهذه الشعب.`);
+    else toast(jobs.length === 1 ? "✅ تم حفظ شكل الكشف الجديد." : `✅ تم حفظ شكل الكشف في ${jobs.length} شعب.`);
+    if (ok) { closeModal('modalSchemaBuilder'); setDirty(false); updateView(true); }
 }
 
 // =====================================================================
