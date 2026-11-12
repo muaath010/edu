@@ -729,7 +729,9 @@ body.dark-mode .folder-card { background: linear-gradient(180deg, #3a2f12, var(-
 .folder-card .f-del { position: absolute; top: 8px; left: 8px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--bad-50); color: var(--bad-ink); opacity: 0; transition: opacity .2s; cursor: pointer; }
 .folder-card:hover .f-del, .file-card:hover .f-move { opacity: 1; }
 .file-card .f-move { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--brand-50); color: var(--brand-600); opacity: 0; transition: opacity .2s; cursor: pointer; }
-@media (hover: none) { .folder-card .f-del, .file-card .f-del, .file-card .f-move { opacity: 1; } }
+.file-card .f-dl { position: absolute; top: 42px; left: 8px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--good-50); color: var(--good-ink); font-size: 12px; opacity: 0; transition: opacity .2s; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.file-card:hover .f-dl { opacity: 1; }
+@media (hover: none) { .folder-card .f-del, .file-card .f-del, .file-card .f-move, .file-card .f-dl { opacity: 1; } }
 .upload-queue { border: 1px solid var(--line); border-radius: 16px; padding: 12px; margin-bottom: 16px; background: var(--surface-2); }
 .uq-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .uq-total, .uq-bar { height: 6px; background: var(--line); border-radius: 9px; overflow: hidden; }
@@ -3760,11 +3762,30 @@ function renderRepo() {
 }
 function fileCard(f) {
     const k = repoCache.indexOf(f);
-    return `<a class="file-card" href="${esc(f.url)}" target="_blank" rel="noopener" title="${esc(f.name)}">
+    return `<a class="file-card" href="${esc(fileOpenURL(f))}" target="_blank" rel="noopener" title="${esc(f.name)}">
+        <button class="f-dl" onclick="event.preventDefault(); event.stopPropagation(); downloadRepoFile(${k})" title="تنزيل"><i class="fa-solid fa-download"></i></button>
         <button class="f-del" onclick="event.preventDefault(); event.stopPropagation(); deleteTeacherFile(${k})" title="حذف"><i class="fa-solid fa-xmark"></i></button>
         <button class="f-move" onclick="event.preventDefault(); event.stopPropagation(); openMoveFile(${k})" title="نقل إلى مجلد"><i class="fa-solid fa-folder-tree"></i></button>
         <span class="f-ico">${fileIcon(f.name)}</span><span class="f-name">${esc(f.name)}</span>
         ${document.getElementById('repoSearch').value.trim() && f.folder ? `<span class="f-meta">📁 ${esc(f.folder)}</span>` : ''}</a>`;
+}
+// المتصفح لا يعرض ملفات Office، فتُفتح في عارض Microsoft على الإنترنت
+const OFFICE_EXT = ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'];
+function fileOpenURL(f) {
+    const e = String(f.name).split('.').pop().toLowerCase();
+    return OFFICE_EXT.includes(e) && f.url.startsWith("https://") ? 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(f.url) : f.url;
+}
+// تنزيل بالاسم الأصلي، وإذا منع الخادم ذلك يُفتح الرابط المباشر
+async function downloadRepoFile(k) {
+    const f = repoCache[k]; if (!f) return;
+    try {
+        const r = await fetch(f.url, { mode: 'cors' });
+        if (!r.ok) throw 0;
+        const blob = await r.blob(), a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = f.name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    } catch (e) { window.open(f.url, '_blank', 'noopener'); }
 }
 function repoGo(path) { repoFolder = cleanPath(path); document.getElementById('repoSearch').value = ''; renderRepo(); }
 function newRepoFolder() {
