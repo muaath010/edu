@@ -111,6 +111,26 @@ a { color: var(--brand); }
     box-shadow: var(--shadow-sm); transition: transform .25s var(--ease-bounce), color .2s, border-color .2s;
 }
 .icon-btn:hover { transform: translateY(-2px); color: var(--brand); border-color: var(--brand-100); }
+/* البحث عن طالب في كل الشعب */
+.find-modal { align-items: flex-start !important; padding-top: 9vh; }
+.find-box { max-width: 620px; width: 100%; padding: 0 !important; overflow: hidden; }
+.find-input-wrap { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.find-input-wrap > i { color: var(--brand); font-size: 18px; }
+.find-input-wrap input { flex: 1; border: 0; outline: none; background: transparent; font: inherit; font-size: 17px; font-weight: 700; color: var(--ink); min-width: 0; }
+.find-input-wrap kbd { font-family: inherit; font-size: 11px; font-weight: 800; color: var(--ink-3); border: 1px solid var(--line-2); border-radius: 6px; padding: 2px 6px; }
+.find-results { max-height: min(60vh, 460px); overflow-y: auto; padding: 6px; }
+.find-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 0; background: none; border-radius: 12px; cursor: pointer; text-align: start; font: inherit; color: var(--ink); }
+.find-item.on, .find-item:hover { background: var(--brand-50); }
+.find-item .avatar { width: 38px; height: 38px; font-size: 14px; }
+.find-item .fi-name { font-weight: 800; font-size: 15px; display: block; }
+.find-item .fi-name mark { background: var(--accent-50); color: var(--accent-600); border-radius: 4px; padding: 0 1px; }
+.find-item .fi-meta { font-size: 12.5px; color: var(--ink-3); font-weight: 700; }
+.find-item .fi-go { margin-inline-start: auto; color: var(--ink-3); font-size: 13px; }
+.find-item.cur .fi-meta::after { content: ' · الشعبة الحالية'; color: var(--brand-600); }
+.find-empty { padding: 28px 16px; text-align: center; color: var(--ink-3); font-weight: 700; line-height: 1.8; }
+.find-count { padding: 6px 12px 2px; font-size: 12px; font-weight: 800; color: var(--ink-3); }
+@keyframes rowFlash { 0%, 100% { background: transparent; } 30% { background: var(--accent-50); } }
+.row-flash > td { animation: rowFlash 1.6s ease 2; }
 /* تخصيص الكشف: اختيار الشعب */
 .schema-targets { margin-bottom: 12px; }
 .schema-targets-head .btn { white-space: nowrap; flex-shrink: 0; }
@@ -861,6 +881,7 @@ body.dark-mode .folder-card { background: linear-gradient(180deg, #3a2f12, var(-
                 <div class="bell-foot"><button class="btn btn-primary btn-block" onclick="reviewPendingTeachers()"><i class="fa-solid fa-user-check"></i> مراجعة وتفعيل</button></div>
             </div>
         </div>
+        <button class="icon-btn" id="btnFindStudent" onclick="openFindStudent()" title="البحث عن طالب في كل الشعب (Ctrl+K)"><i class="fa-solid fa-magnifying-glass"></i></button>
         <button class="icon-btn" id="voiceBtn" onclick="toggleVoice()" title="التحكم الصوتي"><i class="fa-solid fa-microphone"></i></button>
         <button class="icon-btn" onclick="toggleDarkMode()" id="themeBtn" title="تبديل المظهر"><i class="fa-solid fa-moon"></i></button>
         <div class="user-chip"><span class="nm-text" id="teacherWelcome"></span><button class="icon-btn" id="btnMenuToggle" onclick="toggleMenu()" title="القائمة" style="padding:0; overflow:hidden;"><span class="avatar" id="topAvatar" style="width:100%;height:100%;">م</span></button></div>
@@ -1338,6 +1359,18 @@ body.dark-mode .folder-card { background: linear-gradient(180deg, #3a2f12, var(-
         </div>
         <div class="card-head" style="margin-bottom:12px;"><b>المكافآت</b><div class="spacer"></div><button onclick="addNewReward()" class="btn btn-sm btn-good"><i class="fa-solid fa-plus"></i> مكافأة جديدة</button></div>
         <div class="repo-grid" id="rewardsGrid"></div>
+    </div>
+</div>
+
+<!-- البحث عن طالب في كل الشعب -->
+<div id="modalFindStudent" class="modal find-modal" style="z-index:3200;">
+    <div class="modal-content find-box">
+        <div class="find-input-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="search" id="findStudentInput" placeholder="اكتب اسم الطالب للبحث في كل الصفوف والشعب..." autocomplete="off" oninput="renderFindStudent()" onkeydown="findStudentKey(event)">
+            <kbd>Esc</kbd>
+        </div>
+        <div class="find-results" id="findStudentResults"></div>
     </div>
 </div>
 
@@ -2141,6 +2174,7 @@ function renderDynamicTable(g, s) {
 
     document.querySelectorAll('#gradesBody tr').forEach(tr => updateRowView(tr));
     refreshDashboard();
+    if (pendingStudentJump) { const n = pendingStudentJump; pendingStudentJump = null; setTimeout(() => showFoundStudent(n), 150); }
 }
 
 function filterReinf(q) {
@@ -4221,6 +4255,98 @@ function colFill(colId, mode) {
     if (n) { setDirty(true); scheduleDashboard(); }
     toast(n ? (mode === 'clear' ? `🧹 تم مسح ${n} درجة` : `✅ تم رصد ${fmt(val)} لـ ${n} طالباً في «${col.name}»`) : 'لا توجد خانات مناسبة للتعديل.');
 }
+
+// =====================================================================
+//  البحث عن طالب في كل الصفوف والشعب
+// =====================================================================
+let findHits = [], findSel = 0, pendingStudentJump = null;
+// توحيد الكتابة العربية حتى لا تفشل المطابقة بسبب الهمزات أو التشكيل
+function normAr(t) {
+    return String(t || '').toLowerCase().replace(/[ً-ْـ]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي').replace(/\s+/g, ' ').trim();
+}
+function openFindStudent() {
+    if (!Object.keys(studentsData || {}).length) return toast('لا توجد شعب بعد. أضف طلابك من إدارة الطلاب.');
+    if (document.getElementById('sideMenu').classList.contains('open')) toggleMenu();
+    const inp = document.getElementById('findStudentInput');
+    inp.value = ''; renderFindStudent();
+    openModal('modalFindStudent');
+    setTimeout(() => inp.focus(), 60);
+}
+function renderFindStudent() {
+    const q = normAr(document.getElementById('findStudentInput').value);
+    const box = document.getElementById('findStudentResults');
+    if (!q) {
+        let total = 0; Object.values(studentsData).forEach(sec => Object.values(sec).forEach(l => total += l.length));
+        findHits = [];
+        box.innerHTML = `<div class="find-empty">🔎 ابحث بين ${total} طالباً في كل الصفوف والشعب<br><small>يكفي جزء من الاسم، مثل الاسم الأول واسم العائلة</small></div>`;
+        return;
+    }
+    const words = q.split(' ');
+    const g0 = document.getElementById('gradeSelect').value, s0 = document.getElementById('sectionSelect').value;
+    findHits = [];
+    sortKeys(Object.keys(studentsData)).forEach(g => sortKeys(Object.keys(studentsData[g] || {})).forEach(sec => {
+        (studentsData[g][sec] || []).forEach((name, i) => {
+            const n = normAr(name);
+            if (!words.every(w => n.includes(w))) return;
+            // الأولوية: الاسم الذي يبدأ بالبحث، ثم الشعبة الحالية
+            const score = (n.startsWith(words[0]) ? 0 : 1) * 10 + (g === g0 && sec === s0 ? 0 : 1);
+            findHits.push({ g, s: sec, name, no: i + 1, score });
+        });
+    }));
+    findHits.sort((a, b) => a.score - b.score);
+    findHits = findHits.slice(0, 60); findSel = 0;
+    if (!findHits.length) { box.innerHTML = `<div class="find-empty">لا يوجد طالب بهذا الاسم في أي شعبة.</div>`; return; }
+    box.innerHTML = `<div class="find-count">${(n => n === 60 ? 'أول 60 نتيجة' : n === 1 ? 'نتيجة واحدة' : n === 2 ? 'نتيجتان' : n <= 10 ? n + ' نتائج' : n + ' نتيجة')(findHits.length)}</div>` + findHits.map((h, k) =>
+        `<button class="find-item${k === 0 ? ' on' : ''}${h.g === g0 && h.s === s0 ? ' cur' : ''}" data-k="${k}" onclick="pickFindStudent(${k})" onmousemove="findMark(${k})">
+            ${avatarHTML(h.name)}<span><span class="fi-name">${markAr(h.name, words)}</span><span class="fi-meta">الصف ${esc(h.g)} · الشعبة ${esc(h.s)} · رقمه في السجل ${h.no}</span></span>
+            <i class="fa-solid fa-arrow-left fi-go"></i></button>`).join('');
+}
+// تمييز الجزء المطابق في الاسم (مع تجاهل الهمزات والتشكيل)
+function markAr(name, words) {
+    const chars = [...String(name)], keep = [], map = [];
+    chars.forEach((c, i) => { const n = c === ' ' ? ' ' : normAr(c); if (n) { keep.push(n); map.push(i); } });
+    const flat = keep.join(''), hit = new Array(chars.length).fill(false);
+    words.forEach(w => { let p = flat.indexOf(w); while (p >= 0) { for (let j = p; j < p + w.length; j++) hit[map[j]] = true; p = flat.indexOf(w, p + w.length); } });
+    let out = '', open = false;
+    chars.forEach((c, i) => { if (hit[i] && !open) { out += '<mark>'; open = true; } if (!hit[i] && open) { out += '</mark>'; open = false; } out += esc(c); });
+    return out + (open ? '</mark>' : '');
+}
+function findMark(k) {
+    if (k === findSel) return; findSel = k;
+    document.querySelectorAll('#findStudentResults .find-item').forEach(b => b.classList.toggle('on', +b.dataset.k === k));
+}
+function findStudentKey(e) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault(); if (!findHits.length) return;
+        findMark((findSel + (e.key === 'ArrowDown' ? 1 : -1) + findHits.length) % findHits.length);
+        const el = document.querySelector(`#findStudentResults .find-item[data-k="${findSel}"]`); if (el) el.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') { e.preventDefault(); if (findHits.length) pickFindStudent(findSel); }
+}
+function pickFindStudent(k) {
+    const h = findHits[k]; if (!h) return;
+    closeModal('modalFindStudent');
+    const g0 = document.getElementById('gradeSelect').value, s0 = document.getElementById('sectionSelect').value;
+    if (h.g === g0 && h.s === s0 && currentNameList.length) return showFoundStudent(h.name);
+    if (isDirty && !flushBeforeLeave() && !confirm('لديك تعديلات غير محفوظة في هذه الشعبة. هل تريد المتابعة دون حفظ؟')) return;
+    pendingStudentJump = h.name;
+    setDirty(false);
+    document.getElementById('gradeSelect').value = h.g;
+    buildSectionDropdown(h.s);
+}
+// بعد تحميل الشعبة: يُبرز صف الطالب في الكشف ويفتح بطاقته التحليلية
+function showFoundStudent(name) {
+    const i = currentNameList.indexOf(name);
+    if (i < 0) return toast('تعذر العثور على الطالب في هذه الشعبة.');
+    const cell = document.getElementById('name-' + i), tr = cell && cell.closest('tr');
+    if (tr) { tr.classList.remove('row-flash'); void tr.offsetWidth; tr.classList.add('row-flash'); tr.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    openStudentAnalytics(name, i);
+}
+document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.code === 'KeyK') {
+        if (document.getElementById('loginOverlay').style.display === 'flex') return;
+        e.preventDefault(); openFindStudent();
+    }
+});
 
 </script>
 </body>
